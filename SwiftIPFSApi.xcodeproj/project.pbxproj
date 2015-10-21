@@ -79,7 +79,7 @@
 		AB0A3AD91BD67CE10090C97A /* IPFSApi.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IPFSApi.swift; sourceTree = "<group>"; };
 		AB2C9ED11BD6906B00BCCF01 /* Multipart.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Multipart.swift; sourceTree = "<group>"; };
 		AB2C9EDD1BD79E9700BCCF01 /* NetworkIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkIO.swift; sourceTree = "<group>"; };
-		AB2C9EDF1BD79F9B00BCCF01 /* HTTPIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = HTTPIO.swift; path = ../HTTPIO.swift; sourceTree = "<group>"; };
+		AB2C9EDF1BD79F9B00BCCF01 /* HTTPIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPIO.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
