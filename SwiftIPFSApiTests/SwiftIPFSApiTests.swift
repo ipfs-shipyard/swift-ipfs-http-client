@@ -124,7 +124,7 @@ class SwiftIPFSApiTests: XCTestCase {
 
             /// Test cat
             dispatch_group_enter(group)
-            multihash = try fromB58String("QmUYttJXpMQYvQk5DcX2owRUuYJBJM6W7KQSUsycCCE2MZ")
+            multihash = try fromB58String("QmNtFyK7cUSDyw91BfLDxWSRucmskcPAHdDtnrP1fmndhb")
             
             try api.cat(multihash) {
                 result in
@@ -140,6 +140,55 @@ class SwiftIPFSApiTests: XCTestCase {
         }
     }
 
+    func testMisc() {
+        let group = dispatch_group_create()
+        
+        // Test ls
+        dispatch_group_enter(group)
+
+        let filePaths = ["file:///Users/teo/tmp/rb2.patch"]//, "file:///Users/teo/tmp/notred.png","file:///Users/teo/tmp/woot"]
+        do {
+            try HttpIo.sendTo("http://127.0.0.1:5001/api/v0/add?stream-channels=true", content: filePaths) {
+                result in
+                do {
+
+                    /// Terrible bodge to deal with concatenated JSON
+                    var newRes: NSData = NSMutableData()
+                    if let dataString = NSString(data: result, encoding: NSUTF8StringEncoding) {
+                        
+                        var myStr = dataString as String
+                        myStr = myStr.stringByReplacingOccurrencesOfString("}", withString: "},", options: NSStringCompareOptions.LiteralSearch, range: nil)
+                        myStr = String(myStr.characters.dropLast())
+                        myStr = "[" + myStr + "]"
+//                        print(myStr)
+                        newRes = myStr.dataUsingEncoding(NSUTF8StringEncoding)!
+                    }
+
+                    guard let json = try NSJSONSerialization.JSONObjectWithData(newRes, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else {
+                        throw IPFSAPIError.JSONSerializationFailed
+                    }
+                    
+                    for obj in json {
+                        if let name = obj["Name"] {
+                            print("name",name)
+                        }
+                        if let hash = obj["Hash"] {
+                            print("hash",hash)
+                        }
+                    }
+                    
+                    
+                } catch {
+                    print("Error \(error)")
+                }
+                dispatch_group_leave(group)
+            }
+        } catch  {
+            XCTFail("testMisc error: \(error)")
+        }
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
+
+    }
     
     func testPerformanceExample() {
         // This is an example of a performance test case.

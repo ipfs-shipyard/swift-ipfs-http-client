@@ -125,11 +125,6 @@ public class IPFSApi : IpfsApiClient {
                     rawJSON in
                     return try merkleNodeFromJSON(rawJSON)
                 }
-//                guard let objects = json["Objects"] where objects.count == 1 else {
-//                    throw IPFSAPIError.SwarmError("ls error: No Objects in JSON data.")
-//                }
-
-//                let merkles = try merkleNodeFromJSON(objects[0])
 
                 completionHandler(merkles)
                 
@@ -157,8 +152,8 @@ public class IPFSApi : IpfsApiClient {
         return
     }
     
-    public func get(hash: Multihash) throws -> [UInt8] {
-        return []
+    public func get(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
+        try self.cat(hash, completionHandler: completionHandler)
     }
     
     public func refs(hash: Multihash, recursive: Bool) throws -> [String : String] {

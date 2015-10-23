@@ -8,10 +8,12 @@
 
 import Foundation
 
-protocol NetworkIO {
+protocol NetworkIo {
     
-    static func get(sourceURL: String) throws -> [UInt8]
+    static func receiveFrom(source: String, completionHandler: (NSData) -> Void) throws
 
-    static func post(targetURL: String) throws -> [UInt8]
-    
+    static func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws
+
+    /// If we want to send a bunch of location addressed content (eg.files)
+    static func sendTo(target: String, content: [String], completionHandler: (NSData) -> Void) throws
 }
