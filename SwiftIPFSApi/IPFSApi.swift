@@ -22,14 +22,14 @@ extension IpfsApiClient {
     
     func fetchData(path: String, completionHandler: (NSData) -> Void) throws {
         
-        let fullURL = baseUrl + path
-        guard let url = NSURL(string: fullURL) else { throw IPFSAPIError.InvalidURL }
+        let fullUrl = baseUrl + path
+        guard let url = NSURL(string: fullUrl) else { throw IpfsApiError.InvalidUrl }
         
         let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
             (data: NSData?, response: NSURLResponse?, error: NSError?) in
             do {
-                if error != nil { throw IPFSAPIError.DataTaskError(error!) }
-                guard let data = data else { throw IPFSAPIError.NilData }
+                if error != nil { throw IpfsApiError.DataTaskError(error!) }
+                guard let data = data else { throw IpfsApiError.NilData }
                 
                 print("The data:",NSString(data: data, encoding: NSUTF8StringEncoding))
                 
@@ -51,15 +51,15 @@ public enum PinType {
     case recursive
 }
 
-enum IPFSAPIError : ErrorType {
-    case InvalidURL
+enum IpfsApiError : ErrorType {
+    case InvalidUrl
     case NilData
     case DataTaskError(NSError)
-    case JSONSerializationFailed
+    case JsonSerializationFailed
     case SwarmError(String)
 }
 
-public class IPFSApi : IpfsApiClient {
+public class IpfsApi : IpfsApiClient {
 
     public var baseUrl: String = ""
     
@@ -128,7 +128,7 @@ public class IPFSApi : IpfsApiClient {
             /// from within it.
             do {
                 guard let json = try NSJSONSerialization.JSONObjectWithData(newRes, options: NSJSONReadingOptions.AllowFragments) as? [[String : String]] else {
-                    throw IPFSAPIError.JSONSerializationFailed
+                    throw IpfsApiError.JsonSerializationFailed
                 }
 
                 /// Turn each component into a MerkleNode
@@ -151,10 +151,10 @@ public class IPFSApi : IpfsApiClient {
             (data: NSData) in
             do {
                 // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IPFSAPIError.JSONSerializationFailed
+                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
                 }
                 guard let objects = json["Objects"] as? [AnyObject] else {
-                    throw IPFSAPIError.SwarmError("ls error: No Objects in JSON data.")
+                    throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
                 }
                 
                 let merkles = try objects.map {
@@ -192,8 +192,18 @@ public class IPFSApi : IpfsApiClient {
         try self.cat(hash, completionHandler: completionHandler)
     }
     
-    public func refs(hash: Multihash, recursive: Bool) throws -> [String : String] {
-        return [:]
+    public func refs(hash: Multihash, recursive: Bool, completionHandler: ([String : String]) -> Void) throws {
+//        try fetchData("refs?arg=/" + hash + "&r=" + recursive) {
+//            (data: NSData) in
+//            
+//            // Parse the data
+//            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IPFSAPIError.JSONSerializationFailed
+//            }
+//            guard let objects = json["Objects"] as? [AnyObject] else {
+//                throw IPFSAPIError.SwarmError("ls error: No Objects in JSON data.")
+//            }
+//            
+//        }
     }
     
     public func resolve(scheme: String, hash: Multihash, recursive: Bool) throws -> [String : String] {
@@ -250,11 +260,11 @@ public class Swarm : ClientSubCommand {
             (data: NSData) in
             do {
                 // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : [String]] else { throw IPFSAPIError.JSONSerializationFailed
+                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : [String]] else { throw IpfsApiError.JsonSerializationFailed
                 }
                 
                 guard let stringsData = json["Strings"] else {
-                    throw IPFSAPIError.SwarmError("Swarm.peers error: No Strings key in JSON data.")
+                    throw IpfsApiError.SwarmError("Swarm.peers error: No Strings key in JSON data.")
                 }
                 
                 var addresses: [Multiaddr] = []
@@ -274,10 +284,10 @@ public class Swarm : ClientSubCommand {
             (data: NSData) in
             do {
                 // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IPFSAPIError.JSONSerializationFailed
+                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
                 }
                 guard let addrsData = json["Addrs"] else {
-                    throw IPFSAPIError.SwarmError("Swarm.addrs error: No Addrs key in JSON data.")
+                    throw IpfsApiError.SwarmError("Swarm.addrs error: No Addrs key in JSON data.")
                 }
                 completionHandler(addrsData as! [String : [String]])
             } catch {
@@ -291,11 +301,11 @@ public class Swarm : ClientSubCommand {
             (data: NSData) in
             do {
                 // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IPFSAPIError.JSONSerializationFailed
+                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
                 }
                 /// Ensure we've only got one string as a result.
                 guard let result = json["Strings"] where result.count == 1 else {
-                    throw IPFSAPIError.SwarmError("Swarm.connect error: No Strings key in JSON data.")
+                    throw IpfsApiError.SwarmError("Swarm.connect error: No Strings key in JSON data.")
                 }
 
                 completionHandler(result[0] as! String)

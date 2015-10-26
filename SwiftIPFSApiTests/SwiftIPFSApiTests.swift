@@ -12,11 +12,10 @@ import XCTest
 import SwiftMultiaddr
 import SwiftMultihash
 
-class SwiftIPFSApiTests: XCTestCase {
+class SwiftIpfsApiTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
     }
     
     override func tearDown() {
@@ -32,13 +31,8 @@ class SwiftIPFSApiTests: XCTestCase {
     }
     
     func testSwarmPeers() {
-        do {
-            let group = dispatch_group_create()
-            dispatch_group_enter(group)
-            
-            let api = try IPFSApi(host: "127.0.0.1", port: 5001)
-
-            
+        let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.swarm.peers(){
                 (peers: [Multiaddr]) in
                 
@@ -50,22 +44,16 @@ class SwiftIPFSApiTests: XCTestCase {
                     print("testSwarm error",error)
                     XCTFail()
                 }
-                dispatch_group_leave(group)
+                dispatch_group_leave(dispatchGroup)
             }
-            
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
-        } catch {
-            XCTFail()
         }
+        
+        tester(swarmPeers)
     }
     
     func testSwarmAddrs() {
-        do {
-            let group = dispatch_group_create()
-            dispatch_group_enter(group)
-            
-            let api = try IPFSApi(host: "127.0.0.1", port: 5001)
-    
+        let swarmAddrs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.swarm.addrs(){
                 addrs in
 
@@ -73,101 +61,102 @@ class SwiftIPFSApiTests: XCTestCase {
                     print("Hash:",hash)
                     print("     ",addrList)
                 }
-                dispatch_group_leave(group)
+                
+                dispatch_group_leave(dispatchGroup)
             }
-            
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
-        } catch {
-            XCTFail()
         }
+        
+        tester(swarmAddrs)
     }
 
     func testSwarmConnect() {
-        do {
-            let group = dispatch_group_create()
-            dispatch_group_enter(group)
-            
-            let api = try IPFSApi(host: "127.0.0.1", port: 5001)
+        let swarmConnect = { (dispatchGroup: dispatch_group_t) throws -> Void in
             
             let peerAddress = "/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             
             try api.swarm.connect(peerAddress){
                 result in
                 
-//                for (hash, addrList)  in addrs {
-//                    print("Hash:",hash)
-//                    print("     ",addrList)
-//                }
-                dispatch_group_leave(group)
+                dispatch_group_leave(dispatchGroup)
             }
-            
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
-        } catch {
-            XCTFail()
         }
+        
+        tester(swarmConnect)
     }
     
     func testBaseCommands() {
-        do {
-            let api = try IPFSApi(host: "127.0.0.1", port: 5001)
-            let group = dispatch_group_create()
-            
-            // Test ls
-            dispatch_group_enter(group)
-            var multihash = try fromB58String("QmXYxW6Wzbqv7qAmN1QwTEvfvUaGiTVricrppE5VEnh7V7")
-            
+        
+        let lsTest = { (dispatchGroup: dispatch_group_t) throws -> Void in
+
+            let multihash = try fromB58String("QmXYxW6Wzbqv7qAmN1QwTEvfvUaGiTVricrppE5VEnh7V7")
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.ls(multihash) {
                 result in
                 print("Bingo")
-                dispatch_group_leave(group)
+                dispatch_group_leave(dispatchGroup)
             }
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
 
-            /// Test cat
-            dispatch_group_enter(group)
-            multihash = try fromB58String("QmNtFyK7cUSDyw91BfLDxWSRucmskcPAHdDtnrP1fmndhb")
+        }
+            
+        tester(lsTest)
+            
+            
+        let catTest = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
+            let multihash = try fromB58String("QmNtFyK7cUSDyw91BfLDxWSRucmskcPAHdDtnrP1fmndhb")
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             
             try api.cat(multihash) {
                 result in
                 print(result)
-                dispatch_group_leave(group)
+                dispatch_group_leave(dispatchGroup)
             }
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
-       
-            
-        } catch {
-            print("TestBaseCommands error: ",error)
-            XCTFail()
         }
+        
+        tester(catTest)
     }
 
+    
     func testAdd() {
         
-        let group = dispatch_group_create()
-        // Test add
-        dispatch_group_enter(group)
-        
-        do {
-
-            let api = try IPFSApi(host: "127.0.0.1", port: 5001)
-            let filePaths = ["file:///Users/teo/tmp/rb2.patch", "file:///Users/teo/tmp/notred.png","file:///Users/teo/tmp/woot"]
-        
-        
+        let add = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
+            let filePaths = [   "file:///Users/teo/tmp/rb2.patch",
+                                "file:///Users/teo/tmp/notred.png",
+                                "file:///Users/teo/tmp/woot"]
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            
             try api.add(filePaths) {
                 result in
                 for mt in result {
                     print("Name:",mt.name)
                     print("Hash:",mt.hash!.string())
                 }
+                
+                dispatch_group_leave(dispatchGroup)
             }
-            
-            dispatch_group_leave(group)
+        }
+        
+        tester(add)
+    }
+    
+    
+    func tester(test: (dispatchGroup: dispatch_group_t) throws -> Void) {
+        
+        let group = dispatch_group_create()
+        
+        dispatch_group_enter(group)
+        
+        do {
+            /// Perform the test.
+            try test(dispatchGroup: group)
             
         } catch  {
-            XCTFail("testMisc error: \(error)")
+            XCTFail("tester error: \(error)")
         }
+        
         dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
-
     }
     
     func testPerformanceExample() {
