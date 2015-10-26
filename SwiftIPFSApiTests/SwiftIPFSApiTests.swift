@@ -141,6 +141,22 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(add)
     }
     
+    func testRefs() {
+        let refs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let multihash = try fromB58String("QmSEYztFJmcY7dSKS7ZXybzKMhHq3LM5zVt4EfCPMsejp3")
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            
+            try api.refs(multihash, recursive: false) {
+                result in
+                for mh in result {
+                    print(b58String(mh))
+                }
+                
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        tester(refs)
+    }
     
     func tester(test: (dispatchGroup: dispatch_group_t) throws -> Void) {
         

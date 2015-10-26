@@ -110,19 +110,7 @@ public class IpfsApi : IpfsApiClient {
         try HttpIo.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
             result in
 
-                
-            /** Deal with concatenated JSON (since JSONSerialization doesn't)
-             by turning it into a string wrapping it in array brackets and
-             comma separating the various root components. */
-            var newRes: NSData = NSMutableData()
-            if let dataString = NSString(data: result, encoding: NSUTF8StringEncoding) {
-                
-                var myStr = dataString as String
-                myStr = myStr.stringByReplacingOccurrencesOfString("}", withString: "},")
-                myStr = String(myStr.characters.dropLast())
-                myStr = "[" + myStr + "]"
-                newRes = myStr.dataUsingEncoding(NSUTF8StringEncoding)!
-            }
+            let newRes = fixStreamJson(result)
            
             /// We have to catch the thrown errors inside the completion closure 
             /// from within it.
@@ -144,6 +132,7 @@ public class IpfsApi : IpfsApiClient {
             }
         }
     }
+
     
     public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
         let hashString = b58String(hash)
@@ -192,18 +181,35 @@ public class IpfsApi : IpfsApiClient {
         try self.cat(hash, completionHandler: completionHandler)
     }
     
-    public func refs(hash: Multihash, recursive: Bool, completionHandler: ([String : String]) -> Void) throws {
-//        try fetchData("refs?arg=/" + hash + "&r=" + recursive) {
-//            (data: NSData) in
-//            
-//            // Parse the data
-//            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IPFSAPIError.JSONSerializationFailed
-//            }
-//            guard let objects = json["Objects"] as? [AnyObject] else {
-//                throw IPFSAPIError.SwarmError("ls error: No Objects in JSON data.")
-//            }
-//            
-//        }
+    public func refs(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
+        let hashString = b58String(hash)
+        print("hashString:",hashString)
+        try fetchData("refs?arg=" + hashString + "&r=\(recursive)") {
+            (data: NSData) in
+            do {
+                
+                let fixedData = fixStreamJson(data)
+                // Parse the data
+                guard let json = try NSJSONSerialization.JSONObjectWithData(fixedData, options: NSJSONReadingOptions.MutableContainers) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
+                }
+                print(json)
+                var refs: [Multihash] = []
+                for obj in json {
+                    if let ref = obj["Ref"]{
+                        let mh = try fromB58String(ref as! String)
+                        refs.append(mh)
+                    }
+                }
+//                guard let objects = json["Objects"] as? [String: String] else {
+//                    throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
+//                }
+                
+                completionHandler(refs)
+                
+            } catch {
+                print("Error \(error)")
+            }
+        }
     }
     
     public func resolve(scheme: String, hash: Multihash, recursive: Bool) throws -> [String : String] {
@@ -355,4 +361,22 @@ public struct Stats {
 
 public struct Name {
     
+}
+
+/** Deal with concatenated JSON (since JSONSerialization doesn't) by turning
+ it into a string wrapping it in array brackets and comma separating the
+ various root components. */
+func fixStreamJson(rawJson: NSData) -> NSData {
+    
+    var newRes: NSData = NSMutableData()
+    
+    if let dataString = NSString(data: rawJson, encoding: NSUTF8StringEncoding) {
+        
+        var myStr = dataString as String
+        myStr = myStr.stringByReplacingOccurrencesOfString("}", withString: "},")
+        myStr = String(myStr.characters.dropLast())
+        myStr = "[" + myStr + "]"
+        newRes = myStr.dataUsingEncoding(NSUTF8StringEncoding)!
+    }
+    return newRes
 }
