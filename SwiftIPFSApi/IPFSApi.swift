@@ -101,12 +101,48 @@ public class IPFSApi : IpfsApiClient {
     
     /// Tier 1 commands
     
-    public func add(file :NSURL) throws -> MerkleNode {
-        return try MerkleNode(hash: "")
+    public func add(filePath: String, completionHandler: ([MerkleNode]) -> Void) throws {
+        try self.add([filePath], completionHandler: completionHandler)
     }
     
-    public func add(files: [NSURL]) throws -> [MerkleNode] {
-        return []
+    public func add(filePaths: [String], completionHandler: ([MerkleNode]) -> Void) throws {
+
+        try HttpIo.sendTo("http://\(host):\(port)\(version)add?stream-channels=true", content: filePaths) {
+            result in
+
+                
+            /** Deal with concatenated JSON (since JSONSerialization doesn't)
+             by turning it into a string wrapping it in array brackets and
+             comma separating the various root components. */
+            var newRes: NSData = NSMutableData()
+            if let dataString = NSString(data: result, encoding: NSUTF8StringEncoding) {
+                
+                var myStr = dataString as String
+                myStr = myStr.stringByReplacingOccurrencesOfString("}", withString: "},")
+                myStr = String(myStr.characters.dropLast())
+                myStr = "[" + myStr + "]"
+                newRes = myStr.dataUsingEncoding(NSUTF8StringEncoding)!
+            }
+           
+            /// We have to catch the thrown errors inside the completion closure 
+            /// from within it.
+            do {
+                guard let json = try NSJSONSerialization.JSONObjectWithData(newRes, options: NSJSONReadingOptions.AllowFragments) as? [[String : String]] else {
+                    throw IPFSAPIError.JSONSerializationFailed
+                }
+
+                /// Turn each component into a MerkleNode
+                let merkles = try json.map {
+                    rawJSON in
+                    return try merkleNodeFromJSON(rawJSON)
+                }
+                
+                completionHandler(merkles)
+                
+            } catch {
+                print("Error inside add completion handler: \(error)")
+            }
+        }
     }
     
     public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {

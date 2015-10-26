@@ -100,11 +100,13 @@ struct HttpIo : NetworkIo {
         let task = NSURLSession.sharedSession().dataTaskWithRequest(request) {
             (data: NSData?, response: NSURLResponse?, error: NSError?) -> Void in
             
-            if error != nil {
-                print("arse")//throw HttpIoError.TransmissionError("fail: \(error)")
-            } else {
-                completionHandler(data!)
+            guard error == nil && data != nil else {
+                print("Error in dataTaskWithRequest: \(error)")//throw HttpIoError.TransmissionError("fail: \(error)")
+                return
             }
+            
+            completionHandler(data!)
+            
         }
         
         task.resume()

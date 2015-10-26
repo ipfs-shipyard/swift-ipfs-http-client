@@ -140,49 +140,28 @@ class SwiftIPFSApiTests: XCTestCase {
         }
     }
 
-    func testMisc() {
-        let group = dispatch_group_create()
+    func testAdd() {
         
-        // Test ls
+        let group = dispatch_group_create()
+        // Test add
         dispatch_group_enter(group)
-
-        let filePaths = ["file:///Users/teo/tmp/rb2.patch"]//, "file:///Users/teo/tmp/notred.png","file:///Users/teo/tmp/woot"]
+        
         do {
-            try HttpIo.sendTo("http://127.0.0.1:5001/api/v0/add?stream-channels=true", content: filePaths) {
+
+            let api = try IPFSApi(host: "127.0.0.1", port: 5001)
+            let filePaths = ["file:///Users/teo/tmp/rb2.patch", "file:///Users/teo/tmp/notred.png","file:///Users/teo/tmp/woot"]
+        
+        
+            try api.add(filePaths) {
                 result in
-                do {
-
-                    /// Terrible bodge to deal with concatenated JSON
-                    var newRes: NSData = NSMutableData()
-                    if let dataString = NSString(data: result, encoding: NSUTF8StringEncoding) {
-                        
-                        var myStr = dataString as String
-                        myStr = myStr.stringByReplacingOccurrencesOfString("}", withString: "},", options: NSStringCompareOptions.LiteralSearch, range: nil)
-                        myStr = String(myStr.characters.dropLast())
-                        myStr = "[" + myStr + "]"
-//                        print(myStr)
-                        newRes = myStr.dataUsingEncoding(NSUTF8StringEncoding)!
-                    }
-
-                    guard let json = try NSJSONSerialization.JSONObjectWithData(newRes, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else {
-                        throw IPFSAPIError.JSONSerializationFailed
-                    }
-                    
-                    for obj in json {
-                        if let name = obj["Name"] {
-                            print("name",name)
-                        }
-                        if let hash = obj["Hash"] {
-                            print("hash",hash)
-                        }
-                    }
-                    
-                    
-                } catch {
-                    print("Error \(error)")
+                for mt in result {
+                    print("Name:",mt.name)
+                    print("Hash:",mt.hash!.string())
                 }
-                dispatch_group_leave(group)
             }
+            
+            dispatch_group_leave(group)
+            
         } catch  {
             XCTFail("testMisc error: \(error)")
         }
