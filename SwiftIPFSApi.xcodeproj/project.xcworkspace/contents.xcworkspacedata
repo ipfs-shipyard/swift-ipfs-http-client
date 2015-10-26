@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:SwiftIPFSApi.xcodeproj">
+      location = "self:/Users/teo/source/Apple/OSX/Libraries/SwiftIPFSApi/SwiftIpfsApi.xcodeproj">
    </FileRef>
 </Workspace>

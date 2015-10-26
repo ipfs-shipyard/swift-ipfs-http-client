@@ -1,10 +1,12 @@
 //
-//  HTTPIO.swift
-//  SwiftIPFSApi
+//  HttpIo.swift
+//  SwiftIpfsApi
 //
-//  Created by Teo on 21/10/15.
-//  Copyright © 2015 Teo Sartori. All rights reserved.
+//  Created by Matteo Sartori on 21/10/15.
 //
+//  Copyright © 2015 Matteo Sartori. All rights reserved.
+//
+//  Licensed under MIT See LICENCE file in the root of this project for details.
 
 import Foundation
 

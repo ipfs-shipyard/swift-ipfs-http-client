@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AB0A3AB11BD6705B0090C97A /* SwiftIPFSApi.h in Headers */ = {isa = PBXBuildFile; fileRef = AB0A3AB01BD6705B0090C97A /* SwiftIPFSApi.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		AB0A3AB81BD6705B0090C97A /* SwiftIPFSApi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3AAD1BD6705B0090C97A /* SwiftIPFSApi.framework */; };
-		AB0A3ABD1BD6705B0090C97A /* SwiftIPFSApiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0A3ABC1BD6705B0090C97A /* SwiftIPFSApiTests.swift */; };
+		AB0A3AB11BD6705B0090C97A /* SwiftIpfsApi.h in Headers */ = {isa = PBXBuildFile; fileRef = AB0A3AB01BD6705B0090C97A /* SwiftIpfsApi.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		AB0A3AB81BD6705B0090C97A /* SwiftIpfsApi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3AAD1BD6705B0090C97A /* SwiftIpfsApi.framework */; };
+		AB0A3ABD1BD6705B0090C97A /* SwiftIpfsApiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0A3ABC1BD6705B0090C97A /* SwiftIpfsApiTests.swift */; };
 		AB0A3AC81BD671320090C97A /* MerkleNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0A3AC71BD671320090C97A /* MerkleNode.swift */; };
 		AB0A3AD11BD673920090C97A /* Base32.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3ACA1BD673920090C97A /* Base32.framework */; };
 		AB0A3AD21BD673920090C97A /* SwiftBase58.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3ACB1BD673920090C97A /* SwiftBase58.framework */; };
@@ -18,7 +18,7 @@
 		AB0A3AD51BD673920090C97A /* SwiftMultiaddr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3ACE1BD673920090C97A /* SwiftMultiaddr.framework */; };
 		AB0A3AD61BD673920090C97A /* SwiftMultihash.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3ACF1BD673920090C97A /* SwiftMultihash.framework */; };
 		AB0A3AD71BD673920090C97A /* VarInt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3AD01BD673920090C97A /* VarInt.framework */; };
-		AB0A3ADA1BD67CE10090C97A /* IPFSApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0A3AD91BD67CE10090C97A /* IPFSApi.swift */; };
+		AB0A3ADA1BD67CE10090C97A /* IpfsApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0A3AD91BD67CE10090C97A /* IpfsApi.swift */; };
 		AB2C9ED21BD6906B00BCCF01 /* Multipart.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C9ED11BD6906B00BCCF01 /* Multipart.swift */; };
 		AB2C9ED61BD69AFF00BCCF01 /* Base32.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB0A3ACA1BD673920090C97A /* Base32.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AB2C9ED71BD69B0900BCCF01 /* SwiftBase58.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB0A3ACB1BD673920090C97A /* SwiftBase58.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -27,8 +27,8 @@
 		AB2C9EDA1BD69B7A00BCCF01 /* SwiftMultiaddr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB0A3ACE1BD673920090C97A /* SwiftMultiaddr.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AB2C9EDB1BD69B8300BCCF01 /* SwiftMultihash.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB0A3ACF1BD673920090C97A /* SwiftMultihash.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AB2C9EDC1BD69B8300BCCF01 /* VarInt.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AB0A3AD01BD673920090C97A /* VarInt.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		AB2C9EDE1BD79E9700BCCF01 /* NetworkIO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C9EDD1BD79E9700BCCF01 /* NetworkIO.swift */; };
-		AB2C9EE01BD79F9B00BCCF01 /* HTTPIO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C9EDF1BD79F9B00BCCF01 /* HTTPIO.swift */; };
+		AB2C9EDE1BD79E9700BCCF01 /* NetworkIo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C9EDD1BD79E9700BCCF01 /* NetworkIo.swift */; };
+		AB2C9EE01BD79F9B00BCCF01 /* HttpIo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C9EDF1BD79F9B00BCCF01 /* HttpIo.swift */; };
 		AB6389ED1BD7E62D006F9BDA /* SwiftMultiaddr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3ACE1BD673920090C97A /* SwiftMultiaddr.framework */; };
 /* End PBXBuildFile section */
 
@@ -62,11 +62,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		AB0A3AAD1BD6705B0090C97A /* SwiftIPFSApi.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftIPFSApi.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		AB0A3AB01BD6705B0090C97A /* SwiftIPFSApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftIPFSApi.h; sourceTree = "<group>"; };
+		AB0A3AAD1BD6705B0090C97A /* SwiftIpfsApi.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftIpfsApi.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB0A3AB01BD6705B0090C97A /* SwiftIpfsApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftIpfsApi.h; sourceTree = "<group>"; };
 		AB0A3AB21BD6705B0090C97A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		AB0A3AB71BD6705B0090C97A /* SwiftIPFSApiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftIPFSApiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		AB0A3ABC1BD6705B0090C97A /* SwiftIPFSApiTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftIPFSApiTests.swift; sourceTree = "<group>"; };
+		AB0A3AB71BD6705B0090C97A /* SwiftIpfsApiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftIpfsApiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB0A3ABC1BD6705B0090C97A /* SwiftIpfsApiTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftIpfsApiTests.swift; sourceTree = "<group>"; };
 		AB0A3ABE1BD6705B0090C97A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB0A3AC71BD671320090C97A /* MerkleNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MerkleNode.swift; sourceTree = "<group>"; };
 		AB0A3ACA1BD673920090C97A /* Base32.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Base32.framework; path = Carthage/Build/Mac/Base32.framework; sourceTree = "<group>"; };
@@ -76,10 +76,10 @@
 		AB0A3ACE1BD673920090C97A /* SwiftMultiaddr.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftMultiaddr.framework; path = Carthage/Build/Mac/SwiftMultiaddr.framework; sourceTree = "<group>"; };
 		AB0A3ACF1BD673920090C97A /* SwiftMultihash.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftMultihash.framework; path = Carthage/Build/Mac/SwiftMultihash.framework; sourceTree = "<group>"; };
 		AB0A3AD01BD673920090C97A /* VarInt.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VarInt.framework; path = Carthage/Build/Mac/VarInt.framework; sourceTree = "<group>"; };
-		AB0A3AD91BD67CE10090C97A /* IPFSApi.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IPFSApi.swift; sourceTree = "<group>"; };
+		AB0A3AD91BD67CE10090C97A /* IpfsApi.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IpfsApi.swift; sourceTree = "<group>"; };
 		AB2C9ED11BD6906B00BCCF01 /* Multipart.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Multipart.swift; sourceTree = "<group>"; };
-		AB2C9EDD1BD79E9700BCCF01 /* NetworkIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkIO.swift; sourceTree = "<group>"; };
-		AB2C9EDF1BD79F9B00BCCF01 /* HTTPIO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPIO.swift; sourceTree = "<group>"; };
+		AB2C9EDD1BD79E9700BCCF01 /* NetworkIo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkIo.swift; sourceTree = "<group>"; };
+		AB2C9EDF1BD79F9B00BCCF01 /* HttpIo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpIo.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,7 +102,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB6389ED1BD7E62D006F9BDA /* SwiftMultiaddr.framework in Frameworks */,
-				AB0A3AB81BD6705B0090C97A /* SwiftIPFSApi.framework in Frameworks */,
+				AB0A3AB81BD6705B0090C97A /* SwiftIpfsApi.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,8 +112,8 @@
 		AB0A3AA31BD6705B0090C97A = {
 			isa = PBXGroup;
 			children = (
-				AB0A3AAF1BD6705B0090C97A /* SwiftIPFSApi */,
-				AB0A3ABB1BD6705B0090C97A /* SwiftIPFSApiTests */,
+				AB0A3AAF1BD6705B0090C97A /* SwiftIpfsApi */,
+				AB0A3ABB1BD6705B0090C97A /* SwiftIpfsApiTests */,
 				AB0A3AD81BD673A30090C97A /* Frameworks */,
 				AB0A3AAE1BD6705B0090C97A /* Products */,
 			);
@@ -122,32 +122,34 @@
 		AB0A3AAE1BD6705B0090C97A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AB0A3AAD1BD6705B0090C97A /* SwiftIPFSApi.framework */,
-				AB0A3AB71BD6705B0090C97A /* SwiftIPFSApiTests.xctest */,
+				AB0A3AAD1BD6705B0090C97A /* SwiftIpfsApi.framework */,
+				AB0A3AB71BD6705B0090C97A /* SwiftIpfsApiTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		AB0A3AAF1BD6705B0090C97A /* SwiftIPFSApi */ = {
+		AB0A3AAF1BD6705B0090C97A /* SwiftIpfsApi */ = {
 			isa = PBXGroup;
 			children = (
-				AB2C9EDD1BD79E9700BCCF01 /* NetworkIO.swift */,
-				AB2C9EDF1BD79F9B00BCCF01 /* HTTPIO.swift */,
-				AB0A3AD91BD67CE10090C97A /* IPFSApi.swift */,
+				AB2C9EDD1BD79E9700BCCF01 /* NetworkIo.swift */,
+				AB2C9EDF1BD79F9B00BCCF01 /* HttpIo.swift */,
+				AB0A3AD91BD67CE10090C97A /* IpfsApi.swift */,
 				AB2C9ED11BD6906B00BCCF01 /* Multipart.swift */,
 				AB0A3AB21BD6705B0090C97A /* Info.plist */,
 				AB0A3AC71BD671320090C97A /* MerkleNode.swift */,
-				AB0A3AB01BD6705B0090C97A /* SwiftIPFSApi.h */,
+				AB0A3AB01BD6705B0090C97A /* SwiftIpfsApi.h */,
 			);
+			name = SwiftIpfsApi;
 			path = SwiftIPFSApi;
 			sourceTree = "<group>";
 		};
-		AB0A3ABB1BD6705B0090C97A /* SwiftIPFSApiTests */ = {
+		AB0A3ABB1BD6705B0090C97A /* SwiftIpfsApiTests */ = {
 			isa = PBXGroup;
 			children = (
-				AB0A3ABC1BD6705B0090C97A /* SwiftIPFSApiTests.swift */,
+				AB0A3ABC1BD6705B0090C97A /* SwiftIpfsApiTests.swift */,
 				AB0A3ABE1BD6705B0090C97A /* Info.plist */,
 			);
+			name = SwiftIpfsApiTests;
 			path = SwiftIPFSApiTests;
 			sourceTree = "<group>";
 		};
@@ -172,16 +174,16 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB0A3AB11BD6705B0090C97A /* SwiftIPFSApi.h in Headers */,
+				AB0A3AB11BD6705B0090C97A /* SwiftIpfsApi.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		AB0A3AAC1BD6705B0090C97A /* SwiftIPFSApi */ = {
+		AB0A3AAC1BD6705B0090C97A /* SwiftIpfsApi */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AB0A3AC11BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIPFSApi" */;
+			buildConfigurationList = AB0A3AC11BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIpfsApi" */;
 			buildPhases = (
 				AB0A3AA81BD6705B0090C97A /* Sources */,
 				AB0A3AA91BD6705B0090C97A /* Frameworks */,
@@ -192,14 +194,14 @@
 			);
 			dependencies = (
 			);
-			name = SwiftIPFSApi;
+			name = SwiftIpfsApi;
 			productName = SwiftIPFSApi;
-			productReference = AB0A3AAD1BD6705B0090C97A /* SwiftIPFSApi.framework */;
+			productReference = AB0A3AAD1BD6705B0090C97A /* SwiftIpfsApi.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		AB0A3AB61BD6705B0090C97A /* SwiftIPFSApiTests */ = {
+		AB0A3AB61BD6705B0090C97A /* SwiftIpfsApiTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AB0A3AC41BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIPFSApiTests" */;
+			buildConfigurationList = AB0A3AC41BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIpfsApiTests" */;
 			buildPhases = (
 				AB0A3AB31BD6705B0090C97A /* Sources */,
 				AB0A3AB41BD6705B0090C97A /* Frameworks */,
@@ -211,9 +213,9 @@
 			dependencies = (
 				AB0A3ABA1BD6705B0090C97A /* PBXTargetDependency */,
 			);
-			name = SwiftIPFSApiTests;
+			name = SwiftIpfsApiTests;
 			productName = SwiftIPFSApiTests;
-			productReference = AB0A3AB71BD6705B0090C97A /* SwiftIPFSApiTests.xctest */;
+			productReference = AB0A3AB71BD6705B0090C97A /* SwiftIpfsApiTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -234,7 +236,7 @@
 					};
 				};
 			};
-			buildConfigurationList = AB0A3AA71BD6705B0090C97A /* Build configuration list for PBXProject "SwiftIPFSApi" */;
+			buildConfigurationList = AB0A3AA71BD6705B0090C97A /* Build configuration list for PBXProject "SwiftIpfsApi" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -246,8 +248,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AB0A3AAC1BD6705B0090C97A /* SwiftIPFSApi */,
-				AB0A3AB61BD6705B0090C97A /* SwiftIPFSApiTests */,
+				AB0A3AAC1BD6705B0090C97A /* SwiftIpfsApi */,
+				AB0A3AB61BD6705B0090C97A /* SwiftIpfsApiTests */,
 			);
 		};
 /* End PBXProject section */
@@ -274,10 +276,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB2C9EDE1BD79E9700BCCF01 /* NetworkIO.swift in Sources */,
-				AB2C9EE01BD79F9B00BCCF01 /* HTTPIO.swift in Sources */,
+				AB2C9EDE1BD79E9700BCCF01 /* NetworkIo.swift in Sources */,
+				AB2C9EE01BD79F9B00BCCF01 /* HttpIo.swift in Sources */,
 				AB2C9ED21BD6906B00BCCF01 /* Multipart.swift in Sources */,
-				AB0A3ADA1BD67CE10090C97A /* IPFSApi.swift in Sources */,
+				AB0A3ADA1BD67CE10090C97A /* IpfsApi.swift in Sources */,
 				AB0A3AC81BD671320090C97A /* MerkleNode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -286,7 +288,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB0A3ABD1BD6705B0090C97A /* SwiftIPFSApiTests.swift in Sources */,
+				AB0A3ABD1BD6705B0090C97A /* SwiftIpfsApiTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,7 +297,7 @@
 /* Begin PBXTargetDependency section */
 		AB0A3ABA1BD6705B0090C97A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AB0A3AAC1BD6705B0090C97A /* SwiftIPFSApi */;
+			target = AB0A3AAC1BD6705B0090C97A /* SwiftIpfsApi */;
 			targetProxy = AB0A3AB91BD6705B0090C97A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -401,11 +403,11 @@
 					"$(PROJECT_DIR)/Carthage/Build/Mac",
 				);
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = SwiftIPFSApi/Info.plist;
+				INFOPLIST_FILE = SwiftIpfsApi/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIPFSApi";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIpfsApi";
+				PRODUCT_NAME = SwiftIpfsApi;
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -425,11 +427,11 @@
 					"$(PROJECT_DIR)/Carthage/Build/Mac",
 				);
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = SwiftIPFSApi/Info.plist;
+				INFOPLIST_FILE = SwiftIpfsApi/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIPFSApi";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIpfsApi";
+				PRODUCT_NAME = SwiftIpfsApi;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -442,10 +444,10 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/Mac",
 				);
-				INFOPLIST_FILE = SwiftIPFSApiTests/Info.plist;
+				INFOPLIST_FILE = SwiftIpfsApiTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIPFSApiTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIpfsApiTests";
+				PRODUCT_NAME = SwiftIpfsApiTests;
 			};
 			name = Debug;
 		};
@@ -457,17 +459,17 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/Mac",
 				);
-				INFOPLIST_FILE = SwiftIPFSApiTests/Info.plist;
+				INFOPLIST_FILE = SwiftIpfsApiTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIPFSApiTests";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "Terminal-Glow.SwiftIpfsApiTests";
+				PRODUCT_NAME = SwiftIpfsApiTests;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AB0A3AA71BD6705B0090C97A /* Build configuration list for PBXProject "SwiftIPFSApi" */ = {
+		AB0A3AA71BD6705B0090C97A /* Build configuration list for PBXProject "SwiftIpfsApi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AB0A3ABF1BD6705B0090C97A /* Debug */,
@@ -476,7 +478,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AB0A3AC11BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIPFSApi" */ = {
+		AB0A3AC11BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIpfsApi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AB0A3AC21BD6705B0090C97A /* Debug */,
@@ -485,7 +487,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AB0A3AC41BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIPFSApiTests" */ = {
+		AB0A3AC41BD6705B0090C97A /* Build configuration list for PBXNativeTarget "SwiftIpfsApiTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AB0A3AC51BD6705B0090C97A /* Debug */,
