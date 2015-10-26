@@ -11,7 +11,7 @@ import SwiftMultiaddr
 import SwiftMultihash
 
 public protocol IpfsApiClient {
-    var baseURL: String { get }
+    var baseUrl: String { get }
 }
 
 protocol ClientSubCommand {
@@ -22,7 +22,7 @@ extension IpfsApiClient {
     
     func fetchData(path: String, completionHandler: (NSData) -> Void) throws {
         
-        let fullURL = baseURL + path
+        let fullURL = baseUrl + path
         guard let url = NSURL(string: fullURL) else { throw IPFSAPIError.InvalidURL }
         
         let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
@@ -61,7 +61,7 @@ enum IPFSAPIError : ErrorType {
 
 public class IPFSApi : IpfsApiClient {
 
-    public var baseURL: String = ""
+    public var baseUrl: String = ""
     
     public let host: String
     public let port: Int
@@ -88,7 +88,7 @@ public class IPFSApi : IpfsApiClient {
         self.port = port
         self.version = version
         
-        baseURL = "http://\(host):\(port)/\(version)"
+        baseUrl = "http://\(host):\(port)\(version)"
         
         /** All of IPFSApi's properties need to be set before we can use self which
             is why we can't just init the sub commands with self */
@@ -107,7 +107,7 @@ public class IPFSApi : IpfsApiClient {
     
     public func add(filePaths: [String], completionHandler: ([MerkleNode]) -> Void) throws {
 
-        try HttpIo.sendTo("http://\(host):\(port)\(version)add?stream-channels=true", content: filePaths) {
+        try HttpIo.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
             result in
 
                 
