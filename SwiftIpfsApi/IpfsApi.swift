@@ -20,6 +20,24 @@ protocol ClientSubCommand {
 
 extension IpfsApiClient {
     
+    func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try fetchData(path) {
+            (data: NSData) in
+            do {
+                
+                /// Check for streamed JSON format and wrap & separate.
+                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
+                }
+                
+                completionHandler(json)
+            } catch  {
+                print("Error in fetchDictionary: \(error)")
+            }
+            
+        }
+        
+    }
+    
     func fetchData(path: String, completionHandler: (NSData) -> Void) throws {
         
         let fullUrl = baseUrl + path
@@ -141,32 +159,29 @@ public class IpfsApi : IpfsApiClient {
         }
     }
 
-    
     public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
+        
         let hashString = b58String(hash)
-        try fetchData("ls/"+hashString) {
-            (data: NSData) in
+        try fetchDictionary("ls/"+hashString) {
+            (jsonDictionary: Dictionary) in
+            
             do {
-                // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-                }
-                guard let objects = json["Objects"] as? [AnyObject] else {
+                guard let objects = jsonDictionary["Objects"] as? [AnyObject] else {
                     throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
                 }
                 
                 let merkles = try objects.map {
-                    rawJSON in
-                    return try merkleNodeFromJSON(rawJSON)
+                     try merkleNodeFromJSON($0)
                 }
-
-                completionHandler(merkles)
                 
+                completionHandler(merkles)
             } catch {
                 print("ls Error")
             }
         }
     }
     
+
     public func cat(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
         let hashString = b58String(hash)
         try fetchData("cat/"+hashString) {
@@ -220,24 +235,18 @@ public class IpfsApi : IpfsApiClient {
     
     public func resolve(scheme: String, hash: Multihash, recursive: Bool, completionHandler: ([String : AnyObject]) -> Void) throws {
         let hashString = b58String(hash)
-        try fetchData("resolve?arg=/\(scheme)/\(hashString)&r=\(recursive)") {
-            (data: NSData) in
+        try fetchDictionary("resolve?arg=/\(scheme)/\(hashString)&r=\(recursive)") {
+            (jsonDictionary: Dictionary) in
             
-            do {
-                //let fixedData = fixStreamJson(data)
-                // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-                }
-                
-                completionHandler(json)
-            } catch  {
-                print("Error \(error)")
-            }
+            completionHandler(jsonDictionary)
         }
     }
     
-    public func dns(domain: String) throws -> String {
-        return ""
+    public func dns(domain: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try fetchDictionary("dns?arg=" + domain) {
+            (jsonDict: Dictionary) in
+                completionHandler(jsonDict)
+        }
     }
     
     public func mount(ipfsRoot: NSFileHandle, ipnsRoot: NSFileHandle) throws -> [String : String] {

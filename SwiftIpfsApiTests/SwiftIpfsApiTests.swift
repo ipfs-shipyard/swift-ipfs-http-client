@@ -93,7 +93,7 @@ class SwiftIpfsApiTests: XCTestCase {
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.ls(multihash) {
                 result in
-                print("Bingo")
+                /// do comparison with truth here.
                 dispatch_group_leave(dispatchGroup)
             }
 
