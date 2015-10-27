@@ -20,38 +20,33 @@ protocol ClientSubCommand {
 
 extension IpfsApiClient {
     
-    func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+    func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
         try fetchData(path) {
             (data: NSData) in
-            do {
-                
-                /// Check for streamed JSON format and wrap & separate.
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-                }
-                
-                completionHandler(json)
-            } catch  {
-                print("Error in fetchDictionary: \(error)")
+            
+            /// Check for streamed JSON format and wrap & separate.
+            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
             }
             
+            try completionHandler(json)
         }
-        
     }
     
-    func fetchData(path: String, completionHandler: (NSData) -> Void) throws {
+    func fetchData(path: String, completionHandler: (NSData) throws -> Void) throws {
         
         let fullUrl = baseUrl + path
         guard let url = NSURL(string: fullUrl) else { throw IpfsApiError.InvalidUrl }
         
         let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
             (data: NSData?, response: NSURLResponse?, error: NSError?) in
+            
             do {
-                if error != nil { throw IpfsApiError.DataTaskError(error!) }
+                guard error == nil else { throw IpfsApiError.DataTaskError(error!) }
                 guard let data = data else { throw IpfsApiError.NilData }
                 
-                print("The data:",NSString(data: data, encoding: NSUTF8StringEncoding))
+                //print("The data:",NSString(data: data, encoding: NSUTF8StringEncoding))
                 
-                completionHandler(data)
+                try completionHandler(data)
             
             } catch {
                 print("Error ", error, "in completionHandler passed to fetchData ")
@@ -242,10 +237,12 @@ public class IpfsApi : IpfsApiClient {
         }
     }
     
-    public func dns(domain: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func dns(domain: String, completionHandler: (String) -> Void) throws {
         try fetchDictionary("dns?arg=" + domain) {
             (jsonDict: Dictionary) in
-                completionHandler(jsonDict)
+            
+                guard let path = jsonDict["Path"] as? String else { throw IpfsApiError.NilData }
+                completionHandler(path)
         }
     }
     
