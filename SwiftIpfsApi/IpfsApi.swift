@@ -141,10 +141,7 @@ public class IpfsApi : IpfsApiClient {
                 }
 
                 /// Turn each component into a MerkleNode
-                let merkles = try json.map {
-                    rawJSON in
-                    return try merkleNodeFromJSON(rawJSON)
-                }
+                let merkles = try json.map { return try merkleNodeFromJSON($0) }
                 
                 completionHandler(merkles)
                 
@@ -165,9 +162,7 @@ public class IpfsApi : IpfsApiClient {
                     throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
                 }
                 
-                let merkles = try objects.map {
-                     try merkleNodeFromJSON($0)
-                }
+                let merkles = try objects.map { try merkleNodeFromJSON($0) }
                 
                 completionHandler(merkles)
             } catch {
@@ -302,66 +297,51 @@ public class IPFSObject {
 public class Swarm : ClientSubCommand {
     
     var parent: IpfsApiClient?
-    
-    public func peers(completionHandler: ([Multiaddr]) -> Void) throws {
-        try parent!.fetchData("swarm/peers?stream-channels=true") {
-            (data: NSData) in
-            do {
-                // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : [String]] else { throw IpfsApiError.JsonSerializationFailed
-                }
-                
-                guard let stringsData = json["Strings"] else {
-                    throw IpfsApiError.SwarmError("Swarm.peers error: No Strings key in JSON data.")
-                }
-                
-                var addresses: [Multiaddr] = []
-                for entry in stringsData as [String] {
-                    addresses.append(try newMultiaddr(entry))
-                }
-                /// convert the data into a Multiaddr array and pass it to the handler
-                completionHandler(addresses)
-            } catch {
-                print("Swarm peers error serializing JSON",error)
-            }
-        }
-    }
-    
-    public func addrs(completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchData("swarm/addrs?stream-channels=true") {
-            (data: NSData) in
-            do {
-                // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-                }
-                guard let addrsData = json["Addrs"] else {
-                    throw IpfsApiError.SwarmError("Swarm.addrs error: No Addrs key in JSON data.")
-                }
-                completionHandler(addrsData as! [String : [String]])
-            } catch {
-                print("Swarm addrs error serializing JSON",error)
-            }
-        }
-    }
-    
-    public func connect(multiAddr: String, completionHandler: (String) -> Void) throws {
-        try parent!.fetchData("swarm/connect?arg="+multiAddr) {
-            (data: NSData) in
-            do {
-                // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-                }
-                /// Ensure we've only got one string as a result.
-                guard let result = json["Strings"] where result.count == 1 else {
-                    throw IpfsApiError.SwarmError("Swarm.connect error: No Strings key in JSON data.")
-                }
 
-                completionHandler(result[0] as! String)
-            } catch {
-                print("Swarm addrs error serializing JSON",error)
+    public func peers(completionHandler: ([Multiaddr]) -> Void) throws {
+        try parent!.fetchDictionary("swarm/peers?stream-channels=true") {
+            (jsonDictionary: Dictionary) in
+            
+            guard let swarmPeers = jsonDictionary["Strings"] as? [String] else {
+                throw IpfsApiError.SwarmError("Swarm.peers error: No Strings key in JSON data.")
             }
+
+            /// Make an array of Multiaddr from each peer in swarmPeers.
+            let addresses = try swarmPeers.map { try newMultiaddr($0) }
+            /// convert the data into a Multiaddr array and pass it to the handler
+            completionHandler(addresses)
         }
+    }
+
+    public func addrs(completionHandler: ([String : AnyObject]) -> Void) throws {
         
+        try parent!.fetchDictionary("swarm/addrs?stream-channels=true") {
+            (jsonDictionary: Dictionary) in
+            
+            guard let addrsData = jsonDictionary["Addrs"] as? [String : [String]] else {
+                throw IpfsApiError.SwarmError("Swarm.addrs error: No Addrs key in JSON data.")
+            }
+            completionHandler(addrsData)
+        }
+    }
+    public func connect(multiAddr: String, completionHandler: (String) -> Void) throws {
+        try parent!.fetchDictionary("swarm/connect?arg="+multiAddr) {
+            (jsonDictionary: Dictionary) in
+            
+            /// Ensure we've only got one string as a result.
+            guard let result = jsonDictionary["Strings"] as? [String] where result.count == 1 else {
+                throw IpfsApiError.SwarmError("Swarm.connect error: No Strings key in JSON data.")
+            }
+            /// Consider returning the dictionary instead...
+            completionHandler(result[0])
+        }
+    }
+    
+    public func disconnect(multiaddr: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("swarm/disconnect?arg=" + multiaddr) {
+            (jsonDictionary: Dictionary) in
+            completionHandler(jsonDictionary)
+        }
     }
 }
 
