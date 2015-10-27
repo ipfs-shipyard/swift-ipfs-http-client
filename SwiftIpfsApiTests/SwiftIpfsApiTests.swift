@@ -117,6 +117,39 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(catTest)
     }
 
+    func testdns() {
+        let dns = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api       = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
+            let domain    = "ipfs.io"
+            try api.dns(domain) {
+                domainString in
+                
+                print("Domain: ",domainString)
+                if domainString != "/ipfs/QmcQBvKTP8R7p8DgLEtKuoeuz1BBbotGpmofEFBEYBfc97" {
+                    XCTFail("domain string mismatch.")
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(dns)
+    }
+    
+    func testMount() {
+        let mount = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
+            
+            try api.mount() {
+                result in
+                print("Mount got", result)
+                dispatch_group_leave(dispatchGroup)
+            }
+            
+        }
+        
+        tester(mount)
+    }
+    
     func testResolveIpfs() {
         let resolve = { (dispatchGroup: dispatch_group_t) throws -> Void in
             

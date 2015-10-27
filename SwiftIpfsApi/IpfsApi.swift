@@ -246,8 +246,24 @@ public class IpfsApi : IpfsApiClient {
         }
     }
     
-    public func mount(ipfsRoot: NSFileHandle, ipnsRoot: NSFileHandle) throws -> [String : String] {
-        return [:]
+    public func mount(ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        let fileManager = NSFileManager.defaultManager()
+        
+        /// Create the directories if they do not already exist.
+        if fileManager.fileExistsAtPath(ipfsRootPath) == false {
+            try fileManager.createDirectoryAtPath(ipfsRootPath, withIntermediateDirectories: false, attributes: nil)
+        }
+        if fileManager.fileExistsAtPath(ipnsRootPath) == false {
+            try fileManager.createDirectoryAtPath(ipnsRootPath, withIntermediateDirectories: false, attributes: nil)
+        }
+        
+        /// 
+        try fetchDictionary("mount?arg=" + ipfsRootPath + "&arg=" + ipnsRootPath) {
+            (jsonDictionary: Dictionary) in
+            
+            completionHandler(jsonDictionary)
+        }
     }
 }
 
