@@ -10,6 +10,13 @@ import Foundation
 import SwiftMultiaddr
 import SwiftMultihash
 
+/// This is to enable a Multihash to be used as a Dictionary key.
+extension Multihash : Hashable {
+    public var hashValue: Int {
+        return String(value).hash
+    }
+}
+
 public protocol IpfsApiClient {
     var baseUrl: String { get }
 }
@@ -23,9 +30,9 @@ extension IpfsApiClient {
     func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
         try fetchData(path) {
             (data: NSData) in
-            
+            print(data)
             /// Check for streamed JSON format and wrap & separate.
-            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.MutableContainers) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
+            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
             }
             
             try completionHandler(json)
@@ -57,11 +64,11 @@ extension IpfsApiClient {
     }
 }
 
-public enum PinType {
-    case all
-    case direct
-    case indirect
-    case recursive
+public enum PinType: String {
+    case All       = "all"
+    case Direct    = "direct"
+    case Indirect  = "indirect"
+    case Recursive = "recursive"
 }
 
 enum IpfsApiError : ErrorType {
@@ -70,7 +77,10 @@ enum IpfsApiError : ErrorType {
     case NilData
     case DataTaskError(NSError)
     case JsonSerializationFailed
+ 
     case SwarmError(String)
+    case RefsError(String)
+    case PinError(String)
 }
 
 public class IpfsApi : IpfsApiClient {
@@ -82,8 +92,9 @@ public class IpfsApi : IpfsApiClient {
     public let version: String
     
     /// Second Tier commands
-    public let repo = Repo()
-    public let pin = Pin()
+    public let refs  = Refs()
+    public let repo  = Repo()
+    public let pin   = Pin()
     public let swarm = Swarm()
 
 
@@ -113,8 +124,9 @@ public class IpfsApi : IpfsApiClient {
         
         /** All of IPFSApi's properties need to be set before we can use self which
             is why we can't just init the sub commands with self */
-        repo.parent = self
-        pin.parent = self
+        refs.parent  = self
+        repo.parent  = self
+        pin.parent   = self
         swarm.parent = self
         
     }
@@ -265,20 +277,99 @@ public class IpfsApi : IpfsApiClient {
 
 /// Move these to own file
 
+
+public class Refs : ClientSubCommand {
+    
+    var parent: IpfsApiClient?
+    
+    public func local(completionHandler: ([Multihash]) -> Void) throws {
+        try parent!.fetchData("refs/local") {
+            (data: NSData) in
+
+            /// First we turn the data into a string
+            guard let dataString = NSString(data: data, encoding: NSUTF8StringEncoding) as? String else {
+                throw IpfsApiError.RefsError("Could not convert data into string.")
+            }
+            
+            /** The resulting string is a bunch of newline separated strings so:
+                1) Split the string up by the separator into a subsequence,
+                2) Map each resulting subsequence into a string,
+                3) Map each string into a Multihash with fromB58String. */
+            let multiaddrs = try dataString.characters.split{$0 == "\n"}.map(String.init).map{ try fromB58String($0) }
+
+            completionHandler(multiaddrs)
+        }
+    }
+}
+
+/** Pinning an object will ensure a local copy is not garbage collected. */
 public class Pin : ClientSubCommand {
     
     var parent: IpfsApiClient?
 
-    public func add() {
+    public func add(hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
         
+        let hashString = b58String(hash)
+        try parent!.fetchDictionary("pin/add?stream-channels=true&arg=" + hashString) {
+            (jsonDictionary: Dictionary) in
+            
+            guard let objects = jsonDictionary["Pinned"] as? [AnyObject] else {
+                throw IpfsApiError.PinError("Pin.add error: No Pinned objects in JSON data.")
+            }
+            
+            let multihashes = try objects.map { try fromB58String($0 as! String) }
+
+            completionHandler(multihashes)
+        }
     }
     
-    public func ls() {
+    public func ls(completionHandler: ([Multihash : AnyObject]) -> Void) throws {
         
+        /// The default is .Recursive
+        try self.ls(.Recursive) {
+            (result: [String : AnyObject]) throws -> Void in
+            
+            ///turn the result into a [Multihash : AnyObject]
+            var multihashes: [Multihash : AnyObject] = [:]
+            for (k,v) in result {
+                multihashes[try fromB58String(k)] = v
+            }
+            
+            completionHandler(multihashes)
+        }
+    }
+    
+    public func ls(pinType: PinType, completionHandler: ([String : AnyObject]) throws -> Void) throws {
+        
+        try parent!.fetchDictionary("pin/ls?stream-channels=true&t=" + pinType.rawValue) {
+            (jsonDictionary: Dictionary) in
+            
+            guard let objects = jsonDictionary["Keys"] as? [String : AnyObject] else {
+                throw IpfsApiError.PinError("Pin.ls error: No Keys Dictionary in JSON data.")
+            }
+            
+            try completionHandler(objects)
+        }
     }
 
-    public func rm() {
+    public func rm(hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
+        try self.rm(hash, recursive: true, completionHandler: completionHandler)
+    }
+    
+    public func rm(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
         
+        let hashString = b58String(hash)
+        try parent!.fetchDictionary("pin/rm?stream-channels=true&r=\(recursive)&arg=\(hashString)") {
+            (jsonDictionary: Dictionary) in
+            
+            guard let objects = jsonDictionary["Pinned"] as? [AnyObject] else {
+                throw IpfsApiError.PinError("Pin.rm error: No Pinned objects in JSON data.")
+            }
+            
+            let multihashes = try objects.map { try fromB58String($0 as! String) }
+            
+            completionHandler(multihashes)
+        }
     }
 
 }
@@ -358,10 +449,6 @@ public struct Diag {
 }
 
 public struct Config {
-    
-}
-
-public struct Refs {
     
 }
 
