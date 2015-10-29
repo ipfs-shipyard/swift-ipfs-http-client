@@ -122,7 +122,11 @@ class SwiftIpfsApiTests: XCTestCase {
             
             
             try api.repo.gc() {
-                (removed: [String : AnyObject]) in
+                (removed: [[String : AnyObject]]) in
+                
+                for ref in removed {
+                    print("removed: ",ref["Key"]!)
+                }
                 
                 dispatch_group_leave(dispatchGroup)
             }
@@ -210,7 +214,7 @@ class SwiftIpfsApiTests: XCTestCase {
             
             try api.cat(multihash) {
                 result in
-                print(result)
+                print("cat:",String(bytes: result, encoding: NSUTF8StringEncoding)!)
                 dispatch_group_leave(dispatchGroup)
             }
         }

@@ -37,13 +37,10 @@ extension IpfsApiClient {
                 return
             }
             
-            /// Check for streamed JSON format and wrap & separate.
-            let outData = fixStreamJson(data)
-            
-            guard let json = try NSJSONSerialization.JSONObjectWithData(outData, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
+            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
             }
             
-            try completionHandler(json[0])
+            try completionHandler(json)
         }
     }
     
@@ -69,6 +66,22 @@ extension IpfsApiClient {
         }
         
         task.resume()
+    }
+    
+    func fetchBytes(path: String, completionHandler: ([UInt8]) throws -> Void) throws {
+        try fetchData(path) {
+            (data: NSData) in
+            
+            /// Convert the data to a byte array
+            let count = data.length / sizeof(UInt8)
+            // create an array of Uint8
+            var bytes = [UInt8](count: count, repeatedValue: 0)
+            
+            // copy bytes into array
+            data.getBytes(&bytes, length:count * sizeof(UInt8))
+            
+            try completionHandler(bytes)
+        }
     }
 }
 
@@ -194,20 +207,7 @@ public class IpfsApi : IpfsApiClient {
 
     public func cat(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
         let hashString = b58String(hash)
-        try fetchData("cat/"+hashString) {
-            (data: NSData) in
-            
-            /// Convert the data to a byte array
-            let count = data.length / sizeof(UInt8)
-            // create an array of Uint8
-            var bytes = [UInt8](count: count, repeatedValue: 0)
-
-            // copy bytes into array
-            data.getBytes(&bytes, length:count * sizeof(UInt8))
-            
-            completionHandler(bytes)
-        }
-        return
+        try fetchBytes("cat/"+hashString, completionHandler: completionHandler)
     }
     
     public func get(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
@@ -392,12 +392,28 @@ public class Repo : ClientSubCommand {
     
     /** gc is a plumbing command that will sweep the local set of stored objects 
      and remove ones that are not pinned in order to reclaim hard disk space. */
-    public func gc(completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchDictionary("repo/gc") {
-            (jsonDictionary: Dictionary) in
+    public func gc(completionHandler: ([[String : AnyObject]]) -> Void) throws {
+        try parent!.fetchData("repo/gc") {
+            (rawJson: NSData) in
             
-            completionHandler(jsonDictionary)
+            /// Check for streamed JSON format and wrap & separate.
+            let data = fixStreamJson(rawJson)
+            
+            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
+            }
+
+            completionHandler(json)
         }
+    }
+}
+
+public class Block {
+
+    var parent: IpfsApiClient?
+    
+    public func get(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
+        let hashString = b58String(hash)
+        try parent!.fetchBytes("block/get?stream-channels=true&arg=" + hashString, completionHandler: completionHandler)
     }
 }
 
@@ -409,6 +425,10 @@ public class Swarm : ClientSubCommand {
     
     var parent: IpfsApiClient?
 
+    /** peers lists the set of peers this node is connected to. 
+        The completionHandler is passed an array of Multiaddr that represent 
+        the peers.
+     */
     public func peers(completionHandler: ([Multiaddr]) -> Void) throws {
         try parent!.fetchDictionary("swarm/peers?stream-channels=true") {
             (jsonDictionary: Dictionary) in
@@ -460,9 +480,7 @@ public struct Bootstrap {
     
 }
 
-public struct Block {
-    
-}
+
 
 public struct Diag {
     
@@ -500,7 +518,7 @@ func fixStreamJson(rawJson: NSData) -> NSData {
     var brackets         = 0
     var bytesRead        = 0
     let output           = NSMutableData()
-    
+    var newStart = bytes
     /// Start the output off with a JSON opening array bracket [.
     var tmpChar: [UInt8] = [91]
     output.appendBytes(tmpChar, length: 1)
@@ -521,8 +539,11 @@ func fixStreamJson(rawJson: NSData) -> NSData {
                 tmpChar = [44]
                 output.appendBytes(tmpChar, length: 1)
             }
-            output.appendData(NSData(bytes: bytes, length: bytesRead))
+            
+            output.appendData(NSData(bytes: newStart, length: bytesRead))
+            newStart += bytesRead
             bytesRead = 0
+            
         }
         
     }
