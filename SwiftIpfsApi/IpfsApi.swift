@@ -30,12 +30,20 @@ extension IpfsApiClient {
     func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
         try fetchData(path) {
             (data: NSData) in
-            print(data)
-            /// Check for streamed JSON format and wrap & separate.
-            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
+
+            /// If there was no data fetched pass an empty dictionary and return.
+            if data.length == 0 {
+                try completionHandler([:])
+                return
             }
             
-            try completionHandler(json)
+            /// Check for streamed JSON format and wrap & separate.
+            let outData = fixStreamJson(data)
+            
+            guard let json = try NSJSONSerialization.JSONObjectWithData(outData, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
+            }
+            
+            try completionHandler(json[0])
         }
     }
     
@@ -132,7 +140,7 @@ public class IpfsApi : IpfsApiClient {
     }
     
     
-    /// Tier 1 commands
+    /// base commands
     
     public func add(filePath: String, completionHandler: ([MerkleNode]) -> Void) throws {
         try self.add([filePath], completionHandler: completionHandler)
@@ -205,7 +213,8 @@ public class IpfsApi : IpfsApiClient {
     public func get(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
         try self.cat(hash, completionHandler: completionHandler)
     }
-    
+
+
     public func refs(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
         
         let hashString = b58String(hash)
@@ -378,7 +387,18 @@ public class Pin : ClientSubCommand {
 
 
 public class Repo : ClientSubCommand {
+    
     var parent: IpfsApiClient?
+    
+    /** gc is a plumbing command that will sweep the local set of stored objects 
+     and remove ones that are not pinned in order to reclaim hard disk space. */
+    public func gc(completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("repo/gc") {
+            (jsonDictionary: Dictionary) in
+            
+            completionHandler(jsonDictionary)
+        }
+    }
 }
 
 public class IPFSObject {
@@ -472,10 +492,51 @@ public struct Name {
     
 }
 
+/** Deal with concatenated JSON (since JSONSerialization doesn't) by wrapping it
+    in array brackets and comma separating the various root components. */
+func fixStreamJson(rawJson: NSData) -> NSData {
+    /// get the bytes
+    let bytes            = UnsafePointer<UInt8>(rawJson.bytes)
+    var brackets         = 0
+    var bytesRead        = 0
+    let output           = NSMutableData()
+    
+    /// Start the output off with a JSON opening array bracket [.
+    var tmpChar: [UInt8] = [91]
+    output.appendBytes(tmpChar, length: 1)
+    
+    for var i=0; i < rawJson.length ; i++ {
+        switch bytes[i] {
+            case 123: brackets++
+            case 125: brackets--
+            default: break
+        }
+        //print(bytes[i])
+        
+        if brackets > 0 { bytesRead++ }
+        if brackets == 0 && bytesRead++ != 0 {
+            
+            /// Separate sections with a comma unless it's the first one.
+            if output.length > 1 {
+                tmpChar = [44]
+                output.appendBytes(tmpChar, length: 1)
+            }
+            output.appendData(NSData(bytes: bytes, length: bytesRead))
+            bytesRead = 0
+        }
+        
+    }
+    
+    /// End the output with a JSON closing array bracket ].
+    tmpChar = [93]
+    output.appendBytes(tmpChar, length: 1)
+
+    return output
+}
 /** Deal with concatenated JSON (since JSONSerialization doesn't) by turning
  it into a string wrapping it in array brackets and comma separating the
  various root components. */
-func fixStreamJson(rawJson: NSData) -> NSData {
+func deprecatedfixStreamJson(rawJson: NSData) -> NSData {
     
     var newRes: NSData = NSMutableData()
     

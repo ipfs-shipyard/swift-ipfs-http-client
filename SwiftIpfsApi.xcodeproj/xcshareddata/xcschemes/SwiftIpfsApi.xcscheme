@@ -37,6 +37,11 @@
                BlueprintName = "SwiftIpfsApiTests"
                ReferencedContainer = "container:SwiftIpfsApi.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "SwiftIpfsApiTests/testMount()">
+               </Test>
+            </SkippedTests>
          </TestableReference>
       </Testables>
       <MacroExpansion>

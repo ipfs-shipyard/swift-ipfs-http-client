@@ -106,6 +106,31 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(pinRm)
     }
     
+    func testRepo() {
+        let repoGc = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            
+            /// First we do an ls of something we know isn't pinned locally so that
+            /// the gc has something to collect.
+            let tmpGroup = dispatch_group_create()
+            
+            dispatch_group_enter(tmpGroup)
+
+            let multihash = try fromB58String("QmTtqKeVpgQ73KbeoaaomvLoYMP7XKemhTgPNjasWjfh9b")
+            try api.ls(multihash){ _ in dispatch_group_leave(tmpGroup) }
+            dispatch_group_wait(tmpGroup, DISPATCH_TIME_FOREVER)
+            
+            
+            try api.repo.gc() {
+                (removed: [String : AnyObject]) in
+                
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(repoGc)
+    }
+    
     func testSwarmPeers() {
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
@@ -135,7 +160,7 @@ class SwiftIpfsApiTests: XCTestCase {
 
                 for (hash, addrList)  in addrs {
                     print("Hash:",hash)
-                    print("     ",addrList)
+//                    print("     ",addrList)
                 }
                 
                 dispatch_group_leave(dispatchGroup)
