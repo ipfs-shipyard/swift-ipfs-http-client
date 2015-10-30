@@ -198,6 +198,51 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(blockStat)
     }
     
+    func testObject() {
+        
+        let objectNew = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.object.new() {
+                (result: MerkleNode) in
+                print(b58String(result.hash!))
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+//        tester(objectNew)
+        
+        
+        let objectPut = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            
+//            try api.object.put() {
+//                (result: MerkleNode) in
+//                
+//                print(b58String(result.hash!))
+//                //XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+//                dispatch_group_leave(dispatchGroup)
+//            }
+        }
+        
+//        tester(objectPut)
+        
+        let objectGet = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let multihash = try fromB58String("QmR3azp3CCGEFGZxcbZW7sbqRFuotSptcpMuN6nwThJ8x2")
+            
+            try api.object.get(multihash) {
+                (result: MerkleNode) in
+                
+                print(b58String(result.hash!))
+                //XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+                dispatch_group_leave(dispatchGroup)
+
+            }
+        }
+        
+        tester(objectGet)
+    }
     
     func testSwarmPeers() {
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in

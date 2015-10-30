@@ -113,11 +113,12 @@ public class IpfsApi : IpfsApiClient {
     public let version: String
     
     /// Second Tier commands
-    public let refs  = Refs()
-    public let repo  = Repo()
-    public let block = Block()
-    public let pin   = Pin()
-    public let swarm = Swarm()
+    public let refs       = Refs()
+    public let repo       = Repo()
+    public let block      = Block()
+    public let object     = IpfsObject()
+    public let pin        = Pin()
+    public let swarm      = Swarm()
 
 
     public convenience init(addr: Multiaddr) throws {
@@ -147,12 +148,12 @@ public class IpfsApi : IpfsApiClient {
         /** All of IPFSApi's properties need to be set before we can use self which
             is why we can't just init the sub commands with self (unless we make 
             them var which makes them changeable by the user). */
-        refs.parent  = self
-        repo.parent  = self
-        block.parent = self
-        pin.parent   = self
-        swarm.parent = self
-        
+        refs.parent       = self
+        repo.parent       = self
+        block.parent      = self
+        pin.parent        = self
+        swarm.parent      = self
+        object.parent     = self
     }
     
     
@@ -433,7 +434,7 @@ public class Block {
                         
                 completionHandler(try merkleNodeFromJson(json))
             } catch {
-                print(error)
+                print("Block Error:\(error)")
             }
         }
     }
@@ -444,8 +445,61 @@ public class Block {
     }
 }
 
-public class IPFSObject {
+public class IpfsObject {
     
+    var parent: IpfsApiClient?
+    
+    public enum ObjectTemplates: String {
+        case UnixFsDir = "unixfs-dir"
+    }
+    
+    /**
+     IpfsObject new is a plumbing command for creating new DAG nodes.
+     By default it creates and returns a new empty merkledag node, but
+     you may pass an optional template argument to create a preformatted
+     node.
+     
+     Available templates:
+    	* unixfs-dir
+    */
+    public func new(template: ObjectTemplates? = nil, completionHandler: (MerkleNode) -> Void) throws {
+        var request = "object/new?stream-channels=true"
+        if template != nil { request += "&arg=\(template!.rawValue)" }
+        try parent!.fetchDictionary(request) {
+            (result: [String : AnyObject]) in
+                
+            completionHandler( try merkleNodeFromJson(result as AnyObject) )
+        }
+    }
+    
+    public func put(data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
+        let data2 = NSData(bytes: data, length: data.count)
+        
+        try HttpIo.sendTo(parent!.baseUrl+"object/put?stream-channels=true", content: data2) {
+            result in
+            
+            do {
+                print(result)
+                guard let json = try NSJSONSerialization.JSONObjectWithData(result, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else {
+                    throw IpfsApiError.JsonSerializationFailed
+                }
+                
+                completionHandler(try merkleNodeFromJson(json))
+            } catch {
+                print("IpfsObject Error:\(error)")
+            }
+        }
+    }
+    
+    public func get(hash: Multihash, completionHandler: (MerkleNode) -> Void) throws {
+     
+        try parent!.fetchDictionary("object/get?stream-channels=true&arg=" + b58String(hash)){
+            (var result: Dictionary) in
+            result["Hash"] = b58String(hash) as AnyObject
+            completionHandler(try merkleNodeFromJson(result as AnyObject))
+        }
+    }
+
 }
 
 public class Swarm : ClientSubCommand {
