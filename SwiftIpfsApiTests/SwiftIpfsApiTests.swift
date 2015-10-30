@@ -135,6 +135,31 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(repoGc)
     }
     
+    func testBlock() {
+        
+//        let blockGet = {}
+//        tester(blockGet)
+        
+        let blockPut = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let rawData: [UInt8] = Array("hej verden".utf8)
+            try api.block.put(rawData) {
+                (result: MerkleNode) in
+                
+                XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+                print("ipfs.block.put test:")
+//                for mt in result {
+                    print("Name:", result.name)
+                    print("Hash:", b58String(result.hash!))
+//                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(blockPut)
+    }
+    
+    
     func testSwarmPeers() {
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
@@ -162,10 +187,10 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.swarm.addrs(){
                 addrs in
 
-                for (hash, addrList)  in addrs {
-                    print("Hash:",hash)
+//                for (hash, addrList)  in addrs {
+//                    print("Hash:",hash)
 //                    print("     ",addrList)
-                }
+//                }
                 
                 dispatch_group_leave(dispatchGroup)
             }

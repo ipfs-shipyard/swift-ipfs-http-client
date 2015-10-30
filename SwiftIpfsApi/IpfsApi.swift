@@ -115,6 +115,7 @@ public class IpfsApi : IpfsApiClient {
     /// Second Tier commands
     public let refs  = Refs()
     public let repo  = Repo()
+    public let block = Block()
     public let pin   = Pin()
     public let swarm = Swarm()
 
@@ -144,9 +145,11 @@ public class IpfsApi : IpfsApiClient {
         baseUrl = "http://\(host):\(port)\(version)"
         
         /** All of IPFSApi's properties need to be set before we can use self which
-            is why we can't just init the sub commands with self */
+            is why we can't just init the sub commands with self (unless we make 
+            them var which makes them changeable by the user). */
         refs.parent  = self
         repo.parent  = self
+        block.parent = self
         pin.parent   = self
         swarm.parent = self
         
@@ -174,7 +177,7 @@ public class IpfsApi : IpfsApiClient {
                 }
 
                 /// Turn each component into a MerkleNode
-                let merkles = try json.map { return try merkleNodeFromJSON($0) }
+                let merkles = try json.map { return try merkleNodeFromJson($0) }
                 
                 completionHandler(merkles)
                 
@@ -195,7 +198,7 @@ public class IpfsApi : IpfsApiClient {
                     throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
                 }
                 
-                let merkles = try objects.map { try merkleNodeFromJSON($0) }
+                let merkles = try objects.map { try merkleNodeFromJson($0) }
                 
                 completionHandler(merkles)
             } catch {
@@ -415,6 +418,25 @@ public class Block {
         let hashString = b58String(hash)
         try parent!.fetchBytes("block/get?stream-channels=true&arg=" + hashString, completionHandler: completionHandler)
     }
+    
+    public func put(data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
+        let data2 = NSData(bytes: data, length: data.count)
+        
+            try HttpIo.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
+                result in
+                
+                do {
+                    print(result)
+                    guard let json = try NSJSONSerialization.JSONObjectWithData(result, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else {
+                        throw IpfsApiError.JsonSerializationFailed
+                    }
+                            
+                    completionHandler(try merkleNodeFromJson(json))
+                } catch {
+                    print(error)
+                }
+            }
+    }
 }
 
 public class IPFSObject {
@@ -512,7 +534,7 @@ public struct Name {
 
 /** Deal with concatenated JSON (since JSONSerialization doesn't) by wrapping it
     in array brackets and comma separating the various root components. */
-func fixStreamJson(rawJson: NSData) -> NSData {
+public func fixStreamJson(rawJson: NSData) -> NSData {
     /// get the bytes
     let bytes            = UnsafePointer<UInt8>(rawJson.bytes)
     var brackets         = 0
