@@ -42,9 +42,9 @@ public class MerkleNode {
     }
 }
 
-public func merkleNodeFromJSON(rawJSON: AnyObject) throws -> MerkleNode {
+public func merkleNodeFromJson(rawJson: AnyObject) throws -> MerkleNode {
     /// turn it into a dictionary
-    let objs     = rawJSON as! [String : AnyObject]
+    let objs     = rawJson as! [String : AnyObject]
     
     let hash     = objs["Hash"] == nil ? objs["Key"] as! String : objs["Hash"] as! String
     let name     = objs["Name"] as? String
@@ -55,7 +55,7 @@ public func merkleNodeFromJSON(rawJSON: AnyObject) throws -> MerkleNode {
     if let rawLinks = objs["Links"] as? [AnyObject] {
         links    = try rawLinks.map {
             (rawJSON) -> MerkleNode in
-            return try merkleNodeFromJSON(rawJSON)
+            return try merkleNodeFromJson(rawJson)
             }
     }
 
