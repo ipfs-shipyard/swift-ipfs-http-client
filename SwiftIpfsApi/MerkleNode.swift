@@ -53,13 +53,14 @@ public func merkleNodeFromJson(rawJson: AnyObject) throws -> MerkleNode {
     
     var links: [MerkleNode]?
     if let rawLinks = objs["Links"] as? [AnyObject] {
-        links    = try rawLinks.map {
-            (rawJSON) -> MerkleNode in
-            return try merkleNodeFromJson(rawJson)
-            }
+        links    = try rawLinks.map { try merkleNodeFromJson($0) }
     }
 
-    let data     = objs["Data"] as? [UInt8]
+    /// Should this be UInt8? The command line output looks like UInt16
+    var data: [UInt8]?
+    if let strDat = objs["Data"] as? String {
+        data = [UInt8](strDat.utf8)
+    }
 
     return try MerkleNode(hash: hash, name: name, size: size, type: type, links: links, data: data)
 }
