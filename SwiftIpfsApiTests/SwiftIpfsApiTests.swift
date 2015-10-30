@@ -138,8 +138,10 @@ class SwiftIpfsApiTests: XCTestCase {
     func testBlock() {
         
         let blockPut = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             let rawData: [UInt8] = Array("hej verden".utf8)
+            
             try api.block.put(rawData) {
                 (result: MerkleNode) in
                 
@@ -156,9 +158,11 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(blockPut)
         
         
-        let blockGet = {(dispatchGroup: dispatch_group_t) throws -> Void in
+        let blockGet = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             let multihash = try fromB58String("QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+            
             try api.block.get(multihash) {
                 (result: [UInt8]) in
                     let res = String(bytes: result, encoding: NSUTF8StringEncoding)
@@ -169,6 +173,29 @@ class SwiftIpfsApiTests: XCTestCase {
         }
         
         tester(blockGet)
+        
+        
+        let blockStat = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let multihash = try fromB58String("QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+            
+            try api.block.stat(multihash) {
+                (result: Dictionary) in
+                
+                let hash = result["Key"] as? String
+                let size = result["Size"] as? Int
+
+                if hash == nil || size == nil
+                    || hash != "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw"
+                    || size != 10 {
+                    XCTFail()
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(blockStat)
     }
     
     

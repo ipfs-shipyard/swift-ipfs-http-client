@@ -422,20 +422,25 @@ public class Block {
     public func put(data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
         let data2 = NSData(bytes: data, length: data.count)
         
-            try HttpIo.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
-                result in
-                
-                do {
-                    print(result)
-                    guard let json = try NSJSONSerialization.JSONObjectWithData(result, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else {
-                        throw IpfsApiError.JsonSerializationFailed
-                    }
-                            
-                    completionHandler(try merkleNodeFromJson(json))
-                } catch {
-                    print(error)
+        try HttpIo.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
+            result in
+            
+            do {
+                print(result)
+                guard let json = try NSJSONSerialization.JSONObjectWithData(result, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else {
+                    throw IpfsApiError.JsonSerializationFailed
                 }
+                        
+                completionHandler(try merkleNodeFromJson(json))
+            } catch {
+                print(error)
             }
+        }
+    }
+    
+    public func stat(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        try parent!.fetchDictionary("block/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
 }
 
