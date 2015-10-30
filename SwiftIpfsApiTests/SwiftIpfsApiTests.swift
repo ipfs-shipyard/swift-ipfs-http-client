@@ -137,9 +137,6 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testBlock() {
         
-//        let blockGet = {}
-//        tester(blockGet)
-        
         let blockPut = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             let rawData: [UInt8] = Array("hej verden".utf8)
@@ -157,6 +154,21 @@ class SwiftIpfsApiTests: XCTestCase {
         }
         
         tester(blockPut)
+        
+        
+        let blockGet = {(dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let multihash = try fromB58String("QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+            try api.block.get(multihash) {
+                (result: [UInt8]) in
+                    let res = String(bytes: result, encoding: NSUTF8StringEncoding)
+                    XCTAssert(res == "hej verden")
+                    print(res)
+                    dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(blockGet)
     }
     
     
