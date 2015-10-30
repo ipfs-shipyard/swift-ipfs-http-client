@@ -22,98 +22,35 @@ struct HttpIo : NetworkIo {
     }
     
     static func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws {
-        
+        var multipart = try Multipart(targetUrl: target, charset: "UTF8")
+        multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
+        Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
-    
+
+
     static func sendTo(target: String, content: [String], completionHandler: (NSData) -> Void) throws {
 
-        guard let targetUrl = NSURL(string: target) else {
-            throw HttpIoError.URLError("Cannot make URL from "+target)
-        }
-
-        let lineFeed = "\r\n"
-        /// First set up the target connection
-        let request     = NSMutableURLRequest(URL: targetUrl)
-        
-        /// Check if we need to do a multipart post.
-//        if content.count > 1 {
-        
-            let boundary    = Multipart.createBoundary()
-            let contentType = "multipart/form-data; boundary=" + boundary
+        var multipart = try Multipart(targetUrl: target, charset: "UTF8")
+        /// Then build up the data from the urls
+        for source in content {
             
-            request.HTTPMethod = "POST"
-            request.setValue(contentType, forHTTPHeaderField: "content-type")
-            request.setValue("Swift IPFS Client", forHTTPHeaderField: "user-agent")
-
+            /** We could add a check here to see if the string is
+            to a local file. Eg. if missing a :// prefix, check if the
+            file exists locally (using NSFileManager fileExistsAtPath)
+            and prepend file:// to it. For now assume the user has added
+            the necessary prefix...Hahahaha. */
             
-            let body        = NSMutableData()
-            var outString: String
-            /// Then build up the data from the urls
-            for source in content {
-                
-                /** We could add a check here to see if the string is
-                    to a local file. Eg. if missing a :// prefix, check if the
-                    file exists locally (using NSFileManager fileExistsAtPath)
-                    and prepend file:// to it. For now assume the user has added 
-                    the necessary prefix...Hahahaha. */
-                
-                guard let sourceUrl = NSURL(string: source) else {
-                    throw HttpIoError.URLError("Cannot make URL from "+source)
-                }
-                guard let fData = NSData(contentsOfURL: sourceUrl) else { continue }
-                
-                
-                
-                outString = "--" + boundary + lineFeed
-                body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
-                
-                if let fileName = sourceUrl.lastPathComponent {
-                    outString = "content-disposition: file; name=file; filename=\(fileName)" + lineFeed
-                } else {
-                    outString = "content-disposition: file; name=file;" + lineFeed
-                }
-                body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
-                
-                outString = "content-type: application/octet-stream" + lineFeed
-                body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
-                
-                outString = "content-transfer-encoding: binary" + lineFeed + lineFeed
-                body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
-                
-                /// Add the actual data for this file.
-                body.appendData(fData)
-                body.appendData(lineFeed.dataUsingEncoding(NSUTF8StringEncoding)!)
+            guard let sourceUrl = NSURL(string: source) else {
+                throw HttpIoError.URLError("Cannot make URL from "+source)
             }
+            guard let fData = NSData(contentsOfURL: sourceUrl) else { continue }
             
-            
-            /// Finish the body
-            outString = "--" + boundary + "--" + lineFeed
-            body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
-
-            request.setValue(String(body.length), forHTTPHeaderField: "content-length")
-            request.HTTPBody = body
-        
-        
-//        } else {
-//            
-//        }
-        
-        /// Send off the request
-        let task = NSURLSession.sharedSession().dataTaskWithRequest(request) {
-            (data: NSData?, response: NSURLResponse?, error: NSError?) -> Void in
-            
-            guard error == nil && data != nil else {
-                print("Error in dataTaskWithRequest: \(error)")//throw HttpIoError.TransmissionError("fail: \(error)")
-                return
-            }
-            
-            completionHandler(data!)
-            
+            multipart = try Multipart.addFilePart(multipart, fileName: sourceUrl.lastPathComponent , fileData: fData)
         }
         
-        task.resume()
+        Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
-    
+
 }
 
 //public func getMIMETypeFromURL(location: NSURL) -> String? {
