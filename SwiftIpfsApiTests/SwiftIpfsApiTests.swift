@@ -209,22 +209,22 @@ class SwiftIpfsApiTests: XCTestCase {
             }
         }
         
-//        tester(objectNew)
-        
+        tester(objectNew)
         
         let objectPut = { (dispatchGroup: dispatch_group_t) throws -> Void in
-            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             
-//            try api.object.put() {
-//                (result: MerkleNode) in
-//                
-//                print(b58String(result.hash!))
-//                //XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
-//                dispatch_group_leave(dispatchGroup)
-//            }
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let data = [UInt8]("{ \"Data\" : \"Dauz\" }".utf8)
+            try api.object.put(data) {
+                (result: MerkleNode) in
+                
+                print(b58String(result.hash!))
+                //XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+                dispatch_group_leave(dispatchGroup)
+            }
         }
         
-//        tester(objectPut)
+        tester(objectPut)
         
         let objectGet = { (dispatchGroup: dispatch_group_t) throws -> Void in
             
@@ -286,12 +286,13 @@ class SwiftIpfsApiTests: XCTestCase {
     func testSwarmConnect() {
         let swarmConnect = { (dispatchGroup: dispatch_group_t) throws -> Void in
             
-            let peerAddress = "/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+            let peerAddress = "/ip4/192.168.5.18/tcp/4001/ipfs/QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3"
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             
             try api.swarm.connect(peerAddress){
                 result in
                 
+                XCTAssert(result == "connect QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3 success")
                 dispatch_group_leave(dispatchGroup)
             }
         }

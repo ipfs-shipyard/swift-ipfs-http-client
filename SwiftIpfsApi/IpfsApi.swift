@@ -542,7 +542,7 @@ public class Swarm : ClientSubCommand {
             
             /// Ensure we've only got one string as a result.
             guard let result = jsonDictionary["Strings"] as? [String] where result.count == 1 else {
-                throw IpfsApiError.SwarmError("Swarm.connect error: No Strings key in JSON data.")
+                throw IpfsApiError.SwarmError("Swarm.connect error: \(jsonDictionary["Message"] as? String)")
             }
             /// Consider returning the dictionary instead...
             completionHandler(result[0])
