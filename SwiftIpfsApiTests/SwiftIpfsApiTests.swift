@@ -242,6 +242,33 @@ class SwiftIpfsApiTests: XCTestCase {
         }
         
         tester(objectGet)
+        
+        
+        let objectLinks = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let multihash = try fromB58String("QmR3azp3CCGEFGZxcbZW7sbqRFuotSptcpMuN6nwThJ8x2")
+            
+            try api.object.links(multihash) {
+                (result: MerkleNode) in
+                
+                print(b58String(result.hash!))
+                /// There should be two links off the root:
+                if let links = result.links where links.count == 2 {
+                    let link1 = links[0]
+                    let link2 = links[1]
+                    XCTAssert(b58String(link1.hash!) == "QmWfzntFwgPf9T9brQ6P2PL1BMoH16jZvhanGYtZQfgyaD")
+                    XCTAssert(b58String(link2.hash!) == "QmRJ8Gngb5PmvoYDNZLrY6KujKPa4HxtJEXNkb5ehKydg2")
+                } else {
+                    XCTFail()
+                }
+                dispatch_group_leave(dispatchGroup)
+                
+            }
+        }
+        
+        tester(objectLinks)
+        
     }
     
     func testSwarmPeers() {

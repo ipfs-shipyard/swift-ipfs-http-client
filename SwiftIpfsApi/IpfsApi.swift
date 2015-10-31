@@ -472,6 +472,9 @@ public class IpfsObject {
         }
     }
     
+    /** IpfsObject put is a plumbing command for storing DAG nodes.
+        Its input is a byte array, and the output is a base58 encoded multihash.
+    */
     public func put(data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
         let data2 = NSData(bytes: data, length: data.count)
         
@@ -491,15 +494,25 @@ public class IpfsObject {
         }
     }
     
+    /** IpfsObject get is a plumbing command for retreiving DAG nodes.
+        Its input is a base58 encoded Multihash and it returns a MerkleNode.
+    */
     public func get(hash: Multihash, completionHandler: (MerkleNode) -> Void) throws {
      
         try parent!.fetchDictionary("object/get?stream-channels=true&arg=" + b58String(hash)){
-            (var result: Dictionary) in
-            result["Hash"] = b58String(hash) as AnyObject
-            completionHandler(try merkleNodeFromJson(result as AnyObject))
+            (var result) in
+            result["Hash"] = b58String(hash)
+            completionHandler(try merkleNodeFromJson(result))
         }
     }
 
+    public func links(hash: Multihash, completionHandler: (MerkleNode) -> Void) throws {
+        
+        try parent!.fetchDictionary("object/links?stream-channels=true&arg=" + b58String(hash)){
+            result in
+            completionHandler(try merkleNodeFromJson(result))
+        }
+    }
 }
 
 public class Swarm : ClientSubCommand {
