@@ -36,7 +36,7 @@ extension IpfsApiClient {
                 try completionHandler([:])
                 return
             }
-            
+//            print(data)
             guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
             }
             
@@ -48,7 +48,7 @@ extension IpfsApiClient {
         
         let fullUrl = baseUrl + path
         guard let url = NSURL(string: fullUrl) else { throw IpfsApiError.InvalidUrl }
-        
+        print("url",url)
         let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
             (data: NSData?, response: NSURLResponse?, error: NSError?) in
             
@@ -102,6 +102,7 @@ enum IpfsApiError : ErrorType {
     case SwarmError(String)
     case RefsError(String)
     case PinError(String)
+    case IpfsObjectError(String)
 }
 
 public class IpfsApi : IpfsApiClient {
@@ -453,6 +454,13 @@ public class IpfsObject {
         case UnixFsDir = "unixfs-dir"
     }
     
+    public enum ObjectPatchCommand: String {
+        case AddLink    = "add-link"
+        case RmLink     = "rm-link"
+        case SetData    = "set-data"
+        case AppendData = "append-data"
+    }
+    
     /**
      IpfsObject new is a plumbing command for creating new DAG nodes.
      By default it creates and returns a new empty merkledag node, but
@@ -511,6 +519,57 @@ public class IpfsObject {
         try parent!.fetchDictionary("object/links?stream-channels=true&arg=" + b58String(hash)){
             result in
             completionHandler(try merkleNodeFromJson(result))
+        }
+    }
+    
+    public func stat(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        try parent!.fetchDictionary("object/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
+    }
+    
+    public func data(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
+        
+        try parent!.fetchBytes("block/data?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
+    }
+    
+    public func patch(root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: (MerkleNode) -> Void) throws {
+        
+        var request: String = "object/patch?arg=\(b58String(root))&arg=\(cmd.rawValue)&"
+        
+        switch cmd {
+        case .AddLink: /// add-link has two args
+            guard args.count == 2 else {
+                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to add-link")
+            }
+            
+            request += "arg=\(args[0])&arg=\(args[1])&"
+            try parent!.fetchDictionary(request) {
+                result in
+                completionHandler(try merkleNodeFromJson(result))
+            }
+            
+        case .RmLink:
+            guard args.count == 1  else {
+                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to rm-link")
+            }
+            request += "&arg=\(args[0])"
+            try parent!.fetchDictionary(request) {
+                result in
+                completionHandler(try merkleNodeFromJson(result))
+            }
+   
+        case .SetData:
+            guard args.count == 1 else {
+                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to add-link")
+            }
+            let dataString = args[0] //String(bytes: data, encoding: NSUTF8StringEncoding)
+            
+        case .AppendData:
+            guard args.count == 1 else {
+                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to add-link")
+            }
+            let dataString = args[0] //String(bytes: data, encoding: NSUTF8StringEncoding)
+            
         }
     }
 }

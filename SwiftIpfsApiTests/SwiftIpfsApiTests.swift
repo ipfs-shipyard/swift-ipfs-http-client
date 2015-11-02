@@ -271,6 +271,49 @@ class SwiftIpfsApiTests: XCTestCase {
         
     }
     
+    func testObjectPatch() {
+        let objectPatch = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+
+            let hash = "QmUYttJXpMQYvQk5DcX2owRUuYJBJM6W7KQSUsycCCE2MZ" /// a file
+            /// Create a new directory object to start off with.
+            try api.object.new(.UnixFsDir) {
+                (result: MerkleNode) in
+                do {
+                    /** This uses the directory object to create a new object patched
+                        with the given args. */
+                    try api.object.patch(result.hash!, cmd: IpfsObject.ObjectPatchCommand.AddLink, args: "foo", hash) {
+                        (result: MerkleNode) in
+                        
+                        print("object patch ",b58String(result.hash!))
+                        
+                        do {
+                            /// get the new object's links to check against.
+                            try api.object.links(result.hash!) {
+                                (result: MerkleNode) in
+                                
+                                /// Check that the object's link is the same as 
+                                /// what we originally passed to the patch command.
+                                if let links = result.links where links.count == 1,
+                                    let linkHash = links[0].hash where b58String(linkHash) == hash {}
+                                else { XCTFail() }
+                            }
+                        } catch {
+                            print(error)
+                        }
+                        dispatch_group_leave(dispatchGroup)
+                    }
+                } catch {
+                    print("error", error)
+                }
+            }
+            
+            
+        }
+        
+        tester(objectPatch)
+    }
+    
     func testSwarmPeers() {
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
