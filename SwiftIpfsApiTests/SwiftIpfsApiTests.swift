@@ -270,45 +270,103 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(objectLinks)
         
     }
-    
+
     func testObjectPatch() {
+        
+        let setData = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            
+            /// Get the empty directory object to start off with.
+            try api.object.new() {
+                (result: MerkleNode) in
+
+                let data = "This is a longer message."
+                try api.object.patch(result.hash!, cmd: .SetData, args: data) {
+                    result in
+                    
+                    print(b58String(result.hash!))
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+        }
+        
+        tester(setData)
+
+        let appendData = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            
+            /// The previous hash that was returned from setData
+            let previousMultihash = try fromB58String("QmQXys2Xv5xiNBR21F1NNwqWC5cgHDnndKX4c3yXwP4ywj")
+            /// Get the empty directory object to start off with.
+            
+            let data = "Addition to the message."
+            try api.object.patch(previousMultihash, cmd: .AppendData, args: data) {
+                result in
+                
+                print(b58String(result.hash!))
+                
+                /// Now we request the data from the new Multihash to compare it.
+                try api.object.data(result.hash!) {
+                    result in
+                    
+                    let resultString = String(bytes: result, encoding: NSUTF8StringEncoding)
+                    XCTAssert(resultString == "This is a longer message.Addition to the message.")
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+        }
+        
+        tester(appendData)
+
+        
         let objectPatch = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
 
             let hash = "QmUYttJXpMQYvQk5DcX2owRUuYJBJM6W7KQSUsycCCE2MZ" /// a file
-            /// Create a new directory object to start off with.
+            let hash2 = "QmVtU7ths96fMgZ8YSZAbKghyieq7AjxNdcqyVzxTt3qVe" /// a directory
+            
+            /// Get the empty directory object to start off with.
             try api.object.new(.UnixFsDir) {
                 (result: MerkleNode) in
-                do {
-                    /** This uses the directory object to create a new object patched
-                        with the given args. */
-                    try api.object.patch(result.hash!, cmd: IpfsObject.ObjectPatchCommand.AddLink, args: "foo", hash) {
+
+                /** This uses the directory object to create a new object patched
+                    with the object of the given hash. */
+                try api.object.patch(result.hash!, cmd: IpfsObject.ObjectPatchCommand.AddLink, args: "foo", hash) {
+                    (result: MerkleNode) in
+                    
+                    /// Get a new object from the previous object patched with the object of hash2
+                    try api.object.patch(result.hash!, cmd: IpfsObject.ObjectPatchCommand.AddLink, args: "ars", hash2) {
                         (result: MerkleNode) in
                         
-                        print("object patch ",b58String(result.hash!))
-                        
-                        do {
-                            /// get the new object's links to check against.
-                            try api.object.links(result.hash!) {
+                        /// get the new object's links to check against.
+                        try api.object.links(result.hash!) {
+                            (result: MerkleNode) in
+                            
+                            /// Check that the object's link is the same as 
+                            /// what we originally passed to the patch command.
+                            if let links = result.links where links.count == 2,
+                                let linkHash = links[1].hash where b58String(linkHash) == hash {}
+                            else { XCTFail() }
+                            
+                            /// Now try to remove it and check that we only have one link.
+                            try api.object.patch(result.hash!, cmd: .RmLink, args: "foo") {
                                 (result: MerkleNode) in
                                 
-                                /// Check that the object's link is the same as 
-                                /// what we originally passed to the patch command.
-                                if let links = result.links where links.count == 1,
-                                    let linkHash = links[0].hash where b58String(linkHash) == hash {}
-                                else { XCTFail() }
+                                /// get the new object's links to check against.
+                                try api.object.links(result.hash!) {
+                                    (result: MerkleNode) in
+
+                                    if let links = result.links where links.count == 1,
+                                        let linkHash = links[0].hash where b58String(linkHash) == hash2 {}
+                                    else { XCTFail() }
+
+                                    dispatch_group_leave(dispatchGroup)
+                                }
                             }
-                        } catch {
-                            print(error)
                         }
-                        dispatch_group_leave(dispatchGroup)
                     }
-                } catch {
-                    print("error", error)
                 }
             }
-            
-            
         }
         
         tester(objectPatch)

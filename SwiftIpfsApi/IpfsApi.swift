@@ -10,7 +10,7 @@ import Foundation
 import SwiftMultiaddr
 import SwiftMultihash
 
-/// This is to enable a Multihash to be used as a Dictionary key.
+/// This is to allow a Multihash to be used as a Dictionary key.
 extension Multihash : Hashable {
     public var hashValue: Int {
         return String(value).hash
@@ -36,9 +36,12 @@ extension IpfsApiClient {
                 try completionHandler([:])
                 return
             }
-//            print(data)
+            //print(data)
+    
             guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
             }
+    
+            /// At this point we could check to see if the json contains a code/message for flagging errors.
             
             try completionHandler(json)
         }
@@ -47,8 +50,9 @@ extension IpfsApiClient {
     func fetchData(path: String, completionHandler: (NSData) throws -> Void) throws {
         
         let fullUrl = baseUrl + path
+        print("url",fullUrl)
         guard let url = NSURL(string: fullUrl) else { throw IpfsApiError.InvalidUrl }
-        print("url",url)
+        
         let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
             (data: NSData?, response: NSURLResponse?, error: NSError?) in
             
@@ -470,13 +474,13 @@ public class IpfsObject {
      Available templates:
     	* unixfs-dir
     */
-    public func new(template: ObjectTemplates? = nil, completionHandler: (MerkleNode) -> Void) throws {
+    public func new(template: ObjectTemplates? = nil, completionHandler: (MerkleNode) throws -> Void) throws {
         var request = "object/new?stream-channels=true"
         if template != nil { request += "&arg=\(template!.rawValue)" }
         try parent!.fetchDictionary(request) {
             (result: [String : AnyObject]) in
                 
-            completionHandler( try merkleNodeFromJson(result as AnyObject) )
+            try completionHandler( try merkleNodeFromJson(result as AnyObject) )
         }
     }
     
@@ -514,11 +518,11 @@ public class IpfsObject {
         }
     }
 
-    public func links(hash: Multihash, completionHandler: (MerkleNode) -> Void) throws {
+    public func links(hash: Multihash, completionHandler: (MerkleNode) throws -> Void) throws {
         
         try parent!.fetchDictionary("object/links?stream-channels=true&arg=" + b58String(hash)){
             result in
-            completionHandler(try merkleNodeFromJson(result))
+            try completionHandler(try merkleNodeFromJson(result))
         }
     }
     
@@ -529,49 +533,32 @@ public class IpfsObject {
     
     public func data(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
         
-        try parent!.fetchBytes("block/data?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
+        try parent!.fetchBytes("object/data?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func patch(root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: (MerkleNode) -> Void) throws {
+    public func patch(root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: (MerkleNode) throws -> Void) throws {
         
         var request: String = "object/patch?arg=\(b58String(root))&arg=\(cmd.rawValue)&"
+
+        if cmd == .AddLink && args.count != 2 {
+            throw IpfsApiError.IpfsObjectError("Wrong number of arguments to \(cmd.rawValue)")
+        }
         
-        switch cmd {
-        case .AddLink: /// add-link has two args
-            guard args.count == 2 else {
-                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to add-link")
-            }
-            
-            request += "arg=\(args[0])&arg=\(args[1])&"
-            try parent!.fetchDictionary(request) {
-                result in
-                completionHandler(try merkleNodeFromJson(result))
-            }
-            
-        case .RmLink:
-            guard args.count == 1  else {
-                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to rm-link")
-            }
-            request += "&arg=\(args[0])"
-            try parent!.fetchDictionary(request) {
-                result in
-                completionHandler(try merkleNodeFromJson(result))
-            }
-   
-        case .SetData:
-            guard args.count == 1 else {
-                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to add-link")
-            }
-            let dataString = args[0] //String(bytes: data, encoding: NSUTF8StringEncoding)
-            
-        case .AppendData:
-            guard args.count == 1 else {
-                throw IpfsApiError.IpfsObjectError("Wrong number of arguments to add-link")
-            }
-            let dataString = args[0] //String(bytes: data, encoding: NSUTF8StringEncoding)
-            
+        request += buildArgString(args)
+    
+        try parent!.fetchDictionary(request) {
+            result in
+            try completionHandler(try merkleNodeFromJson(result))
         }
     }
+}
+
+func buildArgString(args: [String]) -> String {
+    var outString = ""
+    for arg in args {
+        outString += "arg=\(arg.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())!)&"
+    }
+    return outString
 }
 
 public class Swarm : ClientSubCommand {
