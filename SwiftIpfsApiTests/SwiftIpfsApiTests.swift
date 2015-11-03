@@ -372,6 +372,40 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(objectPatch)
     }
     
+    
+    func testName() {
+    
+        let idHash = "QmTKWgmTLaosngT7txpZEVtwdxvJsX9pwKhmgMSbxwY7sN"
+        let publishedPath = "/ipfs/" + idHash
+        
+        let publish = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let multihash = try fromB58String(idHash)
+            try api.name.publish(hash: multihash) {
+                result in
+                
+                print("Published to: \(result["Name"]!): \(result["Value"]!)")
+                
+                //XCTAssert(result == publishedPath)
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(publish)
+        
+        let resolve = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.name.resolve(){
+                result in
+                XCTAssert(result == publishedPath)
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(resolve)
+    }
+    
+    
     func testSwarmPeers() {
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)

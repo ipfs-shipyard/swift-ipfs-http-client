@@ -122,6 +122,7 @@ public class IpfsApi : IpfsApiClient {
     public let repo       = Repo()
     public let block      = Block()
     public let object     = IpfsObject()
+    public let name       = Name()
     public let pin        = Pin()
     public let swarm      = Swarm()
 
@@ -159,6 +160,7 @@ public class IpfsApi : IpfsApiClient {
         pin.parent        = self
         swarm.parent      = self
         object.parent     = self
+        name.parent       = self
     }
     
     
@@ -553,13 +555,43 @@ public class IpfsObject {
     }
 }
 
-func buildArgString(args: [String]) -> String {
-    var outString = ""
-    for arg in args {
-        outString += "arg=\(arg.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())!)&"
+/** IPNS is a PKI namespace, where names are the hashes of public keys, and
+    the private key enables publishing new (signed) values. In both publish
+    and resolve, the default value of <name> is your own identity public key.
+*/
+public class Name {
+ 
+   var parent: IpfsApiClient?
+    
+    public func publish(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try self.publish(nil, hash: hash, completionHandler: completionHandler)
     }
-    return outString
+    
+    public func publish(id: String? = nil, hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+        var request = "name/publish?arg="
+        if id != nil { request += id! + "&arg=" }
+        try parent!.fetchDictionary(request + "/ipfs/" + b58String(hash), completionHandler: completionHandler)
+    }
+
+    public func resolve(hash: Multihash? = nil, completionHandler: (String) -> Void) throws {
+        
+        var request = "name/resolve"
+        if hash != nil { request += "?arg=" + b58String(hash!) }
+        
+        try parent!.fetchData(request) {
+            (rawJson: NSData) in
+            print(rawJson)
+            
+            guard let json = try NSJSONSerialization.JSONObjectWithData(rawJson, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
+            }
+            
+            let resolvedName = json["Path"] as? String ?? ""
+            completionHandler(resolvedName)
+        }
+
+    }
 }
+
 
 public class Swarm : ClientSubCommand {
     
@@ -646,9 +678,6 @@ public struct Stats {
     
 }
 
-public struct Name {
-    
-}
 
 /** Deal with concatenated JSON (since JSONSerialization doesn't) by wrapping it
     in array brackets and comma separating the various root components. */
@@ -710,4 +739,12 @@ func deprecatedfixStreamJson(rawJson: NSData) -> NSData {
         newRes = myStr.dataUsingEncoding(NSUTF8StringEncoding)!
     }
     return newRes
+}
+
+func buildArgString(args: [String]) -> String {
+    var outString = ""
+    for arg in args {
+        outString += "arg=\(arg.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())!)&"
+    }
+    return outString
 }
