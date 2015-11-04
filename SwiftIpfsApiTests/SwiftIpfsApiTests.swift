@@ -537,6 +537,33 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(swarmConnect)
     }
     
+    
+    func testDiag() {
+        
+        let net = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.diag.net() {
+                result in
+                print(result)
+                /// do comparison with truth here.
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(net)
+        
+        let sys = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.diag.sys() {
+                result in
+                print(result)
+                /// do comparison with truth here.
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        tester(sys)
+    }
+    
     func testBaseCommands() {
         
         let lsTest = { (dispatchGroup: dispatch_group_t) throws -> Void in

@@ -30,6 +30,8 @@ public protocol IpfsApiClient {
     var swarm: Swarm { get }
     var dht: Dht { get }
     var bootstrap: Bootstrap { get }
+    var diag: Diag { get }
+    var stats: Stats { get }
 }
 
 protocol ClientSubCommand {
@@ -139,6 +141,8 @@ public class IpfsApi : IpfsApiClient {
     public let swarm      = Swarm()
     public let dht        = Dht()
     public let bootstrap  = Bootstrap()
+    public let diag       = Diag()
+    public let stats      = Stats()
 
 
     public convenience init(addr: Multiaddr) throws {
@@ -177,6 +181,8 @@ public class IpfsApi : IpfsApiClient {
         name.parent       = self
         dht.parent        = self
         bootstrap.parent  = self
+        diag.parent       = self
+        stats.parent      = self
     }
     
     
@@ -434,7 +440,7 @@ public class Repo : ClientSubCommand {
     }
 }
 
-public class Block {
+public class Block : ClientSubCommand {
 
     var parent: IpfsApiClient?
     
@@ -468,7 +474,7 @@ public class Block {
     }
 }
 
-public class IpfsObject {
+public class IpfsObject : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
@@ -575,7 +581,7 @@ public class IpfsObject {
     the private key enables publishing new (signed) values. In both publish
     and resolve, the default value of <name> is your own identity public key.
 */
-public class Name {
+public class Name : ClientSubCommand {
  
    var parent: IpfsApiClient?
     
@@ -608,7 +614,7 @@ public class Name {
     }
 }
 
-public class Dht {
+public class Dht : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
@@ -634,7 +640,7 @@ public class Dht {
 }
 
 
-public class File {
+public class File : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
@@ -709,7 +715,11 @@ public class Bootstrap : ClientSubCommand {
     public func rm(addresses: [Multiaddr], all: Bool, completionHandler: ([Multiaddr]) throws -> Void) throws {
         
         let multiaddresses = try addresses.map { try $0.string() }
-        let request = "bootstrap/rm?" + buildArgString(multiaddresses)
+        var request = "bootstrap/rm?"
+        
+        if all { request += "all=true&" }
+        
+        request += buildArgString(multiaddresses)
         
         try parent!.fetchDictionary(request) {
             jsonDictionary in
@@ -781,23 +791,42 @@ public class Swarm : ClientSubCommand {
     }
 }
 
-
-public struct Diag {
+/** Generates diagnostic reports */
+public class Diag : ClientSubCommand {
     
+    var parent: IpfsApiClient?
+    
+    /** Generates a network diagnostics report */
+    public func net(completionHandler: (String) -> Void) throws {
+        try parent!.fetchBytes("diag/net?stream-channels=true") {
+            bytes in
+            completionHandler(String(bytes: bytes, encoding: NSUTF8StringEncoding)!)
+        }
+    }
+    
+    public func sys(completionHandler: (String) -> Void) throws {
+        try parent!.fetchBytes("diag/sys?stream-channels=true") {
+            bytes in
+            completionHandler(String(bytes: bytes, encoding: NSUTF8StringEncoding)!)
+        }
+    }
 }
 
-public struct Config {
+public class Config : ClientSubCommand {
     
+    var parent: IpfsApiClient?
 }
 
-public struct Update {
+public class Update : ClientSubCommand {
     
+    var parent: IpfsApiClient?
 }
 
 
 
-public struct Stats {
+public class Stats : ClientSubCommand {
     
+    var parent: IpfsApiClient?
 }
 
 
