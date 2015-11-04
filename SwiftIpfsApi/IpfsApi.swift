@@ -19,6 +19,17 @@ extension Multihash : Hashable {
 
 public protocol IpfsApiClient {
     var baseUrl: String { get }
+    
+    /// Second Tier commands
+    var refs: Refs { get }
+    var repo: Repo { get }
+    var block: Block { get }
+    var object: IpfsObject { get }
+    var name: Name { get }
+    var pin: Pin { get }
+    var swarm: Swarm { get }
+    var dht: Dht { get }
+    var bootstrap: Bootstrap { get }
 }
 
 protocol ClientSubCommand {
@@ -107,6 +118,7 @@ enum IpfsApiError : ErrorType {
     case RefsError(String)
     case PinError(String)
     case IpfsObjectError(String)
+    case BootstrapError(String)
 }
 
 public class IpfsApi : IpfsApiClient {
@@ -125,6 +137,8 @@ public class IpfsApi : IpfsApiClient {
     public let name       = Name()
     public let pin        = Pin()
     public let swarm      = Swarm()
+    public let dht        = Dht()
+    public let bootstrap  = Bootstrap()
 
 
     public convenience init(addr: Multiaddr) throws {
@@ -161,6 +175,8 @@ public class IpfsApi : IpfsApiClient {
         swarm.parent      = self
         object.parent     = self
         name.parent       = self
+        dht.parent        = self
+        bootstrap.parent  = self
     }
     
     
@@ -592,6 +608,123 @@ public class Name {
     }
 }
 
+public class Dht {
+    
+    var parent: IpfsApiClient?
+    
+    public func findProvs(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("dht/findprovs?arg=" + b58String(hash), completionHandler: completionHandler)
+    }
+    
+    public func query(address: Multiaddr, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("dht/query?arg=" + address.string() , completionHandler: completionHandler)
+    }
+    
+    public func findpeer(address: Multiaddr, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("dht/findpeer?arg=" + address.string() , completionHandler: completionHandler)
+    }
+    
+    public func get(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("dht/get?arg=" + b58String(hash), completionHandler: completionHandler)
+    }
+    
+    public func put(key: String, value: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("dht/put?arg=\(key)&arg=\(value)", completionHandler: completionHandler)
+    }
+}
+
+
+public class File {
+    
+    var parent: IpfsApiClient?
+    
+    public func ls(path: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+        try parent!.fetchDictionary("file/ls?arg=" + b58String(path), completionHandler: completionHandler)
+    }
+}
+
+/** Show or edit the list of bootstrap peers */
+//extension IpfsApi {
+//    
+//    public func bootstrap(completionHandler: ([Multiaddr]) -> Void) throws {
+//        try bootstrap.list(completionHandler)
+//    }
+//}
+
+/**
+     SECURITY WARNING:
+ 
+     The bootstrap command manipulates the "bootstrap list", which contains
+     the addresses of bootstrap nodes. These are the *trusted peers* from
+     which to learn about other peers in the network. Only edit this list
+     if you understand the risks of adding or removing nodes from this list.
+*/
+public class Bootstrap : ClientSubCommand {
+    
+    var parent: IpfsApiClient?
+    
+    
+    public func list(completionHandler: ([Multiaddr]) throws -> Void) throws {
+        
+        try parent!.fetchDictionary("bootstrap/") {
+            jsonDictionary in
+            
+            var addresses: [Multiaddr] = []
+            if let peers = jsonDictionary["Peers"] as? [String] {
+                /// Make an array of Multiaddr from each peer
+                addresses = try peers.map { try newMultiaddr($0) }
+            }
+
+            /// convert the data into a Multiaddr array and pass it to the handler
+            try completionHandler(addresses)
+        }
+    }
+    
+    public func add(addresses: [Multiaddr], completionHandler: ([Multiaddr]) throws -> Void) throws {
+        
+        let multiaddresses = try addresses.map { try $0.string() }
+        let request = "bootstrap/add?" + buildArgString(multiaddresses)
+        
+        print(request)
+        
+        try parent!.fetchDictionary(request) {
+            jsonDictionary in
+            
+            var addresses: [Multiaddr] = []
+            if let peers = jsonDictionary["Peers"] as? [String] {
+                /// Make an array of Multiaddr from each peer
+                addresses = try peers.map { try newMultiaddr($0) }
+            }
+
+            /// convert the data into a Multiaddr array and pass it to the handler
+            try completionHandler(addresses)
+        }
+    }
+    
+    public func rm(addresses: [Multiaddr], completionHandler: ([Multiaddr]) throws -> Void) throws {
+        
+        try self.rm(addresses, all: false, completionHandler: completionHandler)
+    }
+    
+    public func rm(addresses: [Multiaddr], all: Bool, completionHandler: ([Multiaddr]) throws -> Void) throws {
+        
+        let multiaddresses = try addresses.map { try $0.string() }
+        let request = "bootstrap/rm?" + buildArgString(multiaddresses)
+        
+        try parent!.fetchDictionary(request) {
+            jsonDictionary in
+            
+            var addresses: [Multiaddr] = []
+            if let peers = jsonDictionary["Peers"] as? [String] {
+                /// Make an array of Multiaddr from each peer
+                addresses = try peers.map { try newMultiaddr($0) }
+            }
+
+            /// convert the data into a Multiaddr array and pass it to the handler
+            try completionHandler(addresses)
+        }
+    }
+}
 
 public class Swarm : ClientSubCommand {
     
@@ -605,12 +738,12 @@ public class Swarm : ClientSubCommand {
         try parent!.fetchDictionary("swarm/peers?stream-channels=true") {
             (jsonDictionary: Dictionary) in
             
-            guard let swarmPeers = jsonDictionary["Strings"] as? [String] else {
-                throw IpfsApiError.SwarmError("Swarm.peers error: No Strings key in JSON data.")
+            var addresses: [Multiaddr] = []
+            if let swarmPeers = jsonDictionary["Strings"] as? [String] {
+                /// Make an array of Multiaddr from each peer in swarmPeers.
+                addresses = try swarmPeers.map { try newMultiaddr($0) }
             }
 
-            /// Make an array of Multiaddr from each peer in swarmPeers.
-            let addresses = try swarmPeers.map { try newMultiaddr($0) }
             /// convert the data into a Multiaddr array and pass it to the handler
             completionHandler(addresses)
         }
@@ -648,11 +781,6 @@ public class Swarm : ClientSubCommand {
     }
 }
 
-public struct Bootstrap {
-    
-}
-
-
 
 public struct Diag {
     
@@ -666,13 +794,7 @@ public struct Update {
     
 }
 
-public struct DHT {
-    
-}
 
-public struct File {
-    
-}
 
 public struct Stats {
     

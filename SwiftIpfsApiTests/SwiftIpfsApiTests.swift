@@ -405,6 +405,81 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(resolve)
     }
     
+    func testBootstrap() {
+        
+        do {
+            
+            let trustedPeer = "/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+            let trustedPeer2 = "/ip4/104.236.176.52/tcp/4001/ipfs/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z"
+
+            let tpMultiaddr = try newMultiaddr(trustedPeer)
+            let tpMultiaddr2 = try newMultiaddr(trustedPeer2)
+            
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+        
+            let rm = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                
+                let tPeers = [tpMultiaddr, tpMultiaddr2]
+                
+                try api.bootstrap.rm(tPeers) {
+                    (peers: [Multiaddr]) in
+                    
+                    for peer in peers {
+                        print(try peer.string())
+                    }
+
+                    if peers.count == 2 {
+                        let t1 = try peers[0].string() == trustedPeer
+                        let t2 = try peers[1].string() == trustedPeer2
+                        XCTAssert(t1 && t2)
+                    } else { XCTFail() }
+                    
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+            
+            tester(rm)
+            
+            let bootstrap = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                
+                try api.bootstrap.list() {
+                    (peers: [Multiaddr]) in
+                    for peer in peers {
+                       print(try peer.string())
+                    }
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+            
+            tester(bootstrap)
+            
+            let add = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                
+                let tPeers = [tpMultiaddr, tpMultiaddr2]
+                
+                try api.bootstrap.add(tPeers) {
+                    (peers: [Multiaddr]) in
+                    
+                    for peer in peers {
+                        print(try peer.string())
+                    }
+
+                    if peers.count == 2 {
+                        let t1 = try peers[0].string() == trustedPeer
+                        let t2 = try peers[1].string() == trustedPeer2
+                        XCTAssert(t1 && t2)
+                    } else { XCTFail() }
+                    
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+            
+            tester(add)
+        
+        } catch {
+            print("Bootstrap test error: \(error)")
+        }
+    }
     
     func testSwarmPeers() {
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
@@ -602,6 +677,10 @@ class SwiftIpfsApiTests: XCTestCase {
         }
         tester(refs)
     }
+    
+    
+    
+    /// Utility functions
     
     func tester(test: (dispatchGroup: dispatch_group_t) throws -> Void) {
         
