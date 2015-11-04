@@ -594,8 +594,28 @@ class SwiftIpfsApiTests: XCTestCase {
         }
         
         tester(catTest)
+        
     }
 
+    func testPing() {
+        
+        let ping = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.ping("QmRAe1ECqUQH5sVn5VjUoYETaNa2gTtGdnQaWUYhnD8hY3") {
+                (pings : [[String : AnyObject]]) in
+                
+                for ping in pings {
+                    print(ping["Text"] ?? "-")
+                    print(ping["Time"] ?? "-")
+                    print(ping["Success"] ?? "-")
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(ping)
+    }
+    
     func testdns() {
         let dns = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api       = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
