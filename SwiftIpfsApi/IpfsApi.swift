@@ -331,6 +331,14 @@ public class IpfsApi : IpfsApiClient {
             completionHandler(json)
         }
     }
+    
+    
+    public func id(target: String? = nil, completionHandler: ([String : AnyObject]) -> Void) throws {
+        var request = "id"
+        if target != nil { request += "/\(target!)" }
+        
+        try fetchDictionary(request, completionHandler: completionHandler)
+    }
 }
 
 

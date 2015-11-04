@@ -616,6 +616,42 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(ping)
     }
     
+    func testId() {
+        
+        let id = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.id("QmRAe1ECqUQH5sVn5VjUoYETaNa2gTtGdnQaWUYhnD8hY3") {
+                (pings : [String : AnyObject]) in
+                
+                for (k,v) in pings {
+                    print("k: ",k)
+                    print("v: ",v)
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(id)
+    }
+    
+    func testIdDefault() {
+        
+        let id = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.id() {
+                (pings : [String : AnyObject]) in
+                
+                for (k,v) in pings {
+                    print("k: ",k)
+                    print("v: ",v)
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(id)
+    }
+    
     func testdns() {
         let dns = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api       = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
