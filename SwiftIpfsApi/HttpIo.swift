@@ -17,7 +17,7 @@ enum HttpIoError : ErrorType {
 
 public struct HttpIo : NetworkIo {
 
-    static func receiveFrom(source: String, completionHandler: (NSData) throws -> Void) throws {
+    public func receiveFrom(source: String, completionHandler: (NSData) throws -> Void) throws {
         
         guard let url = NSURL(string: source) else { throw HttpIoError.UrlError("Invalid URL") }
         
@@ -41,25 +41,28 @@ public struct HttpIo : NetworkIo {
     }
    
     
-    func streamFrom(source: String, updateHandler: (NSData, NSURLSessionDataTask) -> Void, completionHandler: (AnyObject) -> Void) throws {
+    public func streamFrom( source: String,
+                            updateHandler: (NSData, NSURLSessionDataTask) throws -> Void,
+                            completionHandler: (AnyObject) throws -> Void) throws {
     
         guard let url = NSURL(string: source) else { throw HttpIoError.UrlError("Invalid URL") }
         let config = NSURLSessionConfiguration.defaultSessionConfiguration()
         let handler = StreamHandler(updateHandler: updateHandler, completionHandler: completionHandler)
+//        let handler = FetchHandler(updateHandler: updateHandler, completionHandler: completionHandler)
         let session = NSURLSession(configuration: config, delegate: handler, delegateQueue: nil)
         let task = session.dataTaskWithURL(url)
         
         task.resume()
     }
     
-    static func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws {
+    public func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws {
         var multipart = try Multipart(targetUrl: target, charset: "UTF8")
         multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
 
 
-    static func sendTo(target: String, content: [String], completionHandler: (NSData) -> Void) throws {
+    public func sendTo(target: String, content: [String], completionHandler: (NSData) -> Void) throws {
 
         var multipart = try Multipart(targetUrl: target, charset: "UTF8")
         /// Then build up the data from the urls
@@ -115,25 +118,33 @@ public struct HttpIo : NetworkIo {
 public class StreamHandler : NSObject, NSURLSessionDataDelegate {
     
     var dataStore = NSMutableData()
-    let updateHandler: (NSData, NSURLSessionDataTask) -> Void
-    let completionHandler: (AnyObject) -> Void
+    let updateHandler: (NSData, NSURLSessionDataTask) throws -> Void
+    let completionHandler: (AnyObject) throws -> Void
     
-    init(updateHandler: (NSData, NSURLSessionDataTask) -> Void, completionHandler: (AnyObject) -> Void) {
+    init(updateHandler: (NSData, NSURLSessionDataTask) throws -> Void, completionHandler: (AnyObject) throws -> Void) {
         self.updateHandler = updateHandler
         self.completionHandler = completionHandler
     }
     
-    public func URLSession(session: NSURLSession, dataTask: NSURLSessionDataTask, didReceiveData data: NSData) throws {
+    public func URLSession(session: NSURLSession, dataTask: NSURLSessionDataTask, didReceiveData data: NSData) {
         print("HANDLER:")
         dataStore.appendData(data)
         
-        // fire the update handler
-        updateHandler(data, dataTask)
+        do {
+            // fire the update handler
+            try updateHandler(data, dataTask)
+        } catch {
+            print("In StreamHandler: updateHandler error: \(error)")
+        }
     }
     
-    public func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) throws {
+    public func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) {
         print("Completed")
         session.invalidateAndCancel()
-        completionHandler(dataStore)
+        do {
+            try completionHandler(dataStore)
+        } catch {
+            print("In StreamHandler: completionHandler error: \(error)")
+        }
     }
 }

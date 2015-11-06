@@ -708,9 +708,8 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.log() {
                 log in
                 
-                for (k,v) in log {
-                    print("k: ",k)
-                    print("v: ",v)
+                for entry in log {
+                    print(entry)
                 }
                 dispatch_group_leave(dispatchGroup)
             }

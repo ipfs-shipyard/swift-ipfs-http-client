@@ -34,7 +34,7 @@ public protocol IpfsApiClient {
     var diag:       Diag { get }
     var stats:      Stats { get }
     
-    var t: HttpIo { get set }
+    var net:        NetworkIo { get }
 }
 
 protocol ClientSubCommand {
@@ -45,76 +45,35 @@ extension ClientSubCommand {
     mutating func setParent(p: IpfsApiClient) { self.parent = p }
 }
 
-/// Consider just letting the IpfsApiClient be a delegate and provide the handler methods.
-public class FetchHandler : NSObject, NSURLSessionDataDelegate {
-   
-    var dataCollector = NSMutableData()
-    let updateHandler: (NSData, NSURLSessionDataTask) -> Void
-    let completionHandler: (AnyObject) -> Void
-    
-    init(updateHandler: (NSData, NSURLSessionDataTask) -> Void, completionHandler: (AnyObject) -> Void) {
-        self.updateHandler = updateHandler
-        self.completionHandler = completionHandler
-    }
-    
-    public func URLSession(session: NSURLSession, dataTask: NSURLSessionDataTask, didReceiveData data: NSData) {
-        print("HANDLER:")
-//        print("The data:",NSString(data: data, encoding: NSUTF8StringEncoding))
-        dataCollector.appendData(data)
-        
-        // fire the update handler
-        updateHandler(data, dataTask)
-    }
-    
-    public func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) {
-        print("Completed")
-        let fixed = fixStreamJson(dataCollector)
-        if let json = try? NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) {
-            print("JSOOOOON")
-            session.invalidateAndCancel()
-            completionHandler(json)
-        }
-    }
-}
-
 extension IpfsApiClient {
     
-    /// This doesn't work yet...
-    func fetchStream(path: String, completionHandler: (NSData) throws -> Void) throws {
-        let fullUrl = baseUrl + path
-        print("url",fullUrl)
-        try t.streamFrom(fullUrl, updateHandler: fetchUpdateHandler, completionHandler: fetchCompletionHandler)
-    }
-    
-    /// This works
-    func fetchTest(path: String, completionHandler: (NSData) throws -> Void) throws {
-        let fullUrl = baseUrl + path
-        print("url",fullUrl)
-        guard let url = NSURL(string: fullUrl) else { throw IpfsApiError.InvalidUrl }
-        let config = NSURLSessionConfiguration.defaultSessionConfiguration()
-        let handler = FetchHandler(updateHandler: fetchUpdateHandler, completionHandler: fetchCompletionHandler)
-        let sesh = NSURLSession(configuration: config, delegate: handler, delegateQueue: nil)
-        let task = sesh.dataTaskWithURL(url)
-        
-        task.resume()
-        
+    func fetchStreamJson(   path: String,
+                            updateHandler: (NSData, NSURLSessionDataTask) throws -> Void,
+                            completionHandler: (AnyObject) throws -> Void) throws {
+        /// We need to use the passed in completionHandler
+        try net.streamFrom(baseUrl + path, updateHandler: updateHandler, completionHandler: completionHandler)
+//        try net.streamFrom(baseUrl + path, updateHandler: testUpdateHandler, completionHandler: testCompletionHandler)
     }
 
-    func fetchUpdateHandler(data: NSData, task: NSURLSessionDataTask) {
-       print("fetch update")
-        /// At this point we could decide to stop the task.
-        if task.countOfBytesReceived > 1024 {
-            print("fetch task cancel")
-            task.cancel()
-        }
-    }
-    
-    func fetchCompletionHandler(result: AnyObject) {
-        print("fetch completion:")
-        for res in result as! [[String : AnyObject]] {
-            print(res)
-        }
-    }
+//    func testUpdateHandler(data: NSData, task: NSURLSessionDataTask) {
+//       print("fetch update")
+//        /// At this point we could decide to stop the task.
+//        if task.countOfBytesReceived > 1024 {
+//            print("fetch task cancel")
+//            task.cancel()
+//        }
+//    }
+//    
+//    func testCompletionHandler(result: AnyObject) {
+//        print("fetch completion:")
+//        let fixed = fixStreamJson(result as! NSData)
+//        if let json = try? NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) {
+//            
+//            for res in json as! [[String : AnyObject]] {
+//                print(res)
+//            }
+//        }
+//    }
     
     func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
         try fetchData(path) {
@@ -138,7 +97,7 @@ extension IpfsApiClient {
     
     func fetchData(path: String, completionHandler: (NSData) throws -> Void) throws {
         
-        try HttpIo.receiveFrom(baseUrl + path, completionHandler: completionHandler)
+        try net.receiveFrom(baseUrl + path, completionHandler: completionHandler)
     }
     
     func fetchBytes(path: String, completionHandler: ([UInt8]) throws -> Void) throws {
@@ -186,6 +145,7 @@ public class IpfsApi : IpfsApiClient {
     public let host: String
     public let port: Int
     public let version: String
+    public let net: NetworkIo
     
     /// Second Tier commands
     public let refs       = Refs()
@@ -200,7 +160,7 @@ public class IpfsApi : IpfsApiClient {
     public let diag       = Diag()
     public let stats      = Stats()
 
-    public var t = HttpIo()
+
     
     public convenience init(addr: Multiaddr) throws {
         /// Get the host and port number from the Multiaddr
@@ -225,6 +185,7 @@ public class IpfsApi : IpfsApiClient {
         self.version = version
         
         baseUrl = "http://\(host):\(port)\(version)"
+        net = HttpIo()
         
         /** All of IPFSApi's properties need to be set before we can use self which
             is why we can't just init the sub commands with self (unless we make 
@@ -255,7 +216,7 @@ public class IpfsApi : IpfsApiClient {
     
     public func add(filePaths: [String], completionHandler: ([MerkleNode]) -> Void) throws {
 
-        try HttpIo.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
+        try net.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
             result in
 
             let newRes = fixStreamJson(result)
@@ -416,12 +377,45 @@ public class IpfsApi : IpfsApiClient {
         try fetchDictionary(request, completionHandler: completionHandler)
     }
     
-    public func log(completionHandler: ([String : AnyObject]) -> Void) throws {
-        try fetchTest("log/tail") {
-//        try fetchStream("log/tail") {
-            result in
-            print("So far...")
+    /** This method should take both a completion handler and an update handler because
+        the log tail will never stop until interrupted. The update handler should be able
+        to return false when it wants the update to stop.
+    */
+    public func log(completionHandler: ([[String : AnyObject]]) -> Void) throws {
+        
+        /// these two closures will be passed into the log message
+        let comp = { (result: AnyObject) -> Void in
+            completionHandler(result as! [[String : AnyObject]])
         }
+            
+        let update = { (data: NSData, task: NSURLSessionDataTask) in
+            
+            let fixed = fixStreamJson(data)
+            if let json = try NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) as? [[String: AnyObject]] {
+                
+                print(json)
+                for res in json {
+                    print(res)
+                }
+            } else {
+                if let json = try NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) as? [String: AnyObject] {
+                    print("It's a dict!:",json)
+                }
+            }
+        }
+        
+        try fetchStreamJson("log/tail", updateHandler: update, completionHandler: comp)
+//        try fetchStreamJson("log/tail") {
+//            result in
+//            
+//            let fixed = fixStreamJson(result as! NSData)
+//            if let json = try? NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) {
+//                
+//                for res in json as! [[String : AnyObject]] {
+//                    print(res)
+//                }
+//            }
+//        }
     }
 }
 
@@ -561,7 +555,7 @@ public class Block : ClientSubCommand {
     public func put(data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
         let data2 = NSData(bytes: data, length: data.count)
         
-        try HttpIo.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
+        try parent!.net.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
             result in
             
             do {
@@ -623,7 +617,7 @@ public class IpfsObject : ClientSubCommand {
     public func put(data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
         let data2 = NSData(bytes: data, length: data.count)
         
-        try HttpIo.sendTo(parent!.baseUrl+"object/put?stream-channels=true", content: data2) {
+        try parent!.net.sendTo(parent!.baseUrl+"object/put?stream-channels=true", content: data2) {
             result in
             
             do {
