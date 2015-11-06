@@ -12,7 +12,7 @@ import Foundation
 
 protocol NetworkIo {
     
-    static func receiveFrom(source: String, completionHandler: (NSData) -> Void) throws
+    static func receiveFrom(source: String, completionHandler: (NSData) throws -> Void) throws
 
     static func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws
 

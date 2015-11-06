@@ -11,14 +11,45 @@
 import Foundation
 
 enum HttpIoError : ErrorType {
-    case URLError(String)
+    case UrlError(String)
     case TransmissionError(String)
 }
 
-struct HttpIo : NetworkIo {
+public struct HttpIo : NetworkIo {
 
-    static func receiveFrom(source: String, completionHandler: (NSData) -> Void) throws {
+    static func receiveFrom(source: String, completionHandler: (NSData) throws -> Void) throws {
         
+        guard let url = NSURL(string: source) else { throw HttpIoError.UrlError("Invalid URL") }
+        
+        let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
+            (data: NSData?, response: NSURLResponse?, error: NSError?) in
+            
+            do {
+                guard error == nil else { throw HttpIoError.TransmissionError((error?.localizedDescription)!) }
+                guard let data = data else { throw IpfsApiError.NilData }
+                
+                //print("The data:",NSString(data: data, encoding: NSUTF8StringEncoding))
+                
+                try completionHandler(data)
+                
+            } catch {
+                print("Error ", error, "in completionHandler passed to fetchData ")
+            }
+        }
+        
+        task.resume()
+    }
+   
+    
+    func streamFrom(source: String, updateHandler: (NSData, NSURLSessionDataTask) -> Void, completionHandler: (AnyObject) -> Void) throws {
+    
+        guard let url = NSURL(string: source) else { throw HttpIoError.UrlError("Invalid URL") }
+        let config = NSURLSessionConfiguration.defaultSessionConfiguration()
+        let handler = StreamHandler(updateHandler: updateHandler, completionHandler: completionHandler)
+        let session = NSURLSession(configuration: config, delegate: handler, delegateQueue: nil)
+        let task = session.dataTaskWithURL(url)
+        
+        task.resume()
     }
     
     static func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws {
@@ -41,7 +72,7 @@ struct HttpIo : NetworkIo {
             the necessary prefix...Hahahaha. */
             
             guard let sourceUrl = NSURL(string: source) else {
-                throw HttpIoError.URLError("Cannot make URL from "+source)
+                throw HttpIoError.UrlError("Cannot make URL from "+source)
             }
             guard let fData = NSData(contentsOfURL: sourceUrl) else { continue }
             
@@ -50,7 +81,22 @@ struct HttpIo : NetworkIo {
         
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
-
+    
+    func fetchUpdateHandler(data: NSData, task: NSURLSessionDataTask) {
+        print("fetch update")
+        /// At this point we could decide to stop the task.
+        if task.countOfBytesReceived > 1024 {
+            print("fetch task cancel")
+            task.cancel()
+        }
+    }
+    
+    func fetchCompletionHandler(result: AnyObject) {
+        print("fetch completion:")
+        for res in result as! [[String : AnyObject]] {
+            print(res)
+        }
+    }
 }
 
 //public func getMIMETypeFromURL(location: NSURL) -> String? {
@@ -65,3 +111,29 @@ struct HttpIo : NetworkIo {
 //    }
 //    return nil
 //}
+
+public class StreamHandler : NSObject, NSURLSessionDataDelegate {
+    
+    var dataStore = NSMutableData()
+    let updateHandler: (NSData, NSURLSessionDataTask) -> Void
+    let completionHandler: (AnyObject) -> Void
+    
+    init(updateHandler: (NSData, NSURLSessionDataTask) -> Void, completionHandler: (AnyObject) -> Void) {
+        self.updateHandler = updateHandler
+        self.completionHandler = completionHandler
+    }
+    
+    public func URLSession(session: NSURLSession, dataTask: NSURLSessionDataTask, didReceiveData data: NSData) throws {
+        print("HANDLER:")
+        dataStore.appendData(data)
+        
+        // fire the update handler
+        updateHandler(data, dataTask)
+    }
+    
+    public func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) throws {
+        print("Completed")
+        session.invalidateAndCancel()
+        completionHandler(dataStore)
+    }
+}

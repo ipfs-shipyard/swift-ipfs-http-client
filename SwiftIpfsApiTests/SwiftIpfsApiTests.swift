@@ -652,6 +652,74 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(id)
     }
     
+    func testVersion() {
+        let version = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.version() {
+                version in
+                print(version)
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(version)
+        
+    }
+    
+    func testCommands() {
+        let commands = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.commands(true) {
+                commands in
+                
+                for (k,v) in commands {
+                    print("k: ",k)
+                    print("v: ",v)
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(commands)
+        
+    }
+    
+    func testStats() {
+        let stats = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.stats.bw() {
+                stats in
+                
+                for (k,v) in stats {
+                    print("k: ",k)
+                    print("v: ",v)
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(stats)
+        
+    }
+    
+    func testLog() {
+        let log = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.log() {
+                log in
+                
+                for (k,v) in log {
+                    print("k: ",k)
+                    print("v: ",v)
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(log)
+        
+    }
+    
     func testdns() {
         let dns = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api       = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
