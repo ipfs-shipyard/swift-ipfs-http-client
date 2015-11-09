@@ -166,6 +166,7 @@ public class IpfsApi : IpfsApiClient {
         self.port = port
         self.version = version
         
+        /// No https yet as TLS1.2 in OS X 10.11 is not allowing comms with the node.
         baseUrl = "http://\(host):\(port)\(version)"
         net = HttpIo()
         
