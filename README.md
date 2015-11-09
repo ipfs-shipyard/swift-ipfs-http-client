@@ -33,7 +33,7 @@ Add the required frameworks to your project in Xcode:
 
 In your code: 
 ```Swift
-import SwiftIpfsApi.
+import SwiftIpfsApi
 
 /// For brevity we are not catching failed try's. You should.
 let api = try! SwiftIpfsApi("127.0.0.1", "5001") 
