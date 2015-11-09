@@ -38,7 +38,7 @@ import SwiftIpfsApi
 /// For brevity we are not catching failed try's. You should.
 let api = try! SwiftIpfsApi("127.0.0.1", "5001") 
 
-try api.id() {
+try! api.id() {
     (idData : [String : AnyObject]) in
                     
     print("Yay, I've got an id: "+ idData["ID"] as! String )
