@@ -42,7 +42,7 @@ public struct HttpIo : NetworkIo {
    
     
     public func streamFrom( source: String,
-                            updateHandler: (NSData, NSURLSessionDataTask) throws -> Void,
+                            updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool,
                             completionHandler: (AnyObject) throws -> Void) throws {
     
         guard let url = NSURL(string: source) else { throw HttpIoError.UrlError("Invalid URL") }
@@ -118,10 +118,10 @@ public struct HttpIo : NetworkIo {
 public class StreamHandler : NSObject, NSURLSessionDataDelegate {
     
     var dataStore = NSMutableData()
-    let updateHandler: (NSData, NSURLSessionDataTask) throws -> Void
+    let updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool
     let completionHandler: (AnyObject) throws -> Void
     
-    init(updateHandler: (NSData, NSURLSessionDataTask) throws -> Void, completionHandler: (AnyObject) throws -> Void) {
+    init(updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool, completionHandler: (AnyObject) throws -> Void) {
         self.updateHandler = updateHandler
         self.completionHandler = completionHandler
     }

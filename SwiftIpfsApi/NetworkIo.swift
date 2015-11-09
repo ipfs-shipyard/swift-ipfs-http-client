@@ -14,7 +14,7 @@ public protocol NetworkIo {
     
     func receiveFrom(source: String, completionHandler: (NSData) throws -> Void) throws
 
-    func streamFrom(source: String, updateHandler: (NSData, NSURLSessionDataTask) throws -> Void, completionHandler: (AnyObject) throws -> Void) throws
+    func streamFrom(source: String, updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool, completionHandler: (AnyObject) throws -> Void) throws
     
     func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws
 
