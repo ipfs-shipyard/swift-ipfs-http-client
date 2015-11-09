@@ -48,32 +48,11 @@ extension ClientSubCommand {
 extension IpfsApiClient {
     
     func fetchStreamJson(   path: String,
-                            updateHandler: (NSData, NSURLSessionDataTask) throws -> Void,
+                            updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool,
                             completionHandler: (AnyObject) throws -> Void) throws {
         /// We need to use the passed in completionHandler
         try net.streamFrom(baseUrl + path, updateHandler: updateHandler, completionHandler: completionHandler)
-//        try net.streamFrom(baseUrl + path, updateHandler: testUpdateHandler, completionHandler: testCompletionHandler)
     }
-
-//    func testUpdateHandler(data: NSData, task: NSURLSessionDataTask) {
-//       print("fetch update")
-//        /// At this point we could decide to stop the task.
-//        if task.countOfBytesReceived > 1024 {
-//            print("fetch task cancel")
-//            task.cancel()
-//        }
-//    }
-//    
-//    func testCompletionHandler(result: AnyObject) {
-//        print("fetch completion:")
-//        let fixed = fixStreamJson(result as! NSData)
-//        if let json = try? NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) {
-//            
-//            for res in json as! [[String : AnyObject]] {
-//                print(res)
-//            }
-//        }
-//    }
     
     func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
         try fetchData(path) {
@@ -377,50 +356,37 @@ public class IpfsApi : IpfsApiClient {
         try fetchDictionary(request, completionHandler: completionHandler)
     }
     
-    /** This method should take both a completion handler and an update handler because
-        the log tail will never stop until interrupted. The update handler should be able
-        to return false when it wants the update to stop.
+    /** This method should take both a completion handler and an update handler.
+        Since the log tail won't stop until interrupted, the update handler
+        should return false when it wants the updates to stop.
     */
-    public func log(completionHandler: ([[String : AnyObject]]) -> Void) throws {
+    public func log(completionHandler: ([[String : AnyObject]]) -> Void, updateHandler: (NSData) throws -> Bool) throws {
         
-        /// these two closures will be passed into the log message
+        /// Two test closures to be passed to the fetchStreamJson as parameters.
         let comp = { (result: AnyObject) -> Void in
             completionHandler(result as! [[String : AnyObject]])
         }
             
-        let update = { (data: NSData, task: NSURLSessionDataTask) in
+        let update = { (data: NSData, task: NSURLSessionDataTask) -> Bool in
             
             let fixed = fixStreamJson(data)
-            if let json = try NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) as? [[String: AnyObject]] {
+            let json = try NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments)
                 
-                print(json)
-                for res in json {
+            if let arr = json as? [AnyObject] {
+                for res in arr {
                     print(res)
                 }
             } else {
-                if let json = try NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) as? [String: AnyObject] {
-                    print("It's a dict!:",json)
+                if let dict = json as? [String: AnyObject] {
+                    print("It's a dict!:",dict )
                 }
             }
+            return true
         }
         
         try fetchStreamJson("log/tail", updateHandler: update, completionHandler: comp)
-//        try fetchStreamJson("log/tail") {
-//            result in
-//            
-//            let fixed = fixStreamJson(result as! NSData)
-//            if let json = try? NSJSONSerialization.JSONObjectWithData(fixed, options: NSJSONReadingOptions.AllowFragments) {
-//                
-//                for res in json as! [[String : AnyObject]] {
-//                    print(res)
-//                }
-//            }
-//        }
     }
 }
-
-
-/// Move these to own file
 
 
 public class Refs : ClientSubCommand {
@@ -753,12 +719,12 @@ public class File : ClientSubCommand {
 }
 
 /** Show or edit the list of bootstrap peers */
-//extension IpfsApi {
-//    
-//    public func bootstrap(completionHandler: ([Multiaddr]) -> Void) throws {
-//        try bootstrap.list(completionHandler)
-//    }
-//}
+extension IpfsApi {
+    
+    public func bootstrap(completionHandler: ([Multiaddr]) -> Void) throws {
+        try bootstrap.list(completionHandler)
+    }
+}
 
 /**
      SECURITY WARNING:
@@ -916,14 +882,64 @@ public class Diag : ClientSubCommand {
     }
 }
 
+/** Config controls configuration variables. It works much like 'git config'. 
+    The configuration values are stored in a config file inside your IPFS repository.
+*/
 public class Config : ClientSubCommand {
     
     var parent: IpfsApiClient?
+    
+    public func show(completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        try parent!.fetchDictionary("config/show",completionHandler: completionHandler )
+    }
+    
+    public func replace(filePath: String, completionHandler: (Bool) -> Void) throws {
+        try parent!.net.sendTo(parent!.baseUrl+"config/replace?stream-channels=true", content: [filePath]) {
+            _ in
+        }
+    }
+    
+    public func get(key: String, completionHandler: (String) -> Void) throws {
+        try parent!.fetchDictionary("swarm/peers?stream-channels=true") {
+            (jsonDictionary: Dictionary) in
+            
+            guard let result = jsonDictionary["Value"] as? String else {
+                throw IpfsApiError.SwarmError("Config get error: \(jsonDictionary["Message"] as? String)")
+            }
+            
+            completionHandler(result)
+        }
+    }
+    
+    public func set(key: String, value: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        try parent!.fetchDictionary("config?arg=\(key)&arg=\(value)", completionHandler: completionHandler )
+    }
+}
+
+/** Downloads and installs updates for IPFS (disabled at the API node side) */
+extension Update{
+    
+    public func update(completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        try parent!.fetchDictionary("update", completionHandler: completionHandler )
+    }
 }
 
 public class Update : ClientSubCommand {
     
     var parent: IpfsApiClient?
+    
+    public func check(completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        try parent!.fetchDictionary("update/check", completionHandler: completionHandler )
+    }
+    
+    public func log(completionHandler: ([String : AnyObject]) -> Void) throws {
+        
+        try parent!.fetchDictionary("update/log", completionHandler: completionHandler )
+    }
 }
 
 
@@ -942,6 +958,11 @@ public class Stats : ClientSubCommand {
         try parent!.fetchDictionary("stats/bw", completionHandler: completionHandler)
     }
 }
+
+
+
+/// Utility functions
+
 /** Deal with concatenated JSON (since JSONSerialization doesn't) by wrapping it
  in array brackets and comma separating the various root components. */
 public func fixStreamJson(rawJson: NSData) -> NSData {
@@ -999,3 +1020,4 @@ func buildArgString(args: [String]) -> String {
     }
     return outString
 }
+
