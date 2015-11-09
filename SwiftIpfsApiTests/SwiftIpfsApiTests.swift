@@ -564,6 +564,55 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(sys)
     }
     
+    func testConfig() {
+        let show = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.config.show() {
+                result in
+                print(result)
+                /// do comparison with truth here. Currently by visual inspection :/
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(show)
+        
+        let set = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.config.set("Teo", value: "42") {
+                result in
+                
+                try api.config.get("Teo") {
+                    result in
+                    /// do comparison with truth here.
+                    if case .String(let strResult) = result where strResult == "42" { } else {
+                        XCTFail()
+                    }
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+        }
+    
+        tester(set)
+        
+   
+        let get = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.config.get("Datastore.Type") {
+                result in
+                /// do comparison with truth here.
+                if case .String(let strResult) = result where strResult == "leveldb" { } else {
+                    XCTFail()
+                }
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(get)
+
+    }
+    
+    
     func testBaseCommands() {
         
         let lsTest = { (dispatchGroup: dispatch_group_t) throws -> Void in
@@ -705,7 +754,12 @@ class SwiftIpfsApiTests: XCTestCase {
     func testLog() {
         let log = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
-            try api.log() {
+            let updateHandler = { (data: NSData) -> Bool in
+                print("Got an update. Closing.")
+                return false
+            }
+            
+            try api.log(updateHandler) {
                 log in
                 
                 for entry in log {
@@ -715,7 +769,7 @@ class SwiftIpfsApiTests: XCTestCase {
             }
         }
         
-        tester(log)
+        //tester(log)
         
     }
     

@@ -33,6 +33,8 @@ public protocol IpfsApiClient {
     var bootstrap:  Bootstrap { get }
     var diag:       Diag { get }
     var stats:      Stats { get }
+    var config:     Config { get }
+    var update:     Update { get }
     
     var net:        NetworkIo { get }
 }
@@ -138,7 +140,8 @@ public class IpfsApi : IpfsApiClient {
     public let bootstrap  = Bootstrap()
     public let diag       = Diag()
     public let stats      = Stats()
-
+    public let config     = Config()
+    public let update     = Update()
 
     
     public convenience init(addr: Multiaddr) throws {
@@ -180,6 +183,8 @@ public class IpfsApi : IpfsApiClient {
         bootstrap.parent  = self
         diag.parent       = self
         stats.parent      = self
+        config.parent     = self
+        update.parent     = self
 //        v This breaks the compiler so doing it the old fashioned way ^
 //        /// set all the secondary commands' parent to this.
 //        let secondary = [refs, repo, block, pin, swarm, object, name, dht, bootstrap, diags, stats]
@@ -360,7 +365,7 @@ public class IpfsApi : IpfsApiClient {
         Since the log tail won't stop until interrupted, the update handler
         should return false when it wants the updates to stop.
     */
-    public func log(completionHandler: ([[String : AnyObject]]) -> Void, updateHandler: (NSData) throws -> Bool) throws {
+    public func log(updateHandler: (NSData) throws -> Bool, completionHandler: ([[String : AnyObject]]) -> Void) throws {
         
         /// Two test closures to be passed to the fetchStreamJson as parameters.
         let comp = { (result: AnyObject) -> Void in
@@ -900,19 +905,20 @@ public class Config : ClientSubCommand {
         }
     }
     
-    public func get(key: String, completionHandler: (String) -> Void) throws {
-        try parent!.fetchDictionary("swarm/peers?stream-channels=true") {
+    public func get(key: String, completionHandler: (JsonType) throws -> Void) throws {
+        try parent!.fetchDictionary("config?arg=" + key) {
             (jsonDictionary: Dictionary) in
             
-            guard let result = jsonDictionary["Value"] as? String else {
+            guard let result = jsonDictionary["Value"] else {
                 throw IpfsApiError.SwarmError("Config get error: \(jsonDictionary["Message"] as? String)")
             }
             
-            completionHandler(result)
+            try completionHandler(JsonType.parse(result))
+            
         }
     }
     
-    public func set(key: String, value: String, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func set(key: String, value: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
         
         try parent!.fetchDictionary("config?arg=\(key)&arg=\(value)", completionHandler: completionHandler )
     }

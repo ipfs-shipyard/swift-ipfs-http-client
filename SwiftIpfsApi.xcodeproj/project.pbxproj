@@ -30,6 +30,8 @@
 		AB2C9EDE1BD79E9700BCCF01 /* NetworkIo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C9EDD1BD79E9700BCCF01 /* NetworkIo.swift */; };
 		AB2C9EE01BD79F9B00BCCF01 /* HttpIo.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2C9EDF1BD79F9B00BCCF01 /* HttpIo.swift */; };
 		AB6389ED1BD7E62D006F9BDA /* SwiftMultiaddr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3ACE1BD673920090C97A /* SwiftMultiaddr.framework */; };
+		ABEDF91B1BF0BCB3007A1B2B /* Dictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABEDF91A1BF0BCB3007A1B2B /* Dictionary.swift */; };
+		ABEDF91E1BF0BE58007A1B2B /* JsonType.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABEDF91D1BF0BE58007A1B2B /* JsonType.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +82,8 @@
 		AB2C9ED11BD6906B00BCCF01 /* Multipart.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Multipart.swift; sourceTree = "<group>"; };
 		AB2C9EDD1BD79E9700BCCF01 /* NetworkIo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkIo.swift; sourceTree = "<group>"; };
 		AB2C9EDF1BD79F9B00BCCF01 /* HttpIo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HttpIo.swift; sourceTree = "<group>"; };
+		ABEDF91A1BF0BCB3007A1B2B /* Dictionary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Dictionary.swift; path = SwiftIpfsApi/Extensions/Dictionary.swift; sourceTree = "<group>"; };
+		ABEDF91D1BF0BE58007A1B2B /* JsonType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JsonType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +118,7 @@
 			children = (
 				AB0A3AAF1BD6705B0090C97A /* SwiftIpfsApi */,
 				AB0A3ABB1BD6705B0090C97A /* SwiftIpfsApiTests */,
+				ABEDF91C1BF0BCBB007A1B2B /* Extensions */,
 				AB0A3AD81BD673A30090C97A /* Frameworks */,
 				AB0A3AAE1BD6705B0090C97A /* Products */,
 			);
@@ -138,6 +143,7 @@
 				AB0A3AB21BD6705B0090C97A /* Info.plist */,
 				AB0A3AC71BD671320090C97A /* MerkleNode.swift */,
 				AB0A3AB01BD6705B0090C97A /* SwiftIpfsApi.h */,
+				ABEDF91D1BF0BE58007A1B2B /* JsonType.swift */,
 			);
 			path = SwiftIpfsApi;
 			sourceTree = "<group>";
@@ -163,6 +169,14 @@
 				AB0A3AD01BD673920090C97A /* VarInt.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		ABEDF91C1BF0BCBB007A1B2B /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				ABEDF91A1BF0BCB3007A1B2B /* Dictionary.swift */,
+			);
+			name = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -275,10 +289,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				AB2C9EDE1BD79E9700BCCF01 /* NetworkIo.swift in Sources */,
+				ABEDF91E1BF0BE58007A1B2B /* JsonType.swift in Sources */,
 				AB2C9EE01BD79F9B00BCCF01 /* HttpIo.swift in Sources */,
 				AB2C9ED21BD6906B00BCCF01 /* Multipart.swift in Sources */,
 				AB0A3ADA1BD67CE10090C97A /* IpfsApi.swift in Sources */,
 				AB0A3AC81BD671320090C97A /* MerkleNode.swift in Sources */,
+				ABEDF91B1BF0BCB3007A1B2B /* Dictionary.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
