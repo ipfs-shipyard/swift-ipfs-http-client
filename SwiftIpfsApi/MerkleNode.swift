@@ -9,6 +9,11 @@
 import Foundation
 import SwiftMultihash
 
+public enum MerkleNodeError : ErrorType {
+    case JsonFormatError
+    case RequiredValueMissing(String)
+}
+
 public class MerkleNode {
     public let hash: Multihash?
     public let name: String?
@@ -40,6 +45,34 @@ public class MerkleNode {
             throw error
         }
     }
+}
+
+public func merkleNodeFromJson2(rawJson: JsonType) throws -> MerkleNode {
+    guard case .Object(let objs) = rawJson else {
+        throw MerkleNodeError.JsonFormatError
+    }
+    
+    var hash: String
+    if let jsonHash = objs["Hash"]?.string { hash = jsonHash }
+    else if let jsonKey = objs["Key"]?.string { hash = jsonKey }
+    else { throw MerkleNodeError.RequiredValueMissing("Neither Hash nor Key exist") }
+
+    let name     = objs["Name"]?.string
+    let size     = objs["Size"]?.number as? Int
+    let type     = objs["Type"]?.number as? Int
+
+    var links: [MerkleNode]?
+    if let rawLinks = objs["Links"]?.array {
+        links    = try rawLinks.map { try merkleNodeFromJson2($0) }
+    }
+    
+    /// Should this be UInt8? The command line output looks like UInt16
+    var data: [UInt8]?
+    if let strDat = objs["Data"]?.string {
+        data = [UInt8](strDat.utf8)
+    }
+
+    return try MerkleNode(hash: hash, name: name, size: size, type: type, links: links, data: data)
 }
 
 public func merkleNodeFromJson(rawJson: AnyObject) throws -> MerkleNode {

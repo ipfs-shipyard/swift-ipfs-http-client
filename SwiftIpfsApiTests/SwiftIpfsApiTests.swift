@@ -13,6 +13,7 @@ import SwiftMultiaddr
 import SwiftMultihash
 
 class SwiftIpfsApiTests: XCTestCase {
+
     
     override func setUp() {
         super.setUp()
@@ -405,6 +406,51 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(resolve)
     }
     
+    func testDht() {
+        
+        do {
+            /// Common
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let multihash = try fromB58String("QmUYttJXpMQYvQk5DcX2owRUuYJBJM6W7KQSUsycCCE2MZ")
+            
+            let findProvs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                try api.dht.findProvs(multihash) {
+                    result in
+                    
+                    var pass = false
+                    repeat {
+                        guard case .Array(let providers) = result else { break }
+                        
+                        for prov in providers {
+                            
+                            guard   case .Object(let obj) = prov,
+                                    case .Array(let responses) = obj["Responses"]! else { continue }
+                            
+                            for response in responses {
+                                
+                                guard   case .Object(let ars) = response,
+                                        case .String(let provHash) = ars["ID"]! else { continue }
+                                
+                                /// This node should definitely be in the dht.
+                                if provHash == "QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1" { pass = true }
+                            }
+                        }
+                    } while false
+                    
+                    XCTAssert(pass)
+                    
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+            
+            tester(findProvs)
+            
+            
+        } catch {
+            print("testDht error \(error)")
+        }
+    }
+    
     func testBootstrap() {
         
         do {
@@ -615,12 +661,25 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testBaseCommands() {
         
+        /// For this test assert that the resulting links' name is Mel.html and MelKaye.png
         let lsTest = { (dispatchGroup: dispatch_group_t) throws -> Void in
 
             let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.ls(multihash) {
-                result in
+                results in
+                
+                var pass = false
+                let node = results[0]
+                if let links = node.links where
+                        links.count == 2 &&
+                        links[0].name! == "Mel.html" &&
+                        links[1].name! == "MelKaye.png" {
+                    pass = true
+                }
+                
+                XCTAssert(pass)
+                
                 /// do comparison with truth here.
                 dispatch_group_leave(dispatchGroup)
             }

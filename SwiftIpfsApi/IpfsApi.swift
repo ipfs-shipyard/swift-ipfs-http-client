@@ -56,6 +56,27 @@ extension IpfsApiClient {
         try net.streamFrom(baseUrl + path, updateHandler: updateHandler, completionHandler: completionHandler)
     }
     
+
+    func fetchDictionary2(path: String, completionHandler: (JsonType) throws -> Void) throws {
+        try fetchData(path) {
+            (data: NSData) in
+
+            /// If there was no data fetched pass an empty dictionary and return.
+            if data.length == 0 {
+                try completionHandler(JsonType.Null)
+                return
+            }
+//            print(data)
+            let fixedData = fixStreamJson(data)
+            let json = try NSJSONSerialization.JSONObjectWithData(fixedData, options: NSJSONReadingOptions.AllowFragments)
+    
+            /// At this point we could check to see if the json contains a code/message for flagging errors.
+            
+            try completionHandler(JsonType.parse(json))
+        }
+    }
+    
+    
     func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
         try fetchData(path) {
             (data: NSData) in
@@ -75,7 +96,7 @@ extension IpfsApiClient {
             try completionHandler(json)
         }
     }
-    
+   
     func fetchData(path: String, completionHandler: (NSData) throws -> Void) throws {
         
         try net.receiveFrom(baseUrl + path, completionHandler: completionHandler)
@@ -222,7 +243,31 @@ public class IpfsApi : IpfsApiClient {
             }
         }
     }
-
+    
+    public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
+        
+        let hashString = b58String(hash)
+        try fetchDictionary2("ls/"+hashString) {
+            (json) in
+            
+            do {
+                guard   case .Object(let jsonDict) = json,
+                        case .Array(let objects) = jsonDict["Objects"]! else {
+                    throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
+                }
+//                guard let objects = jsonDictionary["Objects"] as? [AnyObject] else {
+//                    throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
+//                }
+                
+                let merkles = try objects.map { try merkleNodeFromJson2($0) }
+                
+                completionHandler(merkles)
+            } catch {
+                print("ls Error")
+            }
+        }
+    }
+/*
     public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
         
         let hashString = b58String(hash)
@@ -242,7 +287,7 @@ public class IpfsApi : IpfsApiClient {
             }
         }
     }
-    
+ */
 
     public func cat(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
         let hashString = b58String(hash)

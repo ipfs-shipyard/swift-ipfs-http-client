@@ -18,6 +18,7 @@ public enum JsonType {
 
 
 public extension JsonType {
+    
     static func parse(json: AnyObject) -> JsonType {
         switch json {
         case let value as [AnyObject]: return .Array(value.map(parse))
@@ -28,6 +29,38 @@ public extension JsonType {
             
         case let value as NSNumber: return .Number(value)
         default: return .Null
+        }
+    }
+}
+
+/// Use introspection to make the extraction of the value easier.
+public extension JsonType {
+    
+    var string: Swift.String? {
+        switch self {
+        case .String(let string): return string
+        default: return nil
+        }
+    }
+    
+    var number: NSNumber? {
+        switch self {
+        case .Number(let number): return number
+        default: return nil
+        }
+    }
+    
+    var object: [Swift.String : JsonType]? {
+        switch self {
+        case .Object(let object): return object
+        default: return nil
+        }
+    }
+    
+    var array: [JsonType]? {
+        switch self {
+        case .Array(let array): return array
+        default: return nil
         }
     }
 }
