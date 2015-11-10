@@ -617,7 +617,7 @@ class SwiftIpfsApiTests: XCTestCase {
         
         let lsTest = { (dispatchGroup: dispatch_group_t) throws -> Void in
 
-            let multihash = try fromB58String("QmXYxW6Wzbqv7qAmN1QwTEvfvUaGiTVricrppE5VEnh7V7")
+            let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.ls(multihash) {
                 result in
@@ -650,7 +650,7 @@ class SwiftIpfsApiTests: XCTestCase {
         
         let ping = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
-            try api.ping("QmRAe1ECqUQH5sVn5VjUoYETaNa2gTtGdnQaWUYhnD8hY3") {
+            try api.ping("QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3") {
                 (pings : [[String : AnyObject]]) in
                 
                 for ping in pings {
@@ -669,7 +669,7 @@ class SwiftIpfsApiTests: XCTestCase {
         
         let id = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
-            try api.id("QmRAe1ECqUQH5sVn5VjUoYETaNa2gTtGdnQaWUYhnD8hY3") {
+            try api.id("QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3") {
                 (pings : [String : AnyObject]) in
                 
                 for (k,v) in pings {
@@ -810,7 +810,7 @@ class SwiftIpfsApiTests: XCTestCase {
         let resolve = { (dispatchGroup: dispatch_group_t) throws -> Void in
             
             let api = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
-            let multihash = try fromB58String("QmSEYztFJmcY7dSKS7ZXybzKMhHq3LM5zVt4EfCPMsejp3")
+            let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
             
             try api.resolve("ipfs", hash: multihash, recursive: false) {
                 result in
@@ -867,7 +867,7 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testRefs() {
         let refs = { (dispatchGroup: dispatch_group_t) throws -> Void in
-            let multihash = try fromB58String("QmSEYztFJmcY7dSKS7ZXybzKMhHq3LM5zVt4EfCPMsejp3")
+            let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             
             try api.refs(multihash, recursive: false) {

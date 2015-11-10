@@ -43,7 +43,25 @@ try! api.id() {
                     
     print("Yay, I've got an id: "+ idData["ID"] as! String )
 }
+```
 
+The Swift IPFS API client is asynchronous, but if you want to use a command synchronously (eg. if you run it in its own thread) you can always use dispatch groups:
+```Swift
+let group = dispatch_group_create()
+dispatch_group_enter(group)
+
+let multihash = try! fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK") 
+
+try! api.refs(multihash, recursive: false) {
+    result in
+    for mh in result {
+        print(b58String(mh))
+    }
+    
+    dispatch_group_leave(dispatchGroup)
+}
+
+dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
 ```
 
 ## Requirements
