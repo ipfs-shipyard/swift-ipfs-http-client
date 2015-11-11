@@ -866,7 +866,10 @@ class SwiftIpfsApiTests: XCTestCase {
             
             try api.mount() {
                 result in
+                
                 print("Mount got", result)
+                XCTAssert(  result.object?["IPFS"]?.string == "/ipfs" &&
+                            result.object?["IPNS"]?.string == "/ipns")
                 dispatch_group_leave(dispatchGroup)
             }
             

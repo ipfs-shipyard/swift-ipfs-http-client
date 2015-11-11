@@ -301,7 +301,7 @@ public class IpfsApi : IpfsApiClient {
         }
     }
     
-    public func mount(ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func mount(ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: (JsonType) -> Void) throws {
         
         let fileManager = NSFileManager.defaultManager()
         
@@ -313,12 +313,7 @@ public class IpfsApi : IpfsApiClient {
             try fileManager.createDirectoryAtPath(ipnsRootPath, withIntermediateDirectories: false, attributes: nil)
         }
         
-        /// 
-        try fetchDictionary("mount?arg=" + ipfsRootPath + "&arg=" + ipnsRootPath) {
-            (jsonDictionary: Dictionary) in
-            
-            completionHandler(jsonDictionary)
-        }
+        try fetchDictionary2("mount?arg=" + ipfsRootPath + "&arg=" + ipnsRootPath, completionHandler: completionHandler)
     }
     
     /** ping is a tool to test sending data to other nodes. 
