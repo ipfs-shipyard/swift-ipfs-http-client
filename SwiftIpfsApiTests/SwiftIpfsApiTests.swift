@@ -74,14 +74,10 @@ class SwiftIpfsApiTests: XCTestCase {
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             
             try api.pin.ls() {
-                (pinned: [Multihash : AnyObject]) in
+                (pinned: [Multihash : JsonType]) in
                 
                 for (k,v) in pinned {
-                    print("Hash:",b58String(k))
-                    if let sd = v as? [String : AnyObject] {
-                        print("Type:", sd["Type"] as! String)
-                        print("Count:", sd["Count"] as! Int)
-                    }
+                    print("\(b58String(k)) \((v.object?["Type"]?.string)!)")
                 }
                 dispatch_group_leave(dispatchGroup)
             }
@@ -770,9 +766,6 @@ class SwiftIpfsApiTests: XCTestCase {
         }
     }
     
-    func testIdDefault() {
-        
-    }
     
     func testVersion() {
         let version = { (dispatchGroup: dispatch_group_t) throws -> Void in
@@ -792,11 +785,13 @@ class SwiftIpfsApiTests: XCTestCase {
         let commands = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.commands(true) {
-                commands in
-                
-                for (k,v) in commands {
-                    print("k: ",k)
-                    print("v: ",v)
+                result in
+               
+                if let commands = result.object {
+                    for (k,v) in commands {
+                        print("k: ",k)
+                        print("v: ",v)
+                    }
                 }
                 dispatch_group_leave(dispatchGroup)
             }

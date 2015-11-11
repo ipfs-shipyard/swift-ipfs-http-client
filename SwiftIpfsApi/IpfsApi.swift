@@ -57,7 +57,7 @@ extension IpfsApiClient {
     }
     
 
-    func fetchDictionary2(path: String, completionHandler: (JsonType) throws -> Void) throws {
+    func fetchJson(path: String, completionHandler: (JsonType) throws -> Void) throws {
         try fetchData(path) {
             (data: NSData) in
 
@@ -248,7 +248,7 @@ public class IpfsApi : IpfsApiClient {
     
     public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
         
-        try fetchDictionary2("ls/\(b58String(hash))") {
+        try fetchJson("ls/\(b58String(hash))") {
             json in
             
             guard  let objects = json.object?["Objects"]?.array else {
@@ -272,7 +272,7 @@ public class IpfsApi : IpfsApiClient {
 
     public func refs(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
         
-        try fetchDictionary2("refs?arg=" + b58String(hash) + "&r=\(recursive)") {
+        try fetchJson("refs?arg=" + b58String(hash) + "&r=\(recursive)") {
            result in
         
             guard let results = result.array else { throw IpfsApiError.UnexpectedReturnType }
@@ -289,11 +289,11 @@ public class IpfsApi : IpfsApiClient {
         }
     }
     public func resolve(scheme: String, hash: Multihash, recursive: Bool, completionHandler: (JsonType) -> Void) throws {
-        try fetchDictionary2("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
+        try fetchJson("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
     }
     
     public func dns(domain: String, completionHandler: (String) -> Void) throws {
-        try fetchDictionary2("dns?arg=" + domain) {
+        try fetchJson("dns?arg=" + domain) {
             result in
             
                 guard let path = result.object?["Path"]?.string else { throw IpfsApiError.ResultMissingData("No Path found") }
@@ -313,14 +313,14 @@ public class IpfsApi : IpfsApiClient {
             try fileManager.createDirectoryAtPath(ipnsRootPath, withIntermediateDirectories: false, attributes: nil)
         }
         
-        try fetchDictionary2("mount?arg=" + ipfsRootPath + "&arg=" + ipnsRootPath, completionHandler: completionHandler)
+        try fetchJson("mount?arg=" + ipfsRootPath + "&arg=" + ipnsRootPath, completionHandler: completionHandler)
     }
     
     /** ping is a tool to test sending data to other nodes. 
         It finds nodes via the routing system, send pings, wait for pongs, 
         and prints out round- trip latency information. */
     public func ping(target: String, completionHandler: (JsonType) -> Void) throws {
-        try fetchDictionary2("ping/" + target, completionHandler: completionHandler)
+        try fetchJson("ping/" + target, completionHandler: completionHandler)
     }
     
     
@@ -328,23 +328,24 @@ public class IpfsApi : IpfsApiClient {
         var request = "id"
         if target != nil { request += "/\(target!)" }
         
-        try fetchDictionary2(request, completionHandler: completionHandler)
+        try fetchJson(request, completionHandler: completionHandler)
     }
     
     public func version(completionHandler: (String) -> Void) throws {
-        try fetchDictionary("version") { json in
-            let version = json["Version"] as? String ?? ""
+        try fetchJson("version") {
+            json in
+            let version = json.object?["Version"]?.string ?? ""
             completionHandler(version)
         }
     }
     
     /** List all available commands. */
-    public func commands(showOptions: Bool = false, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func commands(showOptions: Bool = false, completionHandler: (JsonType) -> Void) throws {
         
         var request = "commands" //+ (showOptions ? "?flags=true&" : "")
         if showOptions { request += "?flags=true&" }
         
-        try fetchDictionary(request, completionHandler: completionHandler)
+        try fetchJson(request, completionHandler: completionHandler)
     }
     
     /** This method should take both a completion handler and an update handler.

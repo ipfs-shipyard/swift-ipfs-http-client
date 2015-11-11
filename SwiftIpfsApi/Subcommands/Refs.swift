@@ -9,6 +9,7 @@
 
 import SwiftMultihash
 
+/** Lists links (references) from an object */
 public class Refs : ClientSubCommand {
     
     var parent: IpfsApiClient?
