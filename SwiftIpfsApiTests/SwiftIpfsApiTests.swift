@@ -382,9 +382,8 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.name.publish(hash: multihash) {
                 result in
                 
-                print("Published to: \(result["Name"]!): \(result["Value"]!)")
-                
-                //XCTAssert(result == publishedPath)
+                XCTAssert(  (result.object?["Name"]?.string)! == "QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1" &&
+                            (result.object?["Value"]?.string)! == publishedPath)
                 dispatch_group_leave(dispatchGroup)
             }
         }

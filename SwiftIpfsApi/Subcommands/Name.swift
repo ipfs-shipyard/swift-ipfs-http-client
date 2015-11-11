@@ -17,14 +17,14 @@ public class Name : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func publish(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func publish(hash: Multihash, completionHandler: (JsonType) -> Void) throws {
         try self.publish(nil, hash: hash, completionHandler: completionHandler)
     }
     
-    public func publish(id: String? = nil, hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func publish(id: String? = nil, hash: Multihash, completionHandler: (JsonType) -> Void) throws {
         var request = "name/publish?arg="
         if id != nil { request += id! + "&arg=" }
-        try parent!.fetchDictionary(request + "/ipfs/" + b58String(hash), completionHandler: completionHandler)
+        try parent!.fetchJson(request + "/ipfs/" + b58String(hash), completionHandler: completionHandler)
     }
     
     public func resolve(hash: Multihash? = nil, completionHandler: (String) -> Void) throws {
@@ -32,16 +32,22 @@ public class Name : ClientSubCommand {
         var request = "name/resolve"
         if hash != nil { request += "?arg=" + b58String(hash!) }
         
-        try parent!.fetchData(request) {
-            (rawJson: NSData) in
-            print(rawJson)
+        try parent!.fetchJson(request) {
+            result in
             
-            guard let json = try NSJSONSerialization.JSONObjectWithData(rawJson, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-            }
-            
-            let resolvedName = json["Path"] as? String ?? ""
+            let resolvedName = result.object?["Path"]?.string ?? ""
             completionHandler(resolvedName)
         }
+//        try parent!.fetchData(request) {
+//            (rawJson: NSData) in
+//            print(rawJson)
+//            
+//            guard let json = try NSJSONSerialization.JSONObjectWithData(rawJson, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
+//            }
+//            
+//            let resolvedName = json["Path"] as? String ?? ""
+//            completionHandler(resolvedName)
+//        }
         
     }
 }
