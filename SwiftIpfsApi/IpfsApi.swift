@@ -248,52 +248,21 @@ public class IpfsApi : IpfsApiClient {
     
     public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
         
-        let hashString = b58String(hash)
-        try fetchDictionary2("ls/"+hashString) {
-            (json) in
+        try fetchDictionary2("ls/\(b58String(hash))") {
+            json in
             
-            do {
-                guard   case .Object(let jsonDict) = json,
-                        case .Array(let objects) = jsonDict["Objects"]! else {
-                    throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
-                }
-//                guard let objects = jsonDictionary["Objects"] as? [AnyObject] else {
-//                    throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
-//                }
-                
-                let merkles = try objects.map { try merkleNodeFromJson2($0) }
-                
-                completionHandler(merkles)
-            } catch {
-                print("ls Error")
+            guard  let objects = json.object?["Objects"]?.array else {
+                throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
             }
+            
+            let merkles = try objects.map { try merkleNodeFromJson2($0) }
+            
+            completionHandler(merkles)
         }
     }
-/*
-    public func ls(hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
-        
-        let hashString = b58String(hash)
-        try fetchDictionary("ls/"+hashString) {
-            (jsonDictionary: Dictionary) in
-            
-            do {
-                guard let objects = jsonDictionary["Objects"] as? [AnyObject] else {
-                    throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
-                }
-                
-                let merkles = try objects.map { try merkleNodeFromJson($0) }
-                
-                completionHandler(merkles)
-            } catch {
-                print("ls Error")
-            }
-        }
-    }
- */
 
     public func cat(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
-        let hashString = b58String(hash)
-        try fetchBytes("cat/"+hashString, completionHandler: completionHandler)
+        try fetchBytes("cat/\(b58String(hash))", completionHandler: completionHandler)
     }
     
     public func get(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
@@ -319,47 +288,10 @@ public class IpfsApi : IpfsApiClient {
             completionHandler(refs)
         }
     }
-/*    public func refs(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
-        
-        let hashString = b58String(hash)
-        try fetchData("refs?arg=" + hashString + "&r=\(recursive)") {
-            (data: NSData) in
-            do {
-                
-                let fixedData = fixStreamJson(data)
-                // Parse the data
-                guard let json = try NSJSONSerialization.JSONObjectWithData(fixedData, options: NSJSONReadingOptions.MutableContainers) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
-                }
-                
-                /// Extract the references and add them to an array.
-                var refs: [Multihash] = []
-                for obj in json {
-                    if let ref = obj["Ref"]{
-                        let mh = try fromB58String(ref as! String)
-                        refs.append(mh)
-                    }
-                }
-                
-                completionHandler(refs)
-                
-            } catch {
-                print("Error \(error)")
-            }
-        }
-    }
- */
     public func resolve(scheme: String, hash: Multihash, recursive: Bool, completionHandler: (JsonType) -> Void) throws {
         try fetchDictionary2("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
     }
-/*    public func resolve(scheme: String, hash: Multihash, recursive: Bool, completionHandler: ([String : AnyObject]) -> Void) throws {
-        let hashString = b58String(hash)
-        try fetchDictionary("resolve?arg=/\(scheme)/\(hashString)&r=\(recursive)") {
-            (jsonDictionary: Dictionary) in
-            
-            completionHandler(jsonDictionary)
-        }
-    }
- */
+    
     public func dns(domain: String, completionHandler: (String) -> Void) throws {
         try fetchDictionary2("dns?arg=" + domain) {
             result in
