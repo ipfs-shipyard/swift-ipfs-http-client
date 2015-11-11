@@ -446,6 +446,16 @@ class SwiftIpfsApiTests: XCTestCase {
             tester(findProvs)
             
             
+            let query = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                let multiaddress = try newMultiaddr("QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3")
+                try api.dht.query(multiaddress) {
+                    result in
+                    /// assert against some known return value
+                }
+            }
+            
+            tester(query)
+            
         } catch {
             print("testDht error \(error)")
         }
@@ -890,7 +900,9 @@ class SwiftIpfsApiTests: XCTestCase {
             
             try api.resolve("ipns", hash: multihash, recursive: false) {
                 result in
-                print("Resolve IPNS got", result)
+                
+                XCTAssert(result.object?["Path"]?.string == "/ipfs/QmTKWgmTLaosngT7txpZEVtwdxvJsX9pwKhmgMSbxwY7sN")
+                
                 dispatch_group_leave(dispatchGroup)
             }
         }
@@ -931,9 +943,13 @@ class SwiftIpfsApiTests: XCTestCase {
             
             try api.refs(multihash, recursive: false) {
                 result in
-                for mh in result {
-                    print(b58String(mh))
-                }
+                
+                XCTAssert(  result.count == 2 &&
+                            b58String(result[0]) == "QmZX6Wrte3EqkUCwLHqBbuDhmH5yqPurNNTxKQc4NFfDxT" &&
+                            b58String(result[1]) == "QmaLB324wDRKEJbGGr8FWg3qWnpTxdc2oEKDT62qhe8tMR" )
+//                for mh in result {
+//                    print(b58String(mh))
+//                }
                 
                 dispatch_group_leave(dispatchGroup)
             }

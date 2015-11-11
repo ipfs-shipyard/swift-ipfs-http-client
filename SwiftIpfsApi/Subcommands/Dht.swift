@@ -18,8 +18,8 @@ public class Dht : ClientSubCommand {
         try parent!.fetchDictionary2("dht/findprovs?arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func query(address: Multiaddr, completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchDictionary("dht/query?arg=" + address.string() , completionHandler: completionHandler)
+    public func query(address: Multiaddr, completionHandler: (JsonType) -> Void) throws {
+        try parent!.fetchDictionary2("dht/query?arg=" + address.string() , completionHandler: completionHandler)
     }
     
     public func findpeer(address: Multiaddr, completionHandler: ([String : AnyObject]) -> Void) throws {

@@ -132,7 +132,9 @@ enum IpfsApiError : ErrorType {
     case NilData
     case DataTaskError(NSError)
     case JsonSerializationFailed
- 
+    case ResultMissingData(String)
+    case UnexpectedReturnType
+    
     case SwarmError(String)
     case RefsError(String)
     case PinError(String)
@@ -301,6 +303,24 @@ public class IpfsApi : IpfsApiClient {
 
     public func refs(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
         
+        try fetchDictionary2("refs?arg=" + b58String(hash) + "&r=\(recursive)") {
+           result in
+        
+            guard let results = result.array else { throw IpfsApiError.UnexpectedReturnType }
+            /// Extract the references and add them to an array.
+            var refs: [Multihash] = []
+            for obj in results {
+                if let ref = obj.object?["Ref"]?.string {
+                    let mh = try fromB58String(ref)
+                    refs.append(mh)
+                }
+            }
+            
+            completionHandler(refs)
+        }
+    }
+/*    public func refs(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
+        
         let hashString = b58String(hash)
         try fetchData("refs?arg=" + hashString + "&r=\(recursive)") {
             (data: NSData) in
@@ -327,8 +347,11 @@ public class IpfsApi : IpfsApiClient {
             }
         }
     }
-    
-    public func resolve(scheme: String, hash: Multihash, recursive: Bool, completionHandler: ([String : AnyObject]) -> Void) throws {
+ */
+    public func resolve(scheme: String, hash: Multihash, recursive: Bool, completionHandler: (JsonType) -> Void) throws {
+        try fetchDictionary2("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
+    }
+/*    public func resolve(scheme: String, hash: Multihash, recursive: Bool, completionHandler: ([String : AnyObject]) -> Void) throws {
         let hashString = b58String(hash)
         try fetchDictionary("resolve?arg=/\(scheme)/\(hashString)&r=\(recursive)") {
             (jsonDictionary: Dictionary) in
@@ -336,12 +359,12 @@ public class IpfsApi : IpfsApiClient {
             completionHandler(jsonDictionary)
         }
     }
-    
+ */
     public func dns(domain: String, completionHandler: (String) -> Void) throws {
-        try fetchDictionary("dns?arg=" + domain) {
-            (jsonDict: Dictionary) in
+        try fetchDictionary2("dns?arg=" + domain) {
+            result in
             
-                guard let path = jsonDict["Path"] as? String else { throw IpfsApiError.NilData }
+                guard let path = result.object?["Path"]?.string else { throw IpfsApiError.ResultMissingData("No Path found") }
                 completionHandler(path)
         }
     }
