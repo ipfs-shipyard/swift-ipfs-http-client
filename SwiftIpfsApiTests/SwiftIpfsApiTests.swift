@@ -720,13 +720,16 @@ class SwiftIpfsApiTests: XCTestCase {
         let ping = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.ping("QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3") {
-                (pings : [[String : AnyObject]]) in
+               result in
                 
-                for ping in pings {
-                    print(ping["Text"] ?? "-")
-                    print(ping["Time"] ?? "-")
-                    print(ping["Success"] ?? "-")
+                if let pings = result.array {
+                    for ping in pings {
+                        print(ping.object?["Text"] ?? "-")
+                        print(ping.object?["Time"] ?? "-")
+                        print(ping.object?["Success"] ?? "-")
+                    }
                 }
+
                 dispatch_group_leave(dispatchGroup)
             }
         }
