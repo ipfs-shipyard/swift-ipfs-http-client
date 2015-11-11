@@ -737,40 +737,41 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(ping)
     }
     
-    func testId() {
+    func testIds() {
         
-        let id = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        do {
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
-            try api.id("QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3") {
-                (pings : [String : AnyObject]) in
-                
-                for (k,v) in pings {
-                    print("k: ",k)
-                    print("v: ",v)
+            let idString = "QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1"
+            
+            let id = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                try api.id(idString) {
+                    result in
+                    
+                    XCTAssert(result.object?["ID"]?.string == idString)
+                    dispatch_group_leave(dispatchGroup)
                 }
-                dispatch_group_leave(dispatchGroup)
             }
+            
+            tester(id)
+            
+            let idDefault = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                try api.id() {
+                    result in
+                    
+                    XCTAssert(result.object?["ID"]?.string == idString)
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+            
+            tester(idDefault)
+            
+        } catch {
+            print("testIds error:\(error)")
         }
-        
-        tester(id)
     }
     
     func testIdDefault() {
         
-        let id = { (dispatchGroup: dispatch_group_t) throws -> Void in
-            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
-            try api.id() {
-                (pings : [String : AnyObject]) in
-                
-                for (k,v) in pings {
-                    print("k: ",k)
-                    print("v: ",v)
-                }
-                dispatch_group_leave(dispatchGroup)
-            }
-        }
-        
-        tester(id)
     }
     
     func testVersion() {

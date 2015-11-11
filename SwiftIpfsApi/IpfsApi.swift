@@ -322,29 +322,13 @@ public class IpfsApi : IpfsApiClient {
     public func ping(target: String, completionHandler: (JsonType) -> Void) throws {
         try fetchDictionary2("ping/" + target, completionHandler: completionHandler)
     }
-//    /** ping is a tool to test sending data to other nodes. 
-//        It finds nodes via the routing system, send pings, wait for pongs, 
-//        and prints out round- trip latency information. */
-//    public func ping(target: String, completionHandler: ([[String : AnyObject]]) -> Void) throws {
-//        try fetchData("ping/" + target) {
-//            (rawJson: NSData) in
-//            
-//            /// Check for streamed JSON format and wrap & separate.
-//            let data = fixStreamJson(rawJson)
-//            
-//            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
-//            }
-//
-//            completionHandler(json)
-//        }
-//    }
     
     
-    public func id(target: String? = nil, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func id(target: String? = nil, completionHandler: (JsonType) -> Void) throws {
         var request = "id"
         if target != nil { request += "/\(target!)" }
         
-        try fetchDictionary(request, completionHandler: completionHandler)
+        try fetchDictionary2(request, completionHandler: completionHandler)
     }
     
     public func version(completionHandler: (String) -> Void) throws {
