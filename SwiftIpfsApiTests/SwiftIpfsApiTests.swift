@@ -165,7 +165,6 @@ class SwiftIpfsApiTests: XCTestCase {
                 (result: [UInt8]) in
                     let res = String(bytes: result, encoding: NSUTF8StringEncoding)
                     XCTAssert(res == "hej verden")
-                    print(res)
                     dispatch_group_leave(dispatchGroup)
             }
         }
@@ -179,10 +178,10 @@ class SwiftIpfsApiTests: XCTestCase {
             let multihash = try fromB58String("QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
             
             try api.block.stat(multihash) {
-                (result: Dictionary) in
+                result in
                 
-                let hash = result["Key"] as? String
-                let size = result["Size"] as? Int
+                let hash = result.object?["Key"]?.string
+                let size = result.object?["Size"]?.number
 
                 if hash == nil || size == nil
                     || hash != "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw"
@@ -202,7 +201,9 @@ class SwiftIpfsApiTests: XCTestCase {
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.object.new() {
                 (result: MerkleNode) in
-                print(b58String(result.hash!))
+                
+                /// A new ipfs object always has the same hash so we can assert against it.
+                XCTAssert(b58String(result.hash!) == "QmdfTbBqBPQ7VNxZEYEj14VmRuZBkqFbiwReogJgS1zR1n")
                 dispatch_group_leave(dispatchGroup)
             }
         }
@@ -213,11 +214,11 @@ class SwiftIpfsApiTests: XCTestCase {
             
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             let data = [UInt8]("{ \"Data\" : \"Dauz\" }".utf8)
+            
             try api.object.put(data) {
                 (result: MerkleNode) in
                 
-                print(b58String(result.hash!))
-                //XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+                XCTAssert(b58String(result.hash!) == "QmUqvXbE4s9oTQNhBXm2hFapLq1pnuuxsMdxP9haTzivN6")
                 dispatch_group_leave(dispatchGroup)
             }
         }
@@ -227,13 +228,12 @@ class SwiftIpfsApiTests: XCTestCase {
         let objectGet = { (dispatchGroup: dispatch_group_t) throws -> Void in
             
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
-            let multihash = try fromB58String("QmR3azp3CCGEFGZxcbZW7sbqRFuotSptcpMuN6nwThJ8x2")
+            let multihash = try fromB58String("QmUqvXbE4s9oTQNhBXm2hFapLq1pnuuxsMdxP9haTzivN6")
             
             try api.object.get(multihash) {
                 (result: MerkleNode) in
                 
-                print(b58String(result.hash!))
-                //XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
+                XCTAssert(result.data! == Array("Dauz".utf8))
                 dispatch_group_leave(dispatchGroup)
 
             }

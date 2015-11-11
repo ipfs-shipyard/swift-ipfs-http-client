@@ -14,9 +14,8 @@ public class Block : ClientSubCommand {
     var parent: IpfsApiClient?
     
     public func get(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
-        let hashString = b58String(hash)
-        try parent!.fetchBytes("block/get?stream-channels=true&arg=" + hashString, completionHandler: completionHandler)
-    }
+        try parent!.fetchBytes("block/get?stream-channels=true&arg=\(b58String(hash))", completionHandler: completionHandler)
+    }                                                                
     
     public func put(data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
         let data2 = NSData(bytes: data, length: data.count)
@@ -25,7 +24,6 @@ public class Block : ClientSubCommand {
             result in
             
             do {
-                print(result)
                 guard let json = try NSJSONSerialization.JSONObjectWithData(result, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else {
                     throw IpfsApiError.JsonSerializationFailed
                 }
@@ -37,8 +35,8 @@ public class Block : ClientSubCommand {
         }
     }
     
-    public func stat(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func stat(hash: Multihash, completionHandler: (JsonType) -> Void) throws {
         
-        try parent!.fetchDictionary("block/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
+        try parent!.fetchJson("block/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
 }

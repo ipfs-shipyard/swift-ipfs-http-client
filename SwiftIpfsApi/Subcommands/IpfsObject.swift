@@ -36,10 +36,9 @@ public class IpfsObject : ClientSubCommand {
     public func new(template: ObjectTemplates? = nil, completionHandler: (MerkleNode) throws -> Void) throws {
         var request = "object/new?stream-channels=true"
         if template != nil { request += "&arg=\(template!.rawValue)" }
-        try parent!.fetchDictionary(request) {
-            (result: [String : AnyObject]) in
-            
-            try completionHandler( try merkleNodeFromJson(result as AnyObject) )
+        try parent!.fetchJson(request) {
+            result in
+            try completionHandler( try merkleNodeFromJson2(result) )
         }
     }
     
@@ -70,24 +69,26 @@ public class IpfsObject : ClientSubCommand {
      */
     public func get(hash: Multihash, completionHandler: (MerkleNode) -> Void) throws {
         
-        try parent!.fetchDictionary("object/get?stream-channels=true&arg=" + b58String(hash)){
-            (var result) in
-            result["Hash"] = b58String(hash)
-            completionHandler(try merkleNodeFromJson(result))
+        try parent!.fetchJson("object/get?stream-channels=true&arg=" + b58String(hash)){
+            result in
+            
+            guard var res = result.object else { throw IpfsApiError.ResultMissingData("No object found!")}
+            res["Hash"] = .String(b58String(hash))
+            completionHandler(try merkleNodeFromJson2(.Object(res)))
         }
     }
     
     public func links(hash: Multihash, completionHandler: (MerkleNode) throws -> Void) throws {
         
-        try parent!.fetchDictionary("object/links?stream-channels=true&arg=" + b58String(hash)){
+        try parent!.fetchJson("object/links?stream-channels=true&arg=" + b58String(hash)){
             result in
-            try completionHandler(try merkleNodeFromJson(result))
+            try completionHandler(try merkleNodeFromJson2(result))
         }
     }
     
-    public func stat(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func stat(hash: Multihash, completionHandler: (JsonType) -> Void) throws {
         
-        try parent!.fetchDictionary("object/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
+        try parent!.fetchJson("object/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
     public func data(hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
@@ -105,9 +106,9 @@ public class IpfsObject : ClientSubCommand {
         
         request += buildArgString(args)
         
-        try parent!.fetchDictionary(request) {
+        try parent!.fetchJson(request) {
             result in
-            try completionHandler(try merkleNodeFromJson(result))
+            try completionHandler(try merkleNodeFromJson2(result))
         }
     }
 }
