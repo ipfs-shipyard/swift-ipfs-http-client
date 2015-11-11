@@ -107,8 +107,9 @@ class SwiftIpfsApiTests: XCTestCase {
         let repoGc = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             
-            /// First we do an ls of something we know isn't pinned locally so that
-            /// the gc has something to collect.
+            /** First we do an ls of something we know isn't pinned locally.
+                This causes it to be copied to the local node so that the gc has
+                something to collect. */
             let tmpGroup = dispatch_group_create()
             
             dispatch_group_enter(tmpGroup)
@@ -119,12 +120,12 @@ class SwiftIpfsApiTests: XCTestCase {
             
             
             try api.repo.gc() {
-                (removed: [[String : AnyObject]]) in
-                
-                for ref in removed {
-                    print("removed: ",ref["Key"]!)
+                result in
+                if let removed = result.array {
+                    for ref in removed {
+                        print("removed: ",(ref.object?["Key"]?.string)!)
+                    }
                 }
-                
                 dispatch_group_leave(dispatchGroup)
             }
         }

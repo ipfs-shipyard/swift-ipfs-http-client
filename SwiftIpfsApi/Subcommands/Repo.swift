@@ -13,17 +13,20 @@ public class Repo : ClientSubCommand {
     
     /** gc is a plumbing command that will sweep the local set of stored objects
      and remove ones that are not pinned in order to reclaim hard disk space. */
-    public func gc(completionHandler: ([[String : AnyObject]]) -> Void) throws {
-        try parent!.fetchData("repo/gc") {
-            (rawJson: NSData) in
-            
-            /// Check for streamed JSON format and wrap & separate.
-            let data = fixStreamJson(rawJson)
-            
-            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
-            }
-            
-            completionHandler(json)
-        }
+    public func gc(completionHandler: (JsonType) -> Void) throws {
+        try parent!.fetchJson("repo/gc", completionHandler: completionHandler)
     }
+//    public func gc(completionHandler: ([[String : AnyObject]]) -> Void) throws {
+//        try parent!.fetchData("repo/gc") {
+//            (rawJson: NSData) in
+//            
+//            /// Check for streamed JSON format and wrap & separate.
+//            let data = fixStreamJson(rawJson)
+//            
+//            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
+//            }
+//            
+//            completionHandler(json)
+//        }
+//    }
 }
