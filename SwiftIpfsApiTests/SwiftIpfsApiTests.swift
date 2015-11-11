@@ -483,6 +483,39 @@ class SwiftIpfsApiTests: XCTestCase {
         }
     }
     
+    /// If this fails check from the command line that the ipns path actually resolves
+    /// to the checkHash before thinking this is actually broken. Ipns links do change.
+    func testFileLs() {
+        let lsIpns = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let checkHash = "QmTKWgmTLaosngT7txpZEVtwdxvJsX9pwKhmgMSbxwY7sN"
+            let path = "/ipns/QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1"
+            try api.file.ls(path) {
+                result in
+                XCTAssert(result.object?["Objects"]?.object?[checkHash]?.object?["Hash"]?.string == checkHash)
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+            
+        tester(lsIpns)
+        
+        let lsIpfs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let checkHash = "QmQHAVCpAQxU21bK8VxeWisn19RRC4bLNFV4DiyXDDyLXM"
+            let objHash = "QmQuQzFkULYToUBrMtyHg2tjvcd93N4kNHPCxfcFthB2kU"
+            let path = "/ipfs/" + objHash
+            
+            try api.file.ls(path) {
+                result in
+                XCTAssert(result.object?["Objects"]?.object?[objHash]?.object?["Links"]?.array?[0].object?["Hash"]?.string == checkHash)
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+            
+        tester(lsIpfs)
+        
+    }
+    
     func testBootstrap() {
         
         do {

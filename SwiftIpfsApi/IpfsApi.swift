@@ -30,6 +30,7 @@ public protocol IpfsApiClient {
     var pin:        Pin { get }
     var swarm:      Swarm { get }
     var dht:        Dht { get }
+    var file:       File { get }
     var bootstrap:  Bootstrap { get }
     var diag:       Diag { get }
     var stats:      Stats { get }
@@ -160,6 +161,7 @@ public class IpfsApi : IpfsApiClient {
     public let pin        = Pin()
     public let swarm      = Swarm()
     public let dht        = Dht()
+    public let file       = File()
     public let bootstrap  = Bootstrap()
     public let diag       = Diag()
     public let stats      = Stats()
@@ -204,6 +206,7 @@ public class IpfsApi : IpfsApiClient {
         object.parent     = self
         name.parent       = self
         dht.parent        = self
+        file.parent       = self
         bootstrap.parent  = self
         diag.parent       = self
         stats.parent      = self

@@ -9,11 +9,18 @@
 
 import SwiftMultihash
 
+/** Provides a familar interface to filesystems represtented by IPFS objects that
+    hides IPFS-implementation details like layout objects (e.g. fanout and chunking). */
 public class File : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func ls(path: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchDictionary("file/ls?arg=" + b58String(path), completionHandler: completionHandler)
+/** Retrieves the object named by <ipfs-or-ipns-path> and displays the contents.
+
+    The JSON output contains size information.  For files, the child size is the
+    total size of the file contents.  
+    For directories, the child size is the IPFS link size. */
+    public func ls(path: String, completionHandler: (JsonType) -> Void) throws {
+        try parent!.fetchJson("file/ls?arg=" + path, completionHandler: completionHandler)
     }
 }
