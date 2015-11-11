@@ -14,23 +14,28 @@ public class Dht : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
+    /** FindProviders will return a list of peers who are able to provide the value requested. */
     public func findProvs(hash: Multihash, completionHandler: (JsonType) -> Void) throws {
         try parent!.fetchJson("dht/findprovs?arg=" + b58String(hash), completionHandler: completionHandler)
     }
-    
-    public func query(address: Multiaddr, completionHandler: (JsonType) -> Void) throws {
-        try parent!.fetchJson("dht/query?arg=" + address.string() , completionHandler: completionHandler)
+   
+    /** Run a 'findClosestPeers' query through the DHT */
+    public func query(hash: Multihash, completionHandler: (JsonType) -> Void) throws {
+        try parent!.fetchJson("dht/query?arg=" + b58String(hash) , completionHandler: completionHandler)
     }
     
-    public func findpeer(address: Multiaddr, completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchDictionary("dht/findpeer?arg=" + address.string() , completionHandler: completionHandler)
+    /** Run a 'FindPeer' query through the DHT */
+    public func findpeer(hash: Multihash, completionHandler: (JsonType) -> Void) throws {
+        try parent!.fetchJson("dht/findpeer?arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func get(hash: Multihash, completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchDictionary("dht/get?arg=" + b58String(hash), completionHandler: completionHandler)
+    /** Will return the value stored in the dht at the given key */
+    public func get(hash: Multihash, completionHandler: (JsonType) -> Void) throws {
+        try parent!.fetchJson("dht/get?arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func put(key: String, value: String, completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchDictionary("dht/put?arg=\(key)&arg=\(value)", completionHandler: completionHandler)
+    /** Will store the given key value pair in the dht. */
+    public func put(key: String, value: String, completionHandler: (JsonType) -> Void) throws {
+        try parent!.fetchJson("dht/put?arg=\(key)&arg=\(value)", completionHandler: completionHandler)
     }
 }

@@ -407,6 +407,7 @@ class SwiftIpfsApiTests: XCTestCase {
         do {
             /// Common
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            let neighbour = "QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3"
             let multihash = try fromB58String("QmUYttJXpMQYvQk5DcX2owRUuYJBJM6W7KQSUsycCCE2MZ")
             
             let findProvs = { (dispatchGroup: dispatch_group_t) throws -> Void in
@@ -439,18 +440,43 @@ class SwiftIpfsApiTests: XCTestCase {
                 }
             }
             
-            tester(findProvs)
+//            tester(findProvs)
             
             
             let query = { (dispatchGroup: dispatch_group_t) throws -> Void in
-                let multiaddress = try newMultiaddr("QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3")
-                try api.dht.query(multiaddress) {
+                /// This nearest works for me but may need changing to something local to the tester.
+                let nearest = try fromB58String(neighbour)
+                try api.dht.query(nearest) {
                     result in
                     /// assert against some known return value
+                    print(result)
+                    dispatch_group_leave(dispatchGroup)
                 }
             }
             
-            tester(query)
+//            tester(query)
+            
+            
+            let findPeer = { (dispatchGroup: dispatch_group_t) throws -> Void in
+                /// This peer works for me but may need changing to something local to the tester.
+                let peer = try fromB58String(neighbour)
+                try api.dht.findpeer(peer) {
+                    result in
+                    
+                    XCTAssert(result.object?["Responses"]?.array?[0].object?["ID"]?.string == neighbour)
+                    
+                    dispatch_group_leave(dispatchGroup)
+                }
+            }
+            
+            tester(findPeer)
+            
+//            let put = { (dispatchGroup: dispatch_group_t) throws -> Void in
+//            }
+//            tester(put)
+//            let get = { (dispatchGroup: dispatch_group_t) throws -> Void in
+//            }
+//            tester(get)
             
         } catch {
             print("testDht error \(error)")

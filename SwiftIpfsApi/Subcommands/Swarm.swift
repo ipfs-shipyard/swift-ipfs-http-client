@@ -17,7 +17,7 @@ public class Swarm : ClientSubCommand {
      The completionHandler is passed an array of Multiaddr that represent
      the peers.
      */
-    public func peers(completionHandler: ([Multiaddr]) -> Void) throws {
+    public func peers(completionHandler: ([Multiaddr]) throws -> Void) throws {
         try parent!.fetchDictionary("swarm/peers?stream-channels=true") {
             (jsonDictionary: Dictionary) in
             
@@ -28,7 +28,7 @@ public class Swarm : ClientSubCommand {
             }
             
             /// convert the data into a Multiaddr array and pass it to the handler
-            completionHandler(addresses)
+            try completionHandler(addresses)
         }
     }
     
