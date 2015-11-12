@@ -13,18 +13,17 @@ public class Swarm : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    /** peers lists the set of peers this node is connected to.
-     The completionHandler is passed an array of Multiaddr that represent
-     the peers.
+    /** Lists the set of peers this node is connected to.
+        The completionHandler is passed an array of Multiaddr that represent the peers.
      */
     public func peers(completionHandler: ([Multiaddr]) throws -> Void) throws {
-        try parent!.fetchDictionary("swarm/peers?stream-channels=true") {
-            (jsonDictionary: Dictionary) in
+        try parent!.fetchJson("swarm/peers?stream-channels=true") {
+            result in
             
             var addresses: [Multiaddr] = []
-            if let swarmPeers = jsonDictionary["Strings"] as? [String] {
+            if let swarmPeers = result.object?["Strings"]?.array {
                 /// Make an array of Multiaddr from each peer in swarmPeers.
-                addresses = try swarmPeers.map { try newMultiaddr($0) }
+                addresses = try swarmPeers.map { try newMultiaddr($0.string!) }
             }
             
             /// convert the data into a Multiaddr array and pass it to the handler
@@ -32,34 +31,24 @@ public class Swarm : ClientSubCommand {
         }
     }
     
-    public func addrs(completionHandler: ([String : AnyObject]) -> Void) throws {
+    /** lists all addresses this node is aware of. */
+    public func addrs(completionHandler: (JsonType) throws -> Void) throws {
         
-        try parent!.fetchDictionary("swarm/addrs?stream-channels=true") {
-            (jsonDictionary: Dictionary) in
-            
-            guard let addrsData = jsonDictionary["Addrs"] as? [String : [String]] else {
+        try parent!.fetchJson("swarm/addrs?stream-channels=true") {
+            result in
+            guard let addrsData = result.object?["Addrs"] else {
                 throw IpfsApiError.SwarmError("Swarm.addrs error: No Addrs key in JSON data.")
             }
-            completionHandler(addrsData)
-        }
-    }
-    public func connect(multiAddr: String, completionHandler: (String) -> Void) throws {
-        try parent!.fetchDictionary("swarm/connect?arg="+multiAddr) {
-            (jsonDictionary: Dictionary) in
-            
-            /// Ensure we've only got one string as a result.
-            guard let result = jsonDictionary["Strings"] as? [String] where result.count == 1 else {
-                throw IpfsApiError.SwarmError("Swarm.connect error: \(jsonDictionary["Message"] as? String)")
-            }
-            /// Consider returning the dictionary instead...
-            completionHandler(result[0])
+            try completionHandler(addrsData)
         }
     }
     
-    public func disconnect(multiaddr: String, completionHandler: ([String : AnyObject]) -> Void) throws {
-        try parent!.fetchDictionary("swarm/disconnect?arg=" + multiaddr) {
-            (jsonDictionary: Dictionary) in
-            completionHandler(jsonDictionary)
-        }
+    /** opens a new direct connection to a peer address. */
+    public func connect(multiaddr: String, completionHandler: (JsonType) throws -> Void) throws {
+        try parent!.fetchJson("swarm/connect?arg=" + multiaddr, completionHandler: completionHandler)
+    }
+    
+    public func disconnect(multiaddr: String, completionHandler: (JsonType) throws -> Void) throws {
+        try parent!.fetchJson("swarm/disconnect?arg=" + multiaddr, completionHandler: completionHandler)
     }
 }

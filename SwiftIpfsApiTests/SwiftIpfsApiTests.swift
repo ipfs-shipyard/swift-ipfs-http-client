@@ -591,19 +591,21 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testSwarmPeers() {
+        
+        /// NB: This test will require the user to change the knownPeer to a known peer.
+        let knownPeer = "/ip4/192.168.5.18/tcp/4001/ipfs/QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3"
+        
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.swarm.peers(){
                 (peers: [Multiaddr]) in
                 
-                do {
-                    for peer in peers {
-                        print("Multiaddr: ", try peer.string())
-                    }
-                } catch {
-                    print("testSwarm error",error)
-                    XCTFail()
+                var pass = false
+                for peer in peers {
+                    pass = (try peer.string() == knownPeer)
+                    if pass { break }
                 }
+                XCTAssert(pass)
                 dispatch_group_leave(dispatchGroup)
             }
         }
@@ -630,20 +632,33 @@ class SwiftIpfsApiTests: XCTestCase {
     }
 
     func testSwarmConnect() {
-        let swarmConnect = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        
+        let swarmDisConnect = { (dispatchGroup: dispatch_group_t) throws -> Void in
             
-            let peerAddress = "/ip4/192.168.5.18/tcp/4001/ipfs/QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3"
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            
+            /// NB: This test will require the user to change the peerAddress to a known peer.
+            let peerAddress = "/ip4/192.168.5.18/tcp/4001/ipfs/QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3"
+            let expectedMessage = "connect QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3 success"
             
             try api.swarm.connect(peerAddress){
                 result in
                 
-                XCTAssert(result == "connect QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3 success")
-                dispatch_group_leave(dispatchGroup)
+                XCTAssert(result.object?["Strings"]?.array?[0].string! == expectedMessage)
+                
+/// The current version of the IPFS node fails to disconnect after the first success,
+/// so I'm disabling this for now.
+//                try api.swarm.disconnect(peerAddress) {
+//                    result in
+//                    
+//                    XCTAssert(result.object?["Strings"]?.array?[0].string! == "dis" + expectedMessage)
+                    dispatch_group_leave(dispatchGroup)
+//                }
+                
             }
         }
         
-        tester(swarmConnect)
+        tester(swarmDisConnect)
     }
     
     
