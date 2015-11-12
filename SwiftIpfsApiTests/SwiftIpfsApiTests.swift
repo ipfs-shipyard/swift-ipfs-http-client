@@ -539,11 +539,9 @@ class SwiftIpfsApiTests: XCTestCase {
                         print(try peer.string())
                     }
 
-                    if peers.count == 2 {
-                        let t1 = try peers[0].string() == trustedPeer
-                        let t2 = try peers[1].string() == trustedPeer2
-                        XCTAssert(t1 && t2)
-                    } else { XCTFail() }
+                    let a = try peers[0].string() == trustedPeer
+                    let b = try peers[1].string() == trustedPeer2
+                    XCTAssert(peers.count == 2 && a && b)
                     
                     dispatch_group_leave(dispatchGroup)
                 }

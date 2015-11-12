@@ -24,18 +24,7 @@ public class Bootstrap : ClientSubCommand {
     
     public func list(completionHandler: ([Multiaddr]) throws -> Void) throws {
         
-        try parent!.fetchDictionary("bootstrap/") {
-            jsonDictionary in
-            
-            var addresses: [Multiaddr] = []
-            if let peers = jsonDictionary["Peers"] as? [String] {
-                /// Make an array of Multiaddr from each peer
-                addresses = try peers.map { try newMultiaddr($0) }
-            }
-            
-            /// convert the data into a Multiaddr array and pass it to the handler
-            try completionHandler(addresses)
-        }
+        try fetchPeers("bootstrap/", completionHandler: completionHandler)
     }
     
     public func add(addresses: [Multiaddr], completionHandler: ([Multiaddr]) throws -> Void) throws {
@@ -43,20 +32,7 @@ public class Bootstrap : ClientSubCommand {
         let multiaddresses = try addresses.map { try $0.string() }
         let request = "bootstrap/add?" + buildArgString(multiaddresses)
         
-        print(request)
-        
-        try parent!.fetchDictionary(request) {
-            jsonDictionary in
-            
-            var addresses: [Multiaddr] = []
-            if let peers = jsonDictionary["Peers"] as? [String] {
-                /// Make an array of Multiaddr from each peer
-                addresses = try peers.map { try newMultiaddr($0) }
-            }
-            
-            /// convert the data into a Multiaddr array and pass it to the handler
-            try completionHandler(addresses)
-        }
+        try fetchPeers(request, completionHandler: completionHandler)
     }
     
     public func rm(addresses: [Multiaddr], completionHandler: ([Multiaddr]) throws -> Void) throws {
@@ -73,15 +49,20 @@ public class Bootstrap : ClientSubCommand {
         
         request += buildArgString(multiaddresses)
         
-        try parent!.fetchDictionary(request) {
-            jsonDictionary in
+        try fetchPeers(request, completionHandler: completionHandler)
+    }
+    
+    private func fetchPeers(request: String, completionHandler: ([Multiaddr]) throws -> Void) throws {
+                                                        
+        try parent!.fetchJson(request) {
+            result in
             
             var addresses: [Multiaddr] = []
-            if let peers = jsonDictionary["Peers"] as? [String] {
+            if let peers = result.object?["Peers"]?.array {
                 /// Make an array of Multiaddr from each peer
-                addresses = try peers.map { try newMultiaddr($0) }
+                addresses = try peers.map { try newMultiaddr($0.string!) }
             }
-            
+                
             /// convert the data into a Multiaddr array and pass it to the handler
             try completionHandler(addresses)
         }
