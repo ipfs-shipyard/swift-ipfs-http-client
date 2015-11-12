@@ -39,9 +39,9 @@ import SwiftIpfsApi
 let api = try! SwiftIpfsApi("127.0.0.1", "5001") 
 
 try! api.id() {
-    (idData : [String : AnyObject]) in
+    (idData : JsonType) in
                     
-    print("Yay, I've got an id: "+ idData["ID"] as! String )
+    print("Yay, I've got an id: "+ idData.object?["ID"]?.string)
 }
 ```
 
