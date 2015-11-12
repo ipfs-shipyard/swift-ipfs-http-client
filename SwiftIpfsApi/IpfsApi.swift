@@ -77,27 +77,6 @@ extension IpfsApiClient {
         }
     }
     
-    
-    func fetchDictionary(path: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
-        try fetchData(path) {
-            (data: NSData) in
-
-            /// If there was no data fetched pass an empty dictionary and return.
-            if data.length == 0 {
-                try completionHandler([:])
-                return
-            }
-            //print(data)
-    
-            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-            }
-    
-            /// At this point we could check to see if the json contains a code/message for flagging errors.
-            
-            try completionHandler(json)
-        }
-    }
-   
     func fetchData(path: String, completionHandler: (NSData) throws -> Void) throws {
         
         try net.receiveFrom(baseUrl + path, completionHandler: completionHandler)

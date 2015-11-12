@@ -16,8 +16,7 @@ public class Stats : ClientSubCommand {
         proto: String? = nil,
         poll: Bool = false,
         interval: String? = nil,
-        completionHandler: ([String : AnyObject]) -> Void) throws {
-            
-            try parent!.fetchDictionary("stats/bw", completionHandler: completionHandler)
+        completionHandler: (JsonType) -> Void) throws {
+            try parent!.fetchJson("stats/bw", completionHandler: completionHandler)
     }
 }

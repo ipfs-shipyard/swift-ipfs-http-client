@@ -877,12 +877,15 @@ class SwiftIpfsApiTests: XCTestCase {
         let stats = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
             try api.stats.bw() {
-                stats in
+                result in
+               
+                /// We can't check for the values as they change constantly but at 
+                /// least we can check for the keys being there.
+                XCTAssert(result.object?["TotalIn"] != nil &&
+                    result.object?["TotalOut"] != nil &&
+                    result.object?["RateIn"] != nil &&
+                    result.object?["RateOut"] != nil )
                 
-                for (k,v) in stats {
-                    print("k: ",k)
-                    print("v: ",v)
-                }
                 dispatch_group_leave(dispatchGroup)
             }
         }

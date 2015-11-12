@@ -11,13 +11,13 @@ public class Update : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func check(completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func check(completionHandler: (JsonType) -> Void) throws {
         
-        try parent!.fetchDictionary("update/check", completionHandler: completionHandler )
+        try parent!.fetchJson("update/check", completionHandler: completionHandler )
     }
     
-    public func log(completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func log(completionHandler: (JsonType) -> Void) throws {
         
-        try parent!.fetchDictionary("update/log", completionHandler: completionHandler )
+        try parent!.fetchJson("update/log", completionHandler: completionHandler )
     }
 }
