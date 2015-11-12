@@ -14,9 +14,9 @@ public class Config : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func show(completionHandler: ([String : AnyObject]) -> Void) throws {
+    public func show(completionHandler: (JsonType) -> Void) throws {
         
-        try parent!.fetchDictionary("config/show",completionHandler: completionHandler )
+        try parent!.fetchJson("config/show",completionHandler: completionHandler )
     }
     
     public func replace(filePath: String, completionHandler: (Bool) -> Void) throws {
@@ -26,20 +26,19 @@ public class Config : ClientSubCommand {
     }
     
     public func get(key: String, completionHandler: (JsonType) throws -> Void) throws {
-        try parent!.fetchDictionary("config?arg=" + key) {
-            (jsonDictionary: Dictionary) in
-            
-            guard let result = jsonDictionary["Value"] else {
-                throw IpfsApiError.SwarmError("Config get error: \(jsonDictionary["Message"] as? String)")
+        try parent!.fetchJson("config?arg=" + key) {
+            result in
+            guard let value = result.object?["Value"] else {
+                throw IpfsApiError.SwarmError("Config get error: \(result.object?["Message"]?.string)")
             }
             
-            try completionHandler(JsonType.parse(result))
+            try completionHandler(value)
             
         }
     }
     
-    public func set(key: String, value: String, completionHandler: ([String : AnyObject]) throws -> Void) throws {
+    public func set(key: String, value: String, completionHandler: (JsonType) throws -> Void) throws {
         
-        try parent!.fetchDictionary("config?arg=\(key)&arg=\(value)", completionHandler: completionHandler )
+        try parent!.fetchJson("config?arg=\(key)&arg=\(value)", completionHandler: completionHandler )
     }
 }
