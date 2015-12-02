@@ -207,21 +207,20 @@ public class IpfsApi : IpfsApiClient {
     public func add(filePaths: [String], completionHandler: ([MerkleNode]) -> Void) throws {
 
         try net.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
-            result in
-
-            let newRes = fixStreamJson(result)
-            /// We have to catch the thrown errors inside the completion closure
-            /// from within it.
+            data in
             do {
-                guard let json = try NSJSONSerialization.JSONObjectWithData(newRes, options: NSJSONReadingOptions.AllowFragments) as? [[String : String]] else {
+                /// If there was no data fetched pass an empty dictionary and return.
+                let fixedData = fixStreamJson(data)
+                let json = JsonType.parse(try NSJSONSerialization.JSONObjectWithData(fixedData, options: NSJSONReadingOptions.AllowFragments))
+                
+                switch json {
+                case .Object:
+                    completionHandler([try merkleNodeFromJson2(json)])
+                case .Array:
+                    completionHandler(try json.array!.map { try merkleNodeFromJson2($0) })
+                default:
                     throw IpfsApiError.JsonSerializationFailed
                 }
-
-                /// Turn each component into a MerkleNode
-                let merkles = try json.map { return try merkleNodeFromJson($0) }
-                
-                completionHandler(merkles)
-                
             } catch {
                 print("Error inside add completion handler: \(error)")
             }
@@ -233,7 +232,7 @@ public class IpfsApi : IpfsApiClient {
         try fetchJson("ls/\(b58String(hash))") {
             json in
             
-            guard  let objects = json.object?["Objects"]?.array else {
+            guard let objects = json.object?["Objects"]?.array else {
                 throw IpfsApiError.SwarmError("ls error: No Objects in JSON data.")
             }
             
