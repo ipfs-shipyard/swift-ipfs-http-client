@@ -52,10 +52,13 @@ public func merkleNodeFromJson2(rawJson: JsonType) throws -> MerkleNode {
         throw MerkleNodeError.JsonFormatError
     }
     
-    var hash: String
-    if let jsonHash = objs["Hash"]?.string { hash = jsonHash }
-    else if let jsonKey = objs["Key"]?.string { hash = jsonKey }
-    else { throw MerkleNodeError.RequiredValueMissing("Neither Hash nor Key exist") }
+    guard let hash: String = objs["Hash"]?.string ?? objs["Key"]?.string else {
+        throw MerkleNodeError.RequiredValueMissing("Neither Hash nor Key exist")
+    }
+//    var hash: String
+//    if let jsonHash = objs["Hash"]?.string { hash = jsonHash }
+//    else if let jsonKey = objs["Key"]?.string { hash = jsonKey }
+//    else { throw MerkleNodeError.RequiredValueMissing("Neither Hash nor Key exist") }
 
     let name     = objs["Name"]?.string
     let size     = objs["Size"]?.number as? Int

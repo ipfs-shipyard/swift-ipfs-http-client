@@ -373,7 +373,21 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testName() {
     
-        let idHash = "QmTKWgmTLaosngT7txpZEVtwdxvJsX9pwKhmgMSbxwY7sN"
+        var idHash: String = ""
+        /// Start test by storing the existing hash so we can restore it after testing.
+        let nameResolvePublish = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let api = try IpfsApi(host: "127.0.0.1", port: 5001)
+            try api.name.resolve(){
+                result in
+                
+                idHash = result.stringByReplacingOccurrencesOfString("/ipfs/", withString: "")
+                
+                dispatch_group_leave(dispatchGroup)
+            }
+        }
+        
+        tester(nameResolvePublish)
+        
         let publishedPath = "/ipfs/" + idHash
         
         let publish = { (dispatchGroup: dispatch_group_t) throws -> Void in
@@ -388,7 +402,7 @@ class SwiftIpfsApiTests: XCTestCase {
             }
         }
         
-        tester(publish)
+        self.tester(publish)
         
         let resolve = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: "127.0.0.1", port: 5001)
@@ -399,7 +413,7 @@ class SwiftIpfsApiTests: XCTestCase {
             }
         }
         
-        tester(resolve)
+        self.tester(resolve)
     }
     
     func testDht() {
