@@ -6,7 +6,7 @@
 //  Copyright © 2015 Teo Sartori. All rights reserved.
 //
 //  Licensed under MIT See LICENCE file in the root of this project for details. 
-
+import Foundation
 import SwiftMultihash
 
 /** Lists links (references) from an object */
