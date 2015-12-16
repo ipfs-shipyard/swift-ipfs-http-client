@@ -7,6 +7,7 @@
 //
 //  Licensed under MIT See LICENCE file in the root of this project for details. 
 
+import Foundation
 import SwiftMultihash
 
 public class IpfsObject : ClientSubCommand {

@@ -8,6 +8,7 @@
 //  Licensed under MIT See LICENCE file in the root of this project for details. 
 
 import SwiftMultihash
+import Foundation
 
 public class Block : ClientSubCommand {
     
