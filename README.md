@@ -18,6 +18,10 @@ github "NeoTeo/swift-ipfs-api"
 - To fetch and build the dependencies, type:
 ```carthage update --no-use-binaries --platform Mac```
 
+or
+
+```carthage update --no-use-binaries --platform iOS```
+
 For more information on how to install via Carthage see the [README](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application)
 
 ## Usage
@@ -58,7 +62,7 @@ try! api.refs(multihash, recursive: false) {
         print(b58String(mh))
     }
     
-    dispatch_group_leave(dispatchGroup)
+    dispatch_group_leave(group)
 }
 
 dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
