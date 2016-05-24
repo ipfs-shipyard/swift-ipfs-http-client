@@ -41,6 +41,9 @@
                <Test
                   Identifier = "SwiftIpfsApiTests/testMount()">
                </Test>
+               <Test
+                  Identifier = "SwiftIpfsApiTests/testObjectPatch()">
+               </Test>
             </SkippedTests>
          </TestableReference>
       </Testables>

@@ -397,31 +397,38 @@ public func fixStreamJson(rawJson: NSData) -> NSData {
     /// Start the output off with a JSON opening array bracket [.
     output.appendBytes([91] as [UInt8], length: 1)
     
-    for var i=0; i < rawJson.length ; i++ {
+    //for var i=0; i < rawJson.length ; i++ {
+    for i in 0..<rawJson.length {
         switch bytes[i] {
 
         case 91 where sections == 0:      /// If an [ is first we need no fix
             return rawJson
 
-        case 123 where ++brackets == 1:   /// check for {
-            newStart = bytes+i
+//        case 123 where ++brackets == 1:   /// check for {
+        case 123:
+            brackets += 1
+            if brackets == 1 { newStart = bytes+i }
             
-        case 125 where --brackets == 0:   /// Check for }
-            
-            /// Separate sections with a comma except the first one.
-            if output.length > 1 {
-                output.appendBytes([44] as [UInt8], length: 1)
+//        case 125 where --brackets == 0:   /// Check for }
+        case 125:
+            brackets -= 1
+            if brackets == 0 {
+                /// Separate sections with a comma except the first one.
+                if output.length > 1 {
+                    output.appendBytes([44] as [UInt8], length: 1)
+                }
+                
+                output.appendData(NSData(bytes: newStart, length: bytesRead+1))
+                bytesRead = 0
+                sections += 1
             }
-            
-            output.appendData(NSData(bytes: newStart, length: bytesRead+1))
-            bytesRead = 0
-            sections++
+//            sections++
 
         default:
             break
         }
         
-        if brackets > 0 { bytesRead++ }
+        if brackets > 0 { bytesRead += 1 } //bytesRead++ }
     }
     
     /// There was nothing to fix. Bail.

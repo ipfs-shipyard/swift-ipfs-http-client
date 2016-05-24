@@ -11,12 +11,13 @@ import Foundation
 /// (from github.com/thoughtbot/Argo project)
 
 // pure merge for Dictionaries
-func + <T, U>(var lhs: [T: U], rhs: [T: U]) -> [T: U] {
+func + <T, U>(lhs: [T: U], rhs: [T: U]) -> [T: U] {
+    var lh = lhs
     for (key, val) in rhs {
-        lhs[key] = val  /// Potential loss: Same key will lose existing lhs value.
+        lh[key] = val  /// Potential loss: Same key will lose existing lhs value.
     }
     
-    return lhs
+    return lh
 }
 
 extension Dictionary {

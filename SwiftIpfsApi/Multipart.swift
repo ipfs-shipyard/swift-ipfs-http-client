@@ -48,7 +48,8 @@ extension Multipart {
         repeat {
             let r = Int(arc4random_uniform(UInt32(maxCount)))
             output += String(allowed.characters[allowed.startIndex.advancedBy(r)])
-        } while --count > 0
+            count -= 1
+        } while count > 0
         
         return output
     }
