@@ -14,13 +14,20 @@ import SwiftMultihash
 
 class SwiftIpfsApiTests: XCTestCase {
 
-    let hostString      = "192.168.5.8"
+    var hostString      = "192.168.5.8"
     let hostPort        = 5001
+    
+    /// Your own IPNS node hash
     let nodeIdString    = "QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1"
-    let altNodeIdString = "QmQyb7g2mCVYzRNHaEkhVcWVKnjZjc2z7dWKn1SKxDgTC3"
+    
+    /// Another know neighbouring hash
+    let altNodeIdString = "QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z"
+
+    let peerIPAddr = "/ip4/104.236.176.52/tcp/4001"
     
     override func setUp() {
         super.setUp()
+        
     }
     
     override func tearDown() {
@@ -485,9 +492,10 @@ class SwiftIpfsApiTests: XCTestCase {
                     result in
                     
                     var pass = false
-                    if let resArray = result.array {
+                    
+                    if let resArray = result.object?["Responses"]?.array {
                         for res in resArray {
-                            if res.object?["Responses"]?.array?[0].object?["ID"]?.string == neighbour {
+                            if res.object?["ID"]?.string == neighbour {
                                 pass = true
                             }
                         }
@@ -516,12 +524,18 @@ class SwiftIpfsApiTests: XCTestCase {
     /// to the checkHash before thinking this is actually broken. Ipns links do change.
     func testFileLs() {
         let lsIpns = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            let checkHash = "QmeXS82nS8YDXQpiqFeT4gCHc1HGoxZe5zH6Srj4HhkiFy"
-            let path = "/ipns/\(self.nodeIdString)"
-            try api.file.ls(path) {
-                result in
-                                print(result)
+            
+            /// basedir hash
+            let path = "/ipns/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+            
+            /// lvl2file hash
+            let checkHash = "QmSiTko9JZyabH56y2fussEt1A5oDqsFXB3CkvAqraFryz"
+
+            try api.file.ls(path) { result in
+                
+                print(result)
                 XCTAssert(result.object?["Objects"]?.object?[checkHash]?.object?["Hash"]?.string == checkHash)
                 dispatch_group_leave(dispatchGroup)
             }
@@ -623,7 +637,7 @@ class SwiftIpfsApiTests: XCTestCase {
     func testSwarmPeers() {
         
         /// NB: This test will require the user to change the knownPeer to a known peer.
-        let knownPeer = "/ip4/192.168.5.18/tcp/4001/ipfs/\(self.altNodeIdString)"
+        let knownPeer = peerIPAddr+"/ipfs/"+self.altNodeIdString
         
         let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
@@ -649,10 +663,7 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.swarm.addrs(){
                 addrs in
 
-//                for (hash, addrList)  in addrs {
-//                    print("Hash:",hash)
-//                    print("     ",addrList)
-//                }
+                XCTAssert(addrs.object?[self.altNodeIdString]?.array?[0].string == self.peerIPAddr)
                 
                 dispatch_group_leave(dispatchGroup)
             }
@@ -668,7 +679,7 @@ class SwiftIpfsApiTests: XCTestCase {
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
             /// NB: This test will require the user to change the peerAddress to a known peer.
-            let peerAddress = "/ip4/192.168.5.18/tcp/4001/ipfs/\(self.altNodeIdString)"
+            let peerAddress = self.peerIPAddr+"/ipfs/"+self.altNodeIdString
             let expectedMessage = "connect \(self.altNodeIdString) success"
             
             try api.swarm.connect(peerAddress){
@@ -676,14 +687,12 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 XCTAssert(result.object?["Strings"]?.array?[0].string! == expectedMessage)
                 
-/// The current version of the IPFS node fails to disconnect after the first success,
-/// so I'm disabling this for now.
-//                try api.swarm.disconnect(peerAddress) {
-//                    result in
-//                    
-//                    XCTAssert(result.object?["Strings"]?.array?[0].string! == "dis" + expectedMessage)
+                try api.swarm.disconnect(peerAddress) {
+                    result in
+                    
+                    XCTAssert(result.object?["Strings"]?.array?[0].string! == "dis" + expectedMessage)
                     dispatch_group_leave(dispatchGroup)
-//                }
+                }
                 
             }
         }
@@ -1037,7 +1046,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 result in
                 
                 /// Subtract one because last element is an empty directory to ignore
-                let resultCount = result.count - 1
+                let resultCount = result.count
                 
                 XCTAssert(resultCount == filePaths.count)
                 
