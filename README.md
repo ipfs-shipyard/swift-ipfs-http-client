@@ -26,7 +26,7 @@ In the root of your project:
 
 -  Add a Cartfile (or use an existing one) with the following:
 ```
-github "NeoTeo/swift-ipfs-api"
+github "ipfs/swift-ipfs-api"
 ```
 - To fetch and build the dependencies, type:
 ```carthage update --no-use-binaries --platform Mac```
@@ -83,7 +83,7 @@ dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
 ```
 
 ## Requirements
-Swift 2.1
+Swift 3
 
 ## Contribute
 
