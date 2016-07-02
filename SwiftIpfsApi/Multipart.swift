@@ -8,8 +8,8 @@
 //  Licensed under MIT See LICENCE file in the root of this project for details. 
 
 import Foundation
-public enum MultipartError : ErrorType {
-    case FailedURLCreation
+public enum MultipartError : ErrorProtocol {
+    case failedURLCreation
 }
 
 public struct Multipart {
@@ -25,9 +25,9 @@ public struct Multipart {
         self.charset = charset
         boundary     = Multipart.createBoundary()
 
-        guard let url = NSURL(string: targetUrl) else { throw MultipartError.FailedURLCreation }
-        request = NSMutableURLRequest(URL: url)
-        request.HTTPMethod = "POST"
+        guard let url = URL(string: targetUrl) else { throw MultipartError.failedURLCreation }
+        request = NSMutableURLRequest(url: url)
+        request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary="+boundary, forHTTPHeaderField: "content-type")
         request.setValue("Swift IPFS Client", forHTTPHeaderField: "user-agent")
     }
@@ -47,48 +47,49 @@ extension Multipart {
         
         repeat {
             let r = Int(arc4random_uniform(UInt32(maxCount)))
-            output += String(allowed.characters[allowed.startIndex.advancedBy(r)])
-        } while --count > 0
+            output += String(allowed.characters[allowed.characters.index(allowed.startIndex, offsetBy: r)])
+			count -= 1
+        } while count > 0
         
         return output
     }
     
-    public static func addFilePart(oldMultipart: Multipart, fileName: String?, fileData: NSData) throws -> Multipart {
+    public static func addFilePart(_ oldMultipart: Multipart, fileName: String?, fileData: Data) throws -> Multipart {
         var outString = "--" + oldMultipart.boundary + lineFeed
-        oldMultipart.body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
+        oldMultipart.body.append(outString.data(using: String.Encoding.utf8)!)
         
         if fileName != nil {
             outString = "content-disposition: file; name=file; filename=\(fileName!)" + lineFeed
         } else {
             outString = "content-disposition: file; name=file;" + lineFeed
         }
-        oldMultipart.body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
+        oldMultipart.body.append(outString.data(using: String.Encoding.utf8)!)
         
         outString = "content-type: application/octet-stream" + lineFeed
-        oldMultipart.body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
+        oldMultipart.body.append(outString.data(using: String.Encoding.utf8)!)
         
         outString = "content-transfer-encoding: binary" + lineFeed + lineFeed
-        oldMultipart.body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
+        oldMultipart.body.append(outString.data(using: String.Encoding.utf8)!)
         
         /// Add the actual data for this file.
-        oldMultipart.body.appendData(fileData)
-        oldMultipart.body.appendData(lineFeed.dataUsingEncoding(NSUTF8StringEncoding)!)
+        oldMultipart.body.append(fileData)
+        oldMultipart.body.append(lineFeed.data(using: String.Encoding.utf8)!)
         
         return oldMultipart
     }
     
-    public static func finishMultipart(multipart: Multipart, completionHandler: (NSData) -> Void) {
+    public static func finishMultipart(_ multipart: Multipart, completionHandler: (Data) -> Void) {
         
         let outString = "--" + multipart.boundary + "--" + lineFeed
-        multipart.body.appendData(outString.dataUsingEncoding(NSUTF8StringEncoding)!)
+        multipart.body.append(outString.data(using: String.Encoding.utf8)!)
         
         multipart.request.setValue(String(multipart.body.length), forHTTPHeaderField: "content-length")
-        multipart.request.HTTPBody = multipart.body
+        multipart.request.httpBody = multipart.body as Data
         
         
         /// Send off the request
-        let task = NSURLSession.sharedSession().dataTaskWithRequest(multipart.request) {
-            (data: NSData?, response: NSURLResponse?, error: NSError?) -> Void in
+        let task = URLSession.shared().dataTask(with: (multipart.request as URLRequest)) {
+            (data: Data?, response: URLResponse?, error: NSError?) -> Void in
             
             guard error == nil && data != nil else {
                 print("Error in dataTaskWithRequest: \(error)")//throw HttpIoError.TransmissionError("fail: \(error)")

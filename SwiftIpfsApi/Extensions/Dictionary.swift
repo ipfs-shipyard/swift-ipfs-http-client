@@ -11,7 +11,8 @@ import Foundation
 /// (from github.com/thoughtbot/Argo project)
 
 // pure merge for Dictionaries
-func + <T, U>(var lhs: [T: U], rhs: [T: U]) -> [T: U] {
+func + <T, U>(lhs: [T: U], rhs: [T: U]) -> [T: U] {
+    var lhs = lhs
     for (key, val) in rhs {
         lhs[key] = val  /// Potential loss: Same key will lose existing lhs value.
     }
@@ -22,7 +23,7 @@ func + <T, U>(var lhs: [T: U], rhs: [T: U]) -> [T: U] {
 extension Dictionary {
     /// Apply function f to each value element in the dictionary and return
     /// a single merged dictionary with the result.
-    func map<T>(f: Value -> T) -> [Key: T] {
+    func map<T>(_ f: (Value) -> T) -> [Key: T] {
         return self.reduce([:]) { $0 + [$1.0: f($1.1)] }
     }
 }

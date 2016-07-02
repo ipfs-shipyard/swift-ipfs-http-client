@@ -14,13 +14,13 @@ public class Pin : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func add(hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
+    public func add(_ hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
         
         try parent!.fetchJson("pin/add?stream-channels=true&arg=\(b58String(hash))") {
             result in
             
             guard let objects = result.object?["Pinned"]?.array else {
-                throw IpfsApiError.PinError("Pin.add error: No Pinned objects in JSON data.")
+                throw IpfsApiError.pinError("Pin.add error: No Pinned objects in JSON data.")
             }
             
             let multihashes = try objects.map { try fromB58String($0.string!) }
@@ -30,7 +30,7 @@ public class Pin : ClientSubCommand {
     }
     
     /** List objects pinned to local storage */
-    public func ls(completionHandler: ([Multihash : JsonType]) -> Void) throws {
+    public func ls(_ completionHandler: ([Multihash : JsonType]) -> Void) throws {
         
         /// The default is .Recursive
         try self.ls(.Recursive) {
@@ -48,30 +48,30 @@ public class Pin : ClientSubCommand {
         }
     }
     
-    public func ls(pinType: PinType, completionHandler: (JsonType) throws -> Void) throws {
+    public func ls(_ pinType: PinType, completionHandler: (JsonType) throws -> Void) throws {
         
         try parent!.fetchJson("pin/ls?stream-channels=true&t=" + pinType.rawValue) {
             result in
             
             guard let objects = result.object?["Keys"] else {
-                throw IpfsApiError.PinError("Pin.ls error: No Keys Dictionary in JSON data.")
+                throw IpfsApiError.pinError("Pin.ls error: No Keys Dictionary in JSON data.")
             }
             
             try completionHandler(objects)
         }
     }
     
-    public func rm(hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
+    public func rm(_ hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
         try self.rm(hash, recursive: true, completionHandler: completionHandler)
     }
     
-    public func rm(hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
+    public func rm(_ hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
         
         try parent!.fetchJson("pin/rm?stream-channels=true&r=\(recursive)&arg=\(b58String(hash))") {
             result in
             
             guard let objects = result.object?["Pinned"]?.array else {
-                throw IpfsApiError.PinError("Pin.rm error: No Pinned objects in JSON data.")
+                throw IpfsApiError.pinError("Pin.rm error: No Pinned objects in JSON data.")
             }
             
             let multihashes = try objects.map { try fromB58String($0.string!) }

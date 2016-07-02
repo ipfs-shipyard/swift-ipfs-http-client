@@ -9,9 +9,9 @@
 import Foundation
 import SwiftMultihash
 
-public enum MerkleNodeError : ErrorType {
-    case JsonFormatError
-    case RequiredValueMissing(String)
+public enum MerkleNodeError : ErrorProtocol {
+    case jsonFormatError
+    case requiredValueMissing(String)
 }
 
 public class MerkleNode {
@@ -47,13 +47,13 @@ public class MerkleNode {
     }
 }
 
-public func merkleNodeFromJson2(rawJson: JsonType) throws -> MerkleNode {
+public func merkleNodeFromJson2(_ rawJson: JsonType) throws -> MerkleNode {
     guard case .Object(let objs) = rawJson else {
-        throw MerkleNodeError.JsonFormatError
+        throw MerkleNodeError.jsonFormatError
     }
     
     guard let hash: String = objs["Hash"]?.string ?? objs["Key"]?.string else {
-        throw MerkleNodeError.RequiredValueMissing("Neither Hash nor Key exist")
+        throw MerkleNodeError.requiredValueMissing("Neither Hash nor Key exist")
     }
 //    var hash: String
 //    if let jsonHash = objs["Hash"]?.string { hash = jsonHash }
@@ -78,7 +78,7 @@ public func merkleNodeFromJson2(rawJson: JsonType) throws -> MerkleNode {
     return try MerkleNode(hash: hash, name: name, size: size, type: type, links: links, data: data)
 }
 
-public func merkleNodeFromJson(rawJson: AnyObject) throws -> MerkleNode {
+public func merkleNodeFromJson(_ rawJson: AnyObject) throws -> MerkleNode {
     /// turn it into a dictionary
     let objs     = rawJson as! [String : AnyObject]
     

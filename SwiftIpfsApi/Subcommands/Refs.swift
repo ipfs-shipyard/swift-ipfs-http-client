@@ -14,13 +14,13 @@ public class Refs : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func local(completionHandler: ([Multihash]) -> Void) throws {
+    public func local(_ completionHandler: ([Multihash]) -> Void) throws {
         try parent!.fetchData("refs/local") {
-            (data: NSData) in
+            (data: Data) in
             
             /// First we turn the data into a string
-            guard let dataString = NSString(data: data, encoding: NSUTF8StringEncoding) as? String else {
-                throw IpfsApiError.RefsError("Could not convert data into string.")
+            guard let dataString = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as? String else {
+                throw IpfsApiError.refsError("Could not convert data into string.")
             }
             
             /** The resulting string is a bunch of newline separated strings so:

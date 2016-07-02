@@ -10,23 +10,23 @@
 
 import Foundation
 
-enum HttpIoError : ErrorType {
-    case UrlError(String)
-    case TransmissionError(String)
+enum HttpIoError : ErrorProtocol {
+    case urlError(String)
+    case transmissionError(String)
 }
 
 public struct HttpIo : NetworkIo {
 
-    public func receiveFrom(source: String, completionHandler: (NSData) throws -> Void) throws {
+    public func receiveFrom(_ source: String, completionHandler: (Data) throws -> Void) throws {
         
-        guard let url = NSURL(string: source) else { throw HttpIoError.UrlError("Invalid URL") }
+        guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         
-        let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
-            (data: NSData?, response: NSURLResponse?, error: NSError?) in
+        let task = URLSession.shared().dataTask(with: url) {
+            (data: Data?, response: URLResponse?, error: NSError?) in
             
             do {
-                guard error == nil else { throw HttpIoError.TransmissionError((error?.localizedDescription)!) }
-                guard let data = data else { throw IpfsApiError.NilData }
+                guard error == nil else { throw HttpIoError.transmissionError((error?.localizedDescription)!) }
+                guard let data = data else { throw IpfsApiError.nilData }
                 
                 //print("The data:",NSString(data: data, encoding: NSUTF8StringEncoding))
                 
@@ -41,28 +41,28 @@ public struct HttpIo : NetworkIo {
     }
    
     
-    public func streamFrom( source: String,
-                            updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool,
+    public func streamFrom( _ source: String,
+                            updateHandler: (Data, URLSessionDataTask) throws -> Bool,
                             completionHandler: (AnyObject) throws -> Void) throws {
     
-        guard let url = NSURL(string: source) else { throw HttpIoError.UrlError("Invalid URL") }
-        let config = NSURLSessionConfiguration.defaultSessionConfiguration()
+        guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
+        let config = URLSessionConfiguration.default()
         let handler = StreamHandler(updateHandler: updateHandler, completionHandler: completionHandler)
 //        let handler = FetchHandler(updateHandler: updateHandler, completionHandler: completionHandler)
-        let session = NSURLSession(configuration: config, delegate: handler, delegateQueue: nil)
-        let task = session.dataTaskWithURL(url)
+        let session = URLSession(configuration: config, delegate: handler, delegateQueue: nil)
+        let task = session.dataTask(with: url)
         
         task.resume()
     }
     
-    public func sendTo(target: String, content: NSData, completionHandler: (NSData) -> Void) throws {
+    public func sendTo(_ target: String, content: Data, completionHandler: (Data) -> Void) throws {
         var multipart = try Multipart(targetUrl: target, charset: "UTF8")
         multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
 
 
-    public func sendTo(target: String, content: [String], completionHandler: (NSData) -> Void) throws {
+    public func sendTo(_ target: String, content: [String], completionHandler: (Data) -> Void) throws {
 
         var multipart = try Multipart(targetUrl: target, charset: "UTF8")
         /// Then build up the data from the urls
@@ -74,10 +74,10 @@ public struct HttpIo : NetworkIo {
             and prepend file:// to it. For now assume the user has added
             the necessary prefix...Hahahaha. */
             
-            guard let sourceUrl = NSURL(string: source) else {
-                throw HttpIoError.UrlError("Cannot make URL from "+source)
+            guard let sourceUrl = URL(string: source) else {
+                throw HttpIoError.urlError("Cannot make URL from "+source)
             }
-            guard let fData = NSData(contentsOfURL: sourceUrl) else { continue }
+            guard let fData = try? Data(contentsOf: sourceUrl) else { continue }
             
             multipart = try Multipart.addFilePart(multipart, fileName: sourceUrl.lastPathComponent , fileData: fData)
         }
@@ -85,7 +85,7 @@ public struct HttpIo : NetworkIo {
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
     
-    func fetchUpdateHandler(data: NSData, task: NSURLSessionDataTask) {
+    func fetchUpdateHandler(_ data: Data, task: URLSessionDataTask) {
         print("fetch update")
         /// At this point we could decide to stop the task.
         if task.countOfBytesReceived > 1024 {
@@ -94,7 +94,7 @@ public struct HttpIo : NetworkIo {
         }
     }
     
-    func fetchCompletionHandler(result: AnyObject) {
+    func fetchCompletionHandler(_ result: AnyObject) {
         print("fetch completion:")
         for res in result as! [[String : AnyObject]] {
             print(res)
@@ -115,30 +115,30 @@ public struct HttpIo : NetworkIo {
 //    return nil
 //}
 
-public class StreamHandler : NSObject, NSURLSessionDataDelegate {
+public class StreamHandler : NSObject, URLSessionDataDelegate {
     
     var dataStore = NSMutableData()
-    let updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool
+    let updateHandler: (Data, URLSessionDataTask) throws -> Bool
     let completionHandler: (AnyObject) throws -> Void
     
-    init(updateHandler: (NSData, NSURLSessionDataTask) throws -> Bool, completionHandler: (AnyObject) throws -> Void) {
+    init(updateHandler: (Data, URLSessionDataTask) throws -> Bool, completionHandler: (AnyObject) throws -> Void) {
         self.updateHandler = updateHandler
         self.completionHandler = completionHandler
     }
     
-    public func URLSession(session: NSURLSession, dataTask: NSURLSessionDataTask, didReceiveData data: NSData) {
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         print("HANDLER:")
-        dataStore.appendData(data)
+        dataStore.append(data)
         
         do {
             // fire the update handler
-            try updateHandler(data, dataTask)
+            try _ = updateHandler(data, dataTask)
         } catch {
             print("In StreamHandler: updateHandler error: \(error)")
         }
     }
     
-    public func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) {
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: NSError?) {
         print("Completed")
         session.invalidateAndCancel()
         do {
