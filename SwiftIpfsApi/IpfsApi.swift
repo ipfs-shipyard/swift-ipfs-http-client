@@ -87,12 +87,12 @@ extension IpfsApiClient {
             (data: Data) in
             
             /// Convert the data to a byte array
-            let count = data.count / sizeof(UInt8)
+            let count = data.count / sizeof(UInt8.self)
             // create an array of Uint8
             var bytes = [UInt8](repeating: 0, count: count)
             
             // copy bytes into array
-            (data as NSData).getBytes(&bytes, length:count * sizeof(UInt8))
+            (data as NSData).getBytes(&bytes, length:count * sizeof(UInt8.self))
             
             try completionHandler(bytes)
         }
@@ -106,7 +106,7 @@ public enum PinType: String {
     case Recursive = "recursive"
 }
 
-enum IpfsApiError : ErrorProtocol {
+enum IpfsApiError : Error {
     case initError
     case invalidUrl
     case nilData
@@ -213,14 +213,15 @@ public class IpfsApi : IpfsApiClient {
                 let fixedData = fixStreamJson(data)
                 let json = JsonType.parse(try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments))
                 
-                switch json {
-                case .Object:
-                    completionHandler([try merkleNodeFromJson2(json)])
-                case .Array:
-                    completionHandler(try json.array!.map { try merkleNodeFromJson2($0) })
-                default:
-                    throw IpfsApiError.jsonSerializationFailed
-                }
+                
+                let res = try merkleNodesFromJson(json)
+                guard res.count > 0 else { throw IpfsApiError.jsonSerializationFailed }
+                
+                /// Unwrap optionals
+                let result = res.flatMap{ $0 }
+                
+                completionHandler( result )
+                
             } catch {
                 print("Error inside add completion handler: \(error)")
             }
@@ -236,8 +237,11 @@ public class IpfsApi : IpfsApiClient {
                 throw IpfsApiError.swarmError("ls error: No Objects in JSON data.")
             }
             
-            let merkles = try objects.map { try merkleNodeFromJson2($0) }
-            
+//            let merkles = try objects.map { try merkleNodeFromJson2($0) }
+            let tmp = try merkleNodesFromJson(json)
+            /// Unwrap optionals
+            let merkles = tmp.flatMap{ $0 }
+
             completionHandler(merkles)
         }
     }
@@ -284,7 +288,7 @@ public class IpfsApi : IpfsApiClient {
     
     public func mount(_ ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: (JsonType) -> Void) throws {
         
-        let fileManager = FileManager.default()
+        let fileManager = FileManager.default
         
         /// Create the directories if they do not already exist.
         if fileManager.fileExists(atPath: ipfsRootPath) == false {

@@ -10,7 +10,7 @@
 
 import Foundation
 
-enum HttpIoError : ErrorProtocol {
+enum HttpIoError : Error {
     case urlError(String)
     case transmissionError(String)
 }
@@ -21,8 +21,8 @@ public struct HttpIo : NetworkIo {
         
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         
-        let task = URLSession.shared().dataTask(with: url) {
-            (data: Data?, response: URLResponse?, error: NSError?) in
+        let task = URLSession.shared.dataTask(with: url) {
+            (data: Data?, response: URLResponse?, error: Error?) in
             
             do {
                 guard error == nil else { throw HttpIoError.transmissionError((error?.localizedDescription)!) }
@@ -46,7 +46,7 @@ public struct HttpIo : NetworkIo {
                             completionHandler: (AnyObject) throws -> Void) throws {
     
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
-        let config = URLSessionConfiguration.default()
+        let config = URLSessionConfiguration.default
         let handler = StreamHandler(updateHandler: updateHandler, completionHandler: completionHandler)
 //        let handler = FetchHandler(updateHandler: updateHandler, completionHandler: completionHandler)
         let session = URLSession(configuration: config, delegate: handler, delegateQueue: nil)
@@ -73,6 +73,11 @@ public struct HttpIo : NetworkIo {
             file exists locally (using NSFileManager fileExistsAtPath)
             and prepend file:// to it. For now assume the user has added
             the necessary prefix...Hahahaha. */
+            /// The idea here is that the contains check is a lot quicker than replacingOccurences
+            
+            let path = source.hasPrefix("file://") ? source.substring(from: source.index(source.startIndex, offsetBy:7)) : source
+            
+            guard FileManager.default.fileExists(atPath: path) else { throw HttpIoError.urlError("file not found at given path: \(path)") }
             
             guard let sourceUrl = URL(string: source) else {
                 throw HttpIoError.urlError("Cannot make URL from "+source)
@@ -138,7 +143,7 @@ public class StreamHandler : NSObject, URLSessionDataDelegate {
         }
     }
     
-    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: NSError?) {
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         print("Completed")
         session.invalidateAndCancel()
         do {
