@@ -138,7 +138,7 @@ public class StreamHandler : NSObject, URLSessionDataDelegate {
         }
     }
     
-    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: NSError?) {
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         print("Completed")
         session.invalidateAndCancel()
         do {

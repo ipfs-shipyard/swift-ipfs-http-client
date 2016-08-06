@@ -87,12 +87,12 @@ extension IpfsApiClient {
             (data: Data) in
             
             /// Convert the data to a byte array
-            let count = data.count / sizeof(UInt8)
+            let count = data.count / sizeof(UInt8.self)
             // create an array of Uint8
             var bytes = [UInt8](repeating: 0, count: count)
             
             // copy bytes into array
-            (data as NSData).getBytes(&bytes, length:count * sizeof(UInt8))
+            (data as NSData).getBytes(&bytes, length:count * sizeof(UInt8.self))
             
             try completionHandler(bytes)
         }
