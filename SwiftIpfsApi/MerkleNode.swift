@@ -9,7 +9,7 @@
 import Foundation
 import SwiftMultihash
 
-public enum MerkleNodeError : ErrorProtocol {
+public enum MerkleNodeError : Error {
     case jsonFormatError
     case requiredValueMissing(String)
 }

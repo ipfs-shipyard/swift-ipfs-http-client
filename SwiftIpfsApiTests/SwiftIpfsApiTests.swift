@@ -252,7 +252,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 print(b58String(result.hash!))
                 /// There should be two links off the root:
-                if let links = result.links where links.count == 2 {
+                if let links = result.links, links.count == 2 {
                     let link1 = links[0]
                     let link2 = links[1]
                     XCTAssert(b58String(link1.hash!) == "QmWfzntFwgPf9T9brQ6P2PL1BMoH16jZvhanGYtZQfgyaD")
@@ -342,8 +342,8 @@ class SwiftIpfsApiTests: XCTestCase {
                             
                             /// Check that the object's link is the same as 
                             /// what we originally passed to the patch command.
-                            if let links = result.links where links.count == 2,
-                                let linkHash = links[1].hash where b58String(linkHash) == hash {}
+                            if let links = result.links, links.count == 2,
+                                let linkHash = links[1].hash, b58String(linkHash) == hash {}
                             else { XCTFail() }
                             
                             /// Now try to remove it and check that we only have one link.
@@ -354,8 +354,8 @@ class SwiftIpfsApiTests: XCTestCase {
                                 try api.object.links(result.hash!) {
                                     (result: MerkleNode) in
 
-                                    if let links = result.links where links.count == 1,
-                                        let linkHash = links[0].hash where b58String(linkHash) == hash2 {}
+                                    if let links = result.links, links.count == 1,
+                                        let linkHash = links[0].hash, b58String(linkHash) == hash2 {}
                                     else { XCTFail() }
 
                                     dispatchGroup.leave()
@@ -723,7 +723,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 try api.config.get("Teo") {
                     result in
                     /// do comparison with truth here.
-                    if case .String(let strResult) = result where strResult == "42" { } else {
+                    if case .String(let strResult) = result, strResult == "42" { } else {
                         XCTFail()
                     }
                     dispatchGroup.leave()
@@ -739,7 +739,7 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.config.get("Datastore.Type") {
                 result in
                 /// do comparison with truth here.
-                if case .String(let strResult) = result where strResult == "leveldb" { } else {
+                if case .String(let strResult) = result, strResult == "leveldb" { } else {
                     XCTFail()
                 }
                 dispatchGroup.leave()
@@ -763,7 +763,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 var pass = false
                 let node = results[0]
-                if let links = node.links where
+                if let links = node.links,
                         links.count == 2 &&
                         links[0].name! == "Mel.html" &&
                         links[1].name! == "MelKaye.png" {

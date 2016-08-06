@@ -10,7 +10,7 @@
 
 import Foundation
 
-enum HttpIoError : ErrorProtocol {
+enum HttpIoError : Error {
     case urlError(String)
     case transmissionError(String)
 }
@@ -21,8 +21,8 @@ public struct HttpIo : NetworkIo {
         
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         
-        let task = URLSession.shared().dataTask(with: url) {
-            (data: Data?, response: URLResponse?, error: NSError?) in
+        let task = URLSession.shared.dataTask(with: url) {
+            (data: Data?, response: URLResponse?, error: Error?) in
             
             do {
                 guard error == nil else { throw HttpIoError.transmissionError((error?.localizedDescription)!) }
@@ -46,7 +46,7 @@ public struct HttpIo : NetworkIo {
                             completionHandler: (AnyObject) throws -> Void) throws {
     
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
-        let config = URLSessionConfiguration.default()
+        let config = URLSessionConfiguration.default
         let handler = StreamHandler(updateHandler: updateHandler, completionHandler: completionHandler)
 //        let handler = FetchHandler(updateHandler: updateHandler, completionHandler: completionHandler)
         let session = URLSession(configuration: config, delegate: handler, delegateQueue: nil)

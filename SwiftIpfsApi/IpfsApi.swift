@@ -106,7 +106,7 @@ public enum PinType: String {
     case Recursive = "recursive"
 }
 
-enum IpfsApiError : ErrorProtocol {
+enum IpfsApiError : Error {
     case initError
     case invalidUrl
     case nilData
@@ -284,7 +284,7 @@ public class IpfsApi : IpfsApiClient {
     
     public func mount(_ ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: (JsonType) -> Void) throws {
         
-        let fileManager = FileManager.default()
+        let fileManager = FileManager.default
         
         /// Create the directories if they do not already exist.
         if fileManager.fileExists(atPath: ipfsRootPath) == false {

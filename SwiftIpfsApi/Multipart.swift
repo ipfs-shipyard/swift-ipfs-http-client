@@ -8,7 +8,7 @@
 //  Licensed under MIT See LICENCE file in the root of this project for details. 
 
 import Foundation
-public enum MultipartError : ErrorProtocol {
+public enum MultipartError : Error {
     case failedURLCreation
 }
 
@@ -88,8 +88,8 @@ extension Multipart {
         
         
         /// Send off the request
-        let task = URLSession.shared().dataTask(with: (multipart.request as URLRequest)) {
-            (data: Data?, response: URLResponse?, error: NSError?) -> Void in
+        let task = URLSession.shared.dataTask(with: (multipart.request as URLRequest)) {
+            (data: Data?, response: URLResponse?, error: Error?) -> Void in
             
             guard error == nil && data != nil else {
                 print("Error in dataTaskWithRequest: \(error)")//throw HttpIoError.TransmissionError("fail: \(error)")
