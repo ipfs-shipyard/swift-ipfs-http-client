@@ -13,7 +13,7 @@ import SwiftMultihash
 /// This is to allow a Multihash to be used as a Dictionary key.
 extension Multihash : Hashable {
     public var hashValue: Int {
-        return String(value).hash
+        return String(describing: value).hash
     }
 }
 
@@ -51,14 +51,14 @@ extension ClientSubCommand {
 extension IpfsApiClient {
     
     func fetchStreamJson(   _ path: String,
-                            updateHandler: (Data, URLSessionDataTask) throws -> Bool,
-                            completionHandler: (AnyObject) throws -> Void) throws {
+                            updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool,
+                            completionHandler: @escaping (AnyObject) throws -> Void) throws {
         /// We need to use the passed in completionHandler
         try net.streamFrom(baseUrl + path, updateHandler: updateHandler, completionHandler: completionHandler)
     }
     
 
-    func fetchJson(_ path: String, completionHandler: (JsonType) throws -> Void) throws {
+    func fetchJson(_ path: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try fetchData(path) {
             (data: Data) in
 
@@ -73,26 +73,26 @@ extension IpfsApiClient {
     
             /// At this point we could check to see if the json contains a code/message for flagging errors.
             
-            try completionHandler(JsonType.parse(json))
+            try completionHandler(JsonType.parse(json as AnyObject))
         }
     }
     
-    func fetchData(_ path: String, completionHandler: (Data) throws -> Void) throws {
+    func fetchData(_ path: String, completionHandler: @escaping (Data) throws -> Void) throws {
         
         try net.receiveFrom(baseUrl + path, completionHandler: completionHandler)
     }
     
-    func fetchBytes(_ path: String, completionHandler: ([UInt8]) throws -> Void) throws {
+    func fetchBytes(_ path: String, completionHandler: @escaping ([UInt8]) throws -> Void) throws {
         try fetchData(path) {
             (data: Data) in
             
             /// Convert the data to a byte array
-            let count = data.count / sizeof(UInt8.self)
+            let count = data.count / MemoryLayout<UInt8>.size
             // create an array of Uint8
             var bytes = [UInt8](repeating: 0, count: count)
             
             // copy bytes into array
-            (data as NSData).getBytes(&bytes, length:count * sizeof(UInt8.self))
+            (data as NSData).getBytes(&bytes, length:count * MemoryLayout<UInt8>.size)
             
             try completionHandler(bytes)
         }
@@ -200,19 +200,21 @@ public class IpfsApi : IpfsApiClient {
     
     /// base commands
     
-    public func add(_ filePath: String, completionHandler: ([MerkleNode]) -> Void) throws {
+    public func add(_ filePath: String, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
         try self.add([filePath], completionHandler: completionHandler)
     }
     
-    public func add(_ filePaths: [String], completionHandler: ([MerkleNode]) -> Void) throws {
+    public func add(_ filePaths: [String], completionHandler: @escaping ([MerkleNode]) -> Void) throws {
 
         try net.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
             data in
             do {
                 /// If there was no data fetched pass an empty dictionary and return.
                 let fixedData = fixStreamJson(data)
-                let json = JsonType.parse(try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments))
                 
+                
+                let json = JsonType.parse(try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments) as AnyObject)
+                print(json)
                 
                 let res = try merkleNodesFromJson(json)
                 guard res.count > 0 else { throw IpfsApiError.jsonSerializationFailed }
@@ -228,7 +230,7 @@ public class IpfsApi : IpfsApiClient {
         }
     }
     
-    public func ls(_ hash: Multihash, completionHandler: ([MerkleNode]) -> Void) throws {
+    public func ls(_ hash: Multihash, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
         
         try fetchJson("ls/\(b58String(hash))") {
             json in
@@ -237,25 +239,25 @@ public class IpfsApi : IpfsApiClient {
                 throw IpfsApiError.swarmError("ls error: No Objects in JSON data.")
             }
             
-//            let merkles = try objects.map { try merkleNodeFromJson2($0) }
-            let tmp = try merkleNodesFromJson(json)
+            let merkles = try objects.map { try merkleNodeFromJson2($0) }
+//            let tmp = try merkleNodesFromJson(json)
             /// Unwrap optionals
-            let merkles = tmp.flatMap{ $0 }
+//            let merkles = tmp.flatMap{ $0 }
 
             completionHandler(merkles)
         }
     }
 
-    public func cat(_ hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
+    public func cat(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
         try fetchBytes("cat/\(b58String(hash))", completionHandler: completionHandler)
     }
     
-    public func get(_ hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
+    public func get(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
         try self.cat(hash, completionHandler: completionHandler)
     }
 
 
-    public func refs(_ hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
+    public func refs(_ hash: Multihash, recursive: Bool, completionHandler: @escaping ([Multihash]) -> Void) throws {
         
         try fetchJson("refs?arg=" + b58String(hash) + "&r=\(recursive)") {
            result in
@@ -273,11 +275,11 @@ public class IpfsApi : IpfsApiClient {
             completionHandler(refs)
         }
     }
-    public func resolve(_ scheme: String, hash: Multihash, recursive: Bool, completionHandler: (JsonType) -> Void) throws {
+    public func resolve(_ scheme: String, hash: Multihash, recursive: Bool, completionHandler: @escaping (JsonType) -> Void) throws {
         try fetchJson("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
     }
     
-    public func dns(_ domain: String, completionHandler: (String) -> Void) throws {
+    public func dns(_ domain: String, completionHandler: @escaping (String) -> Void) throws {
         try fetchJson("dns?arg=" + domain) {
             result in
             
@@ -286,7 +288,7 @@ public class IpfsApi : IpfsApiClient {
         }
     }
     
-    public func mount(_ ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: (JsonType) -> Void) throws {
+    public func mount(_ ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: @escaping (JsonType) -> Void) throws {
         
         let fileManager = FileManager.default
         
@@ -304,19 +306,19 @@ public class IpfsApi : IpfsApiClient {
     /** ping is a tool to test sending data to other nodes. 
         It finds nodes via the routing system, send pings, wait for pongs, 
         and prints out round- trip latency information. */
-    public func ping(_ target: String, completionHandler: (JsonType) -> Void) throws {
+    public func ping(_ target: String, completionHandler: @escaping (JsonType) -> Void) throws {
         try fetchJson("ping/" + target, completionHandler: completionHandler)
     }
     
     
-    public func id(_ target: String? = nil, completionHandler: (JsonType) -> Void) throws {
+    public func id(_ target: String? = nil, completionHandler: @escaping (JsonType) -> Void) throws {
         var request = "id"
         if target != nil { request += "/\(target!)" }
         
         try fetchJson(request, completionHandler: completionHandler)
     }
     
-    public func version(_ completionHandler: (String) -> Void) throws {
+    public func version(_ completionHandler: @escaping (String) -> Void) throws {
         try fetchJson("version") {
             json in
             let version = json.object?["Version"]?.string ?? ""
@@ -325,7 +327,7 @@ public class IpfsApi : IpfsApiClient {
     }
     
     /** List all available commands. */
-    public func commands(_ showOptions: Bool = false, completionHandler: (JsonType) -> Void) throws {
+    public func commands(_ showOptions: Bool = false, completionHandler: @escaping (JsonType) -> Void) throws {
         
         var request = "commands" //+ (showOptions ? "?flags=true&" : "")
         if showOptions { request += "?flags=true&" }
@@ -337,7 +339,7 @@ public class IpfsApi : IpfsApiClient {
         Since the log tail won't stop until interrupted, the update handler
         should return false when it wants the updates to stop.
     */
-    public func log(_ updateHandler: (Data) throws -> Bool, completionHandler: ([[String : AnyObject]]) -> Void) throws {
+    public func log(_ updateHandler: (Data) throws -> Bool, completionHandler: @escaping ([[String : AnyObject]]) -> Void) throws {
         
         /// Two test closures to be passed to the fetchStreamJson as parameters.
         let comp = { (result: AnyObject) -> Void in
@@ -370,7 +372,7 @@ public class IpfsApi : IpfsApiClient {
 /** Show or edit the list of bootstrap peers */
 extension IpfsApiClient {
     
-    public func bootstrap(_ completionHandler: ([Multiaddr]) -> Void) throws {
+    public func bootstrap(_ completionHandler: @escaping ([Multiaddr]) -> Void) throws {
         try bootstrap.list(completionHandler)
     }
 }
@@ -391,44 +393,47 @@ extension IpfsApiClient {
 /** Deal with concatenated JSON (since JSONSerialization doesn't) by wrapping it
  in array brackets and comma separating the various root components. */
 public func fixStreamJson(_ rawJson: Data) -> Data {
-    /// get the bytes
-    let bytes            = UnsafePointer<UInt8>((rawJson as NSData).bytes)
+
     var sections         = 0
     var brackets         = 0
     var bytesRead        = 0
     let output           = NSMutableData()
-    var newStart         = bytes
-    /// Start the output off with a JSON opening array bracket [.
-    output.append([91] as [UInt8], length: 1)
-    
-    for i in 0 ..< rawJson.count {
-        switch bytes[i] {
 
-        case 91 where sections == 0:      /// If an [ is first we need no fix
-            return rawJson
+    rawJson.withUnsafeBytes { (bytes: UnsafePointer<UInt8>)->Void in
+        
+        var newStart         = bytes
+        /// Start the output off with a JSON opening array bracket [.
+        output.append([91] as [UInt8], length: 1)
+        
+        for i in 0 ..< rawJson.count {
+            switch bytes[i] {
 
-        case 123 where (brackets+1) == 1:   /// check for {
-			brackets += 1
-            newStart = bytes+i
-            
-        case 125 where (brackets-1) == 0:   /// Check for }
-            brackets -= 1
-            /// Separate sections with a comma except the first one.
-            if output.length > 1 {
-                output.append([44] as [UInt8], length: 1)
+            case 91 where sections == 0:      /// If an [ is first we need no fix
+                sections = 1
+                return// rawJson
+
+            case 123 where (brackets+1) == 1:   /// check for {
+                brackets += 1
+                newStart = bytes+i
+                
+            case 125 where (brackets-1) == 0:   /// Check for }
+                brackets -= 1
+                /// Separate sections with a comma except the first one.
+                if output.length > 1 {
+                    output.append([44] as [UInt8], length: 1)
+                }
+                
+                output.append(Data(bytes: UnsafePointer<UInt8>(newStart), count: bytesRead+1))
+                bytesRead = 0
+                sections += 1
+
+            default:
+                break
             }
             
-            output.append(Data(bytes: UnsafePointer<UInt8>(newStart), count: bytesRead+1))
-            bytesRead = 0
-            sections += 1
-
-        default:
-            break
+            if brackets > 0 { bytesRead += 1 }
         }
-        
-        if brackets > 0 { bytesRead += 1 }
     }
-    
     /// There was nothing to fix. Bail.
     if sections == 1 { return rawJson }
     

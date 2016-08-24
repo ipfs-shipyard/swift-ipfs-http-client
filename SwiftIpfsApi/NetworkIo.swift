@@ -12,12 +12,12 @@ import Foundation
 
 public protocol NetworkIo {
     
-    func receiveFrom(_ source: String, completionHandler: (Data) throws -> Void) throws
+    func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws
 
-    func streamFrom(_ source: String, updateHandler: (Data, URLSessionDataTask) throws -> Bool, completionHandler: (AnyObject) throws -> Void) throws
+    func streamFrom(_ source: String, updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool, completionHandler: @escaping (AnyObject) throws -> Void) throws
     
-    func sendTo(_ target: String, content: Data, completionHandler: (Data) -> Void) throws
+    func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws
 
     /// If we want to send a bunch of location addressed content (eg.files)
-    func sendTo(_ target: String, content: [String], completionHandler: (Data) -> Void) throws
+    func sendTo(_ target: String, content: [String], completionHandler: @escaping (Data) -> Void) throws
 }

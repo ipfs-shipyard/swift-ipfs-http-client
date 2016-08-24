@@ -20,7 +20,7 @@ public class File : ClientSubCommand {
     The JSON output contains size information.  For files, the child size is the
     total size of the file contents.  
     For directories, the child size is the IPFS link size. */
-    public func ls(_ path: String, completionHandler: (JsonType) -> Void) throws {
+    public func ls(_ path: String, completionHandler: @escaping (JsonType) -> Void) throws {
         try parent!.fetchJson("file/ls?arg=" + path, completionHandler: completionHandler)
     }
 }

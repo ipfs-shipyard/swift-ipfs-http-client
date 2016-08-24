@@ -22,12 +22,12 @@ public class Bootstrap : ClientSubCommand {
     var parent: IpfsApiClient?
     
     
-    public func list(_ completionHandler: ([Multiaddr]) throws -> Void) throws {
+    public func list(_ completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
         
         try fetchPeers("bootstrap/", completionHandler: completionHandler)
     }
     
-    public func add(_ addresses: [Multiaddr], completionHandler: ([Multiaddr]) throws -> Void) throws {
+    public func add(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
         
         let multiaddresses = try addresses.map { try $0.string() }
         let request = "bootstrap/add?" + buildArgString(multiaddresses)
@@ -35,12 +35,12 @@ public class Bootstrap : ClientSubCommand {
         try fetchPeers(request, completionHandler: completionHandler)
     }
     
-    public func rm(_ addresses: [Multiaddr], completionHandler: ([Multiaddr]) throws -> Void) throws {
+    public func rm(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
         
         try self.rm(addresses, all: false, completionHandler: completionHandler)
     }
     
-    public func rm(_ addresses: [Multiaddr], all: Bool, completionHandler: ([Multiaddr]) throws -> Void) throws {
+    public func rm(_ addresses: [Multiaddr], all: Bool, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
         
         let multiaddresses = try addresses.map { try $0.string() }
         var request = "bootstrap/rm?"
@@ -52,7 +52,7 @@ public class Bootstrap : ClientSubCommand {
         try fetchPeers(request, completionHandler: completionHandler)
     }
     
-    private func fetchPeers(_ request: String, completionHandler: ([Multiaddr]) throws -> Void) throws {
+    private func fetchPeers(_ request: String, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
                                                         
         try parent!.fetchJson(request) {
             result in

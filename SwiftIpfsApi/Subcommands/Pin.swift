@@ -14,7 +14,7 @@ public class Pin : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func add(_ hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
+    public func add(_ hash: Multihash, completionHandler: @escaping ([Multihash]) -> Void) throws {
         
         try parent!.fetchJson("pin/add?stream-channels=true&arg=\(b58String(hash))") {
             result in
@@ -30,7 +30,7 @@ public class Pin : ClientSubCommand {
     }
     
     /** List objects pinned to local storage */
-    public func ls(_ completionHandler: ([Multihash : JsonType]) -> Void) throws {
+    public func ls(_ completionHandler: @escaping ([Multihash : JsonType]) -> Void) throws {
         
         /// The default is .Recursive
         try self.ls(.Recursive) {
@@ -48,7 +48,7 @@ public class Pin : ClientSubCommand {
         }
     }
     
-    public func ls(_ pinType: PinType, completionHandler: (JsonType) throws -> Void) throws {
+    public func ls(_ pinType: PinType, completionHandler: @escaping (JsonType) throws -> Void) throws {
         
         try parent!.fetchJson("pin/ls?stream-channels=true&t=" + pinType.rawValue) {
             result in
@@ -61,11 +61,11 @@ public class Pin : ClientSubCommand {
         }
     }
     
-    public func rm(_ hash: Multihash, completionHandler: ([Multihash]) -> Void) throws {
+    public func rm(_ hash: Multihash, completionHandler: @escaping ([Multihash]) -> Void) throws {
         try self.rm(hash, recursive: true, completionHandler: completionHandler)
     }
     
-    public func rm(_ hash: Multihash, recursive: Bool, completionHandler: ([Multihash]) -> Void) throws {
+    public func rm(_ hash: Multihash, recursive: Bool, completionHandler: @escaping ([Multihash]) -> Void) throws {
         
         try parent!.fetchJson("pin/rm?stream-channels=true&r=\(recursive)&arg=\(b58String(hash))") {
             result in

@@ -17,17 +17,17 @@ public class Name : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func publish(_ hash: Multihash, completionHandler: (JsonType) -> Void) throws {
+    public func publish(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
         try self.publish(nil, hash: hash, completionHandler: completionHandler)
     }
     
-    public func publish(_ id: String? = nil, hash: Multihash, completionHandler: (JsonType) -> Void) throws {
+    public func publish(_ id: String? = nil, hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
         var request = "name/publish?arg="
         if id != nil { request += id! + "&arg=" }
         try parent!.fetchJson(request + "/ipfs/" + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func resolve(_ hash: Multihash? = nil, completionHandler: (String) -> Void) throws {
+    public func resolve(_ hash: Multihash? = nil, completionHandler: @escaping (String) -> Void) throws {
         
         var request = "name/resolve"
         if hash != nil { request += "?arg=" + b58String(hash!) }

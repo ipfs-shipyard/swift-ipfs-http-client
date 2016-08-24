@@ -14,7 +14,7 @@ public class Refs : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func local(_ completionHandler: ([Multihash]) -> Void) throws {
+    public func local(_ completionHandler: @escaping ([Multihash]) -> Void) throws {
         try parent!.fetchData("refs/local") {
             (data: Data) in
             

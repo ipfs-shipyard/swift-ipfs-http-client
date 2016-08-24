@@ -17,7 +17,7 @@ enum HttpIoError : Error {
 
 public struct HttpIo : NetworkIo {
 
-    public func receiveFrom(_ source: String, completionHandler: (Data) throws -> Void) throws {
+    public func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws {
         
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         
@@ -42,8 +42,8 @@ public struct HttpIo : NetworkIo {
    
     
     public func streamFrom( _ source: String,
-                            updateHandler: (Data, URLSessionDataTask) throws -> Bool,
-                            completionHandler: (AnyObject) throws -> Void) throws {
+                            updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool,
+                            completionHandler: @escaping (AnyObject) throws -> Void) throws {
     
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         let config = URLSessionConfiguration.default
@@ -55,14 +55,14 @@ public struct HttpIo : NetworkIo {
         task.resume()
     }
     
-    public func sendTo(_ target: String, content: Data, completionHandler: (Data) -> Void) throws {
+    public func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws {
         var multipart = try Multipart(targetUrl: target, charset: "UTF8")
         multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
 
 
-    public func sendTo(_ target: String, content: [String], completionHandler: (Data) -> Void) throws {
+    public func sendTo(_ target: String, content: [String], completionHandler: @escaping (Data) -> Void) throws {
 
         var multipart = try Multipart(targetUrl: target, charset: "UTF8")
         /// Then build up the data from the urls
@@ -126,7 +126,7 @@ public class StreamHandler : NSObject, URLSessionDataDelegate {
     let updateHandler: (Data, URLSessionDataTask) throws -> Bool
     let completionHandler: (AnyObject) throws -> Void
     
-    init(updateHandler: (Data, URLSessionDataTask) throws -> Bool, completionHandler: (AnyObject) throws -> Void) {
+    init(updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool, completionHandler: @escaping (AnyObject) throws -> Void) {
         self.updateHandler = updateHandler
         self.completionHandler = completionHandler
     }

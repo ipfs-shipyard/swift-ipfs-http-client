@@ -14,7 +14,7 @@ public class Config : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func show(_ completionHandler: (JsonType) -> Void) throws {
+    public func show(_ completionHandler: @escaping (JsonType) -> Void) throws {
         
         try parent!.fetchJson("config/show",completionHandler: completionHandler )
     }
@@ -25,7 +25,7 @@ public class Config : ClientSubCommand {
         }
     }
     
-    public func get(_ key: String, completionHandler: (JsonType) throws -> Void) throws {
+    public func get(_ key: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try parent!.fetchJson("config?arg=" + key) {
             result in
             guard let value = result.object?["Value"] else {
@@ -37,7 +37,7 @@ public class Config : ClientSubCommand {
         }
     }
     
-    public func set(_ key: String, value: String, completionHandler: (JsonType) throws -> Void) throws {
+    public func set(_ key: String, value: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         
         try parent!.fetchJson("config?arg=\(key)&arg=\(value)", completionHandler: completionHandler )
     }

@@ -67,12 +67,28 @@ public class MerkleNode {
         }
     }
 }
-
+public func merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
+    var nodes = [MerkleNode?]()
+    
+    switch rawJson {
+    case .Object(_):
+        return [try merkleNodeFromJson2(rawJson)]
+//        return try merkleNodesFromJson(JsonType.Array([rawJson]))
+        
+    case .Array(let arr):
+        for obj in arr {
+            nodes.append(try merkleNodeFromJson2(obj))
+        }
+    default:
+        break
+    }
+    return nodes
+}
 /** This method will find all the objects in the rawJson that refer to the same
     name and build merkle nodes from them. It will return the new merkle nodes.
  */
 /// FIXME: Assumption that hash is always last is incorrect.
-public func merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
+public func _merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
     
     var nodes = [MerkleNode?]()
     
@@ -84,7 +100,7 @@ public func merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
     case .Array(let arr):
         
         /// we need a place to hold the objects with the same name
-        var merkles = [String : MerkleData]()
+        _ = [String : MerkleData]()
 //        var curMerkle: MerkleData?
         var curMerkle = MerkleData()
         

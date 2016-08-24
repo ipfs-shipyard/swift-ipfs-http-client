@@ -1054,7 +1054,7 @@ class SwiftIpfsApiTests: XCTestCase {
     
     /// Utility functions
     
-    func tester(_ test: (dispatchGroup: DispatchGroup) throws -> Void) {
+    func tester(_ test: (_ dispatchGroup: DispatchGroup) throws -> Void) {
         
         let group = DispatchGroup()
         

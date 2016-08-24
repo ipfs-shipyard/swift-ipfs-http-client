@@ -34,7 +34,7 @@ public class IpfsObject : ClientSubCommand {
      Available templates:
     	* unixfs-dir
      */
-    public func new(_ template: ObjectTemplates? = nil, completionHandler: (MerkleNode) throws -> Void) throws {
+    public func new(_ template: ObjectTemplates? = nil, completionHandler: @escaping (MerkleNode) throws -> Void) throws {
         var request = "object/new?stream-channels=true"
         if template != nil { request += "&arg=\(template!.rawValue)" }
         try parent!.fetchJson(request) {
@@ -46,7 +46,7 @@ public class IpfsObject : ClientSubCommand {
     /** IpfsObject put is a plumbing command for storing DAG nodes.
      Its input is a byte array, and the output is a base58 encoded multihash.
      */
-    public func put(_ data: [UInt8], completionHandler: (MerkleNode) -> Void) throws {
+    public func put(_ data: [UInt8], completionHandler: @escaping (MerkleNode) -> Void) throws {
         let data2 = Data(bytes: UnsafePointer<UInt8>(data), count: data.count)
         
         try parent!.net.sendTo(parent!.baseUrl+"object/put?stream-channels=true", content: data2) {
@@ -58,7 +58,7 @@ public class IpfsObject : ClientSubCommand {
                     throw IpfsApiError.jsonSerializationFailed
                 }
                 
-                completionHandler(try merkleNodeFromJson(json))
+                completionHandler(try merkleNodeFromJson(json as AnyObject))
             } catch {
                 print("IpfsObject Error:\(error)")
             }
@@ -68,7 +68,7 @@ public class IpfsObject : ClientSubCommand {
     /** IpfsObject get is a plumbing command for retreiving DAG nodes.
      Its input is a base58 encoded Multihash and it returns a MerkleNode.
      */
-    public func get(_ hash: Multihash, completionHandler: (MerkleNode) -> Void) throws {
+    public func get(_ hash: Multihash, completionHandler: @escaping (MerkleNode) -> Void) throws {
         
         try parent!.fetchJson("object/get?stream-channels=true&arg=" + b58String(hash)){
             result in
@@ -79,7 +79,7 @@ public class IpfsObject : ClientSubCommand {
         }
     }
     
-    public func links(_ hash: Multihash, completionHandler: (MerkleNode) throws -> Void) throws {
+    public func links(_ hash: Multihash, completionHandler: @escaping (MerkleNode) throws -> Void) throws {
         
         try parent!.fetchJson("object/links?stream-channels=true&arg=" + b58String(hash)){
             result in
@@ -87,17 +87,17 @@ public class IpfsObject : ClientSubCommand {
         }
     }
     
-    public func stat(_ hash: Multihash, completionHandler: (JsonType) -> Void) throws {
+    public func stat(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
         
         try parent!.fetchJson("object/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func data(_ hash: Multihash, completionHandler: ([UInt8]) -> Void) throws {
+    public func data(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
         
         try parent!.fetchBytes("object/data?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func patch(_ root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: (MerkleNode) throws -> Void) throws {
+    public func patch(_ root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: @escaping (MerkleNode) throws -> Void) throws {
         
         var request: String = "object/patch?arg=\(b58String(root))&arg=\(cmd.rawValue)&"
         

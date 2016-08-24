@@ -14,11 +14,11 @@ public enum MultipartError : Error {
 
 public struct Multipart {
     
-    private static let lineFeed:String = "\r\n"
-    private let boundary: String
-    private let charset: String
-    private var body = NSMutableData()
-    private let request: NSMutableURLRequest
+    static let lineFeed:String = "\r\n"
+    let boundary: String
+    let charset: String
+    var body = NSMutableData()
+    let request: NSMutableURLRequest
     
     init(targetUrl: String, charset: String) throws {
         
@@ -78,7 +78,7 @@ extension Multipart {
         return oldMultipart
     }
     
-    public static func finishMultipart(_ multipart: Multipart, completionHandler: (Data) -> Void) {
+    public static func finishMultipart(_ multipart: Multipart, completionHandler: @escaping (Data) -> Void) {
         
         let outString = "--" + multipart.boundary + "--" + lineFeed
         multipart.body.append(outString.data(using: String.Encoding.utf8)!)
