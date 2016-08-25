@@ -1062,7 +1062,7 @@ class SwiftIpfsApiTests: XCTestCase {
         
         do {
             /// Perform the test.
-            try test(dispatchGroup: group)
+            try test(group)
             
         } catch  {
             XCTFail("tester error: \(error)")
