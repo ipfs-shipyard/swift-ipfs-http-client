@@ -29,11 +29,11 @@ In the root of your project:
 github "ipfs/swift-ipfs-api"
 ```
 - To fetch and build the dependencies, type:
-```carthage update --no-use-binaries --platform Mac```
+```carthage update --platform Mac```
 
 or
 
-```carthage update --no-use-binaries --platform iOS```
+```carthage update --platform iOS```
 
 For more information on how to install via Carthage see the [README](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application)
 
