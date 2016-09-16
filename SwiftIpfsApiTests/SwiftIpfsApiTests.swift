@@ -994,13 +994,13 @@ class SwiftIpfsApiTests: XCTestCase {
     func testResolveIpfs() {
         let resolve = { (dispatchGroup: DispatchGroup) throws -> Void in
             
-//            let api = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
             let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
             
             try api.resolve("ipfs", hash: multihash, recursive: false) {
                 result in
-                print("Resolve IPFS got", result)
+				XCTAssert(result.object?["Path"]?.string == "/ipfs/QmW2WQi7j6c7UgJTarActp7tDNikE4B2qXtFCfLPdsgaTQ")
+//                print("Resolve IPFS got", result)
                 dispatchGroup.leave()
             }
         }

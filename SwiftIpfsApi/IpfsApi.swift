@@ -56,8 +56,20 @@ extension IpfsApiClient {
         /// We need to use the passed in completionHandler
         try net.streamFrom(baseUrl + path, updateHandler: updateHandler, completionHandler: completionHandler)
     }
-    
-
+	
+	
+//	let stream: InputStream = InputStream(data: data)
+//	var buffer = [UInt8](repeating: 0, count: data.count)
+//	stream.open()
+//	
+//	if stream.hasBytesAvailable {
+//	//let result :Int = stream.read(&buffer, maxLength: buffer.count)
+//	let myson = try JSONSerialization.jsonObject(with: stream)
+//	print("streams \(myson)")
+//	}
+//	stream.close()
+	
+	
     func fetchJson(_ path: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try fetchData(path) {
             (data: Data) in
@@ -67,10 +79,21 @@ extension IpfsApiClient {
                 try completionHandler(JsonType.null)
                 return
             }
-//            print(data)
-            let fixedData = fixStreamJson(data)
-            let json = try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments)
-    
+
+//			print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
+//			let fixedData: Data = fixStreamJson(data)
+//			print("The fixed data:",NSString(data: fixedData, encoding: String.Encoding.utf8.rawValue))
+			
+			var json: Any
+			do {
+				json = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments)
+			} catch {
+				/// So the serialization might have failed due to the json being concatenated.
+				/// Let's try fixing it
+				let fixedData: Data = fixStreamJson(data)
+				/// and try again
+				json = try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments)
+			}
             /// At this point we could check to see if the json contains a code/message for flagging errors.
             
             try completionHandler(JsonType.parse(json as AnyObject))
@@ -260,11 +283,11 @@ public class IpfsApi : IpfsApiClient {
     public func refs(_ hash: Multihash, recursive: Bool, completionHandler: @escaping ([Multihash]) -> Void) throws {
         
         try fetchJson("refs?arg=" + b58String(hash) + "&r=\(recursive)") {
-           result in
-        
+			result in
             guard let results = result.array else { throw IpfsApiError.unexpectedReturnType }
             /// Extract the references and add them to an array.
             var refs: [Multihash] = []
+			
             for obj in results {
                 if let ref = obj.object?["Ref"]?.string {
                     let mh = try fromB58String(ref)
@@ -275,6 +298,7 @@ public class IpfsApi : IpfsApiClient {
             completionHandler(refs)
         }
     }
+	
     public func resolve(_ scheme: String, hash: Multihash, recursive: Bool, completionHandler: @escaping (JsonType) -> Void) throws {
         try fetchJson("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
     }

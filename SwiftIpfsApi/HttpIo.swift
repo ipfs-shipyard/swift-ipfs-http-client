@@ -28,7 +28,7 @@ public struct HttpIo : NetworkIo {
                 guard error == nil else { throw HttpIoError.transmissionError((error?.localizedDescription)!) }
                 guard let data = data else { throw IpfsApiError.nilData }
                 
-                //print("The data:",NSString(data: data, encoding: NSUTF8StringEncoding))
+//                print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
                 
                 try completionHandler(data)
                 
