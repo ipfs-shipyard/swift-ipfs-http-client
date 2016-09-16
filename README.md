@@ -1,30 +1,51 @@
-IPFS API wrapper library written in Swift
-=========================================
+# swift-ipfs-api
 
-> A client library for the IPFS API.
+[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
+[![](https://img.shields.io/badge/project-IPFS-blue.svg?style=flat-square)](http://ipfs.io/)
+[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
+[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+
+> A Swift client library for the IPFS API.
 
 For more information about [IPFS](http://ipfs.io) or the [API commands](http://ipfs.io/docs/commands) click the links.
 
 The Swift IPFS API shell/client is an asynchronous library that provides native calls to an IPFS node.
 
-## Installation
+## Table of Contents
+
+- [Install](#install)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Requirements](#requirements)
+- [Contribute](#contribute)
+- [License](#license)
+
+## Install
 
 In the root of your project:
 
 -  Add a Cartfile (or use an existing one) with the following:
 ```
-github "NeoTeo/swift-ipfs-api"
+github "ipfs/swift-ipfs-api"
 ```
 - To fetch and build the dependencies, type:
-```carthage update --no-use-binaries --platform Mac```
+
+```carthage update --platform Mac```
 
 or
 
-```carthage update --no-use-binaries --platform iOS```
+```carthage update --platform iOS```
+
+or
+
+```carthage update .```
+
+if you want both platforms.
 
 For more information on how to install via Carthage see the [README](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application)
 
 ## Usage
+
 Add the required frameworks to your project in Xcode:
 
 - In your target's `build phases` tab.
@@ -69,7 +90,16 @@ dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
 ```
 
 ## Requirements
-Swift 2.1
+Swift 3
+
+## Contribute
+
+Feel free to join in. All welcome. Open an [issue](https://github.com/ipfs/swift-ipfs-api/issues)!
+
+This repository falls under the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
+
+[![](https://cdn.rawgit.com/jbenet/contribute-ipfs-gif/master/img/contribute.gif)](https://github.com/ipfs/community/blob/master/contributing.md)
 
 ## License
-MIT
+
+[MIT](LICENSE)
