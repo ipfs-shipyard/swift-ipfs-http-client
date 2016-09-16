@@ -16,7 +16,7 @@ public class Swarm : ClientSubCommand {
     /** Lists the set of peers this node is connected to.
         The completionHandler is passed an array of Multiaddr that represent the peers.
      */
-    public func peers(completionHandler: ([Multiaddr]) throws -> Void) throws {
+    public func peers(_ completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
         try parent!.fetchJson("swarm/peers?stream-channels=true") {
             result in
             
@@ -32,23 +32,23 @@ public class Swarm : ClientSubCommand {
     }
     
     /** lists all addresses this node is aware of. */
-    public func addrs(completionHandler: (JsonType) throws -> Void) throws {
+    public func addrs(_ completionHandler: @escaping (JsonType) throws -> Void) throws {
         
         try parent!.fetchJson("swarm/addrs?stream-channels=true") {
             result in
             guard let addrsData = result.object?["Addrs"] else {
-                throw IpfsApiError.SwarmError("Swarm.addrs error: No Addrs key in JSON data.")
+                throw IpfsApiError.swarmError("Swarm.addrs error: No Addrs key in JSON data.")
             }
             try completionHandler(addrsData)
         }
     }
     
     /** opens a new direct connection to a peer address. */
-    public func connect(multiaddr: String, completionHandler: (JsonType) throws -> Void) throws {
+    public func connect(_ multiaddr: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try parent!.fetchJson("swarm/connect?arg=" + multiaddr, completionHandler: completionHandler)
     }
     
-    public func disconnect(multiaddr: String, completionHandler: (JsonType) throws -> Void) throws {
+    public func disconnect(_ multiaddr: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try parent!.fetchJson("swarm/disconnect?arg=" + multiaddr, completionHandler: completionHandler)
     }
 }

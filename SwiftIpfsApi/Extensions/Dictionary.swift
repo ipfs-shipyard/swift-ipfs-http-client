@@ -23,7 +23,7 @@ func + <T, U>(lhs: [T: U], rhs: [T: U]) -> [T: U] {
 extension Dictionary {
     /// Apply function f to each value element in the dictionary and return
     /// a single merged dictionary with the result.
-    func map<T>(f: Value -> T) -> [Key: T] {
+    func map<T>(_ f: (Value) -> T) -> [Key: T] {
         return self.reduce([:]) { $0 + [$1.0: f($1.1)] }
     }
 }

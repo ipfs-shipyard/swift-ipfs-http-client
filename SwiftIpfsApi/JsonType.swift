@@ -13,13 +13,13 @@ public enum JsonType {
     case Array([JsonType])
     case String(Swift.String)
     case Number(NSNumber)
-    case Null
+    case null
 }
 
 
 public extension JsonType {
     
-    static func parse(json: AnyObject) -> JsonType {
+    static func parse(_ json: AnyObject) -> JsonType {
         switch json {
         case let value as [AnyObject]: return .Array(value.map(parse))
             
@@ -28,7 +28,7 @@ public extension JsonType {
         case let value as Swift.String: return .String(value)
             
         case let value as NSNumber: return .Number(value)
-        default: return .Null
+        default: return .null
         }
     }
 }

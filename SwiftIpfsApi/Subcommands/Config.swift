@@ -14,22 +14,22 @@ public class Config : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func show(completionHandler: (JsonType) -> Void) throws {
+    public func show(_ completionHandler: @escaping (JsonType) -> Void) throws {
         
         try parent!.fetchJson("config/show",completionHandler: completionHandler )
     }
     
-    public func replace(filePath: String, completionHandler: (Bool) -> Void) throws {
+    public func replace(_ filePath: String, completionHandler: (Bool) -> Void) throws {
         try parent!.net.sendTo(parent!.baseUrl+"config/replace?stream-channels=true", content: [filePath]) {
             _ in
         }
     }
     
-    public func get(key: String, completionHandler: (JsonType) throws -> Void) throws {
+    public func get(_ key: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try parent!.fetchJson("config?arg=" + key) {
             result in
             guard let value = result.object?["Value"] else {
-                throw IpfsApiError.SwarmError("Config get error: \(result.object?["Message"]?.string)")
+                throw IpfsApiError.swarmError("Config get error: \(result.object?["Message"]?.string)")
             }
             
             try completionHandler(value)
@@ -37,7 +37,7 @@ public class Config : ClientSubCommand {
         }
     }
     
-    public func set(key: String, value: String, completionHandler: (JsonType) throws -> Void) throws {
+    public func set(_ key: String, value: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         
         try parent!.fetchJson("config?arg=\(key)&arg=\(value)", completionHandler: completionHandler )
     }

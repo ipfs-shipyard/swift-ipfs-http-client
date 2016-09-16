@@ -44,15 +44,16 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testRefsLocal() {
         
-        let refsLocal = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let refsLocal = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+
             try api.refs.local() {
                 (localRefs: [Multihash]) in
                 
                 for mh in localRefs {
                     print(b58String(mh))
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -61,7 +62,7 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testPin() {
         
-        let pinAdd = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let pinAdd = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let multihash = try fromB58String("Qmb4b83vuYMmMYqj5XaucmEuNAcwNBATvPL6CNuQosjr91")
@@ -73,14 +74,14 @@ class SwiftIpfsApiTests: XCTestCase {
                     print(b58String(mh))
                 }
                 
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         tester(pinAdd)
         
         
-        let pinLs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let pinLs = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
@@ -90,13 +91,13 @@ class SwiftIpfsApiTests: XCTestCase {
                 for (k,v) in pinned {
                     print("\(b58String(k)) \((v.object?["Type"]?.string)!)")
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         tester(pinLs)
         
-        let pinRm = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let pinRm = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let multihash = try fromB58String("Qmb4b83vuYMmMYqj5XaucmEuNAcwNBATvPL6CNuQosjr91")
@@ -107,7 +108,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 for hash in removed {
                     print("Removed hash:",b58String(hash))
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -115,19 +116,19 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testRepo() {
-        let repoGc = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let repoGc = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
             /** First we do an ls of something we know isn't pinned locally.
                 This causes it to be copied to the local node so that the gc has
                 something to collect. */
-            let tmpGroup = dispatch_group_create()
+            let tmpGroup = DispatchGroup()
             
-            dispatch_group_enter(tmpGroup)
+            tmpGroup.enter()
 
             let multihash = try fromB58String("QmTtqKeVpgQ73KbeoaaomvLoYMP7XKemhTgPNjasWjfh9b")
-            try api.ls(multihash){ _ in dispatch_group_leave(tmpGroup) }
-            dispatch_group_wait(tmpGroup, DISPATCH_TIME_FOREVER)
+            try api.ls(multihash){ _ in tmpGroup.leave() }
+            tmpGroup.wait(timeout: DispatchTime.distantFuture)
             
             
             try api.repo.gc() {
@@ -137,7 +138,7 @@ class SwiftIpfsApiTests: XCTestCase {
                         print("removed: ",(ref.object?["Key"]?.string)!)
                     }
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -146,7 +147,7 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testBlock() {
         
-        let blockPut = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let blockPut = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let rawData: [UInt8] = Array("hej verden".utf8)
@@ -160,30 +161,30 @@ class SwiftIpfsApiTests: XCTestCase {
                     print("Name:", result.name)
                     print("Hash:", b58String(result.hash!))
 //                }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         tester(blockPut)
         
         
-        let blockGet = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let blockGet = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let multihash = try fromB58String("QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
             
             try api.block.get(multihash) {
                 (result: [UInt8]) in
-                    let res = String(bytes: result, encoding: NSUTF8StringEncoding)
+                    let res = String(bytes: result, encoding: String.Encoding.utf8)
                     XCTAssert(res == "hej verden")
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
             }
         }
         
         tester(blockGet)
         
         
-        let blockStat = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let blockStat = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let multihash = try fromB58String("QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
@@ -199,7 +200,7 @@ class SwiftIpfsApiTests: XCTestCase {
                     || size != 10 {
                     XCTFail()
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -208,20 +209,20 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testObject() {
         
-        let objectNew = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let objectNew = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.object.new() {
                 (result: MerkleNode) in
                 
                 /// A new ipfs object always has the same hash so we can assert against it.
                 XCTAssert(b58String(result.hash!) == "QmdfTbBqBPQ7VNxZEYEj14VmRuZBkqFbiwReogJgS1zR1n")
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         tester(objectNew)
         
-        let objectPut = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let objectPut = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let data = [UInt8]("{ \"Data\" : \"Dauz\" }".utf8)
@@ -230,13 +231,13 @@ class SwiftIpfsApiTests: XCTestCase {
                 (result: MerkleNode) in
                 
                 XCTAssert(b58String(result.hash!) == "QmUqvXbE4s9oTQNhBXm2hFapLq1pnuuxsMdxP9haTzivN6")
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         tester(objectPut)
         
-        let objectGet = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let objectGet = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let multihash = try fromB58String("QmUqvXbE4s9oTQNhBXm2hFapLq1pnuuxsMdxP9haTzivN6")
@@ -245,7 +246,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 (result: MerkleNode) in
                 
                 XCTAssert(result.data! == Array("Dauz".utf8))
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
 
             }
         }
@@ -253,7 +254,7 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(objectGet)
         
         
-        let objectLinks = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let objectLinks = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let multihash = try fromB58String("QmR3azp3CCGEFGZxcbZW7sbqRFuotSptcpMuN6nwThJ8x2")
@@ -263,7 +264,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 print(b58String(result.hash!))
                 /// There should be two links off the root:
-                if let links = result.links where links.count == 2 {
+                if let links = result.links, links.count == 2 {
                     let link1 = links[0]
                     let link2 = links[1]
                     XCTAssert(b58String(link1.hash!) == "QmWfzntFwgPf9T9brQ6P2PL1BMoH16jZvhanGYtZQfgyaD")
@@ -271,7 +272,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 } else {
                     XCTFail()
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
                 
             }
         }
@@ -282,7 +283,7 @@ class SwiftIpfsApiTests: XCTestCase {
 
     func testObjectPatch() {
         
-        let setData = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let setData = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
             /// Get the empty directory object to start off with.
@@ -294,14 +295,14 @@ class SwiftIpfsApiTests: XCTestCase {
                     result in
                     
                     print(b58String(result.hash!))
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
         }
         
         tester(setData)
 
-        let appendData = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let appendData = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
             /// The previous hash that was returned from setData
@@ -318,9 +319,9 @@ class SwiftIpfsApiTests: XCTestCase {
                 try api.object.data(result.hash!) {
                     result in
                     
-                    let resultString = String(bytes: result, encoding: NSUTF8StringEncoding)
+                    let resultString = String(bytes: result, encoding: String.Encoding.utf8)
                     XCTAssert(resultString == "This is a longer message.Addition to the message.")
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
         }
@@ -328,7 +329,7 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(appendData)
 
         
-        let objectPatch = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let objectPatch = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
 
             let hash = "QmUYttJXpMQYvQk5DcX2owRUuYJBJM6W7KQSUsycCCE2MZ" /// a file
@@ -353,8 +354,8 @@ class SwiftIpfsApiTests: XCTestCase {
                             
                             /// Check that the object's link is the same as 
                             /// what we originally passed to the patch command.
-                            if let links = result.links where links.count == 2,
-                                let linkHash = links[1].hash where b58String(linkHash) == hash {}
+                            if let links = result.links, links.count == 2,
+                                let linkHash = links[1].hash, b58String(linkHash) == hash {}
                             else { XCTFail() }
                             
                             /// Now try to remove it and check that we only have one link.
@@ -365,11 +366,11 @@ class SwiftIpfsApiTests: XCTestCase {
                                 try api.object.links(result.hash!) {
                                     (result: MerkleNode) in
 
-                                    if let links = result.links where links.count == 1,
-                                        let linkHash = links[0].hash where b58String(linkHash) == hash2 {}
+                                    if let links = result.links, links.count == 1,
+                                        let linkHash = links[0].hash, b58String(linkHash) == hash2 {}
                                     else { XCTFail() }
 
-                                    dispatch_group_leave(dispatchGroup)
+                                    dispatchGroup.leave()
                                 }
                             }
                         }
@@ -386,14 +387,14 @@ class SwiftIpfsApiTests: XCTestCase {
     
         var idHash: String = ""
         /// Start test by storing the existing hash so we can restore it after testing.
-        let nameResolvePublish = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let nameResolvePublish = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.name.resolve(){
                 result in
                 
-                idHash = result.stringByReplacingOccurrencesOfString("/ipfs/", withString: "")
-                
-                dispatch_group_leave(dispatchGroup)
+//                idHash = result.stringByReplacingOccurrencesOfString("/ipfs/", withString: "")
+                idHash = result.replacingOccurrences(of: "/ipfs/", with: "")
+                dispatchGroup.leave()
             }
         }
         
@@ -401,7 +402,7 @@ class SwiftIpfsApiTests: XCTestCase {
         
         let publishedPath = "/ipfs/" + idHash
         
-        let publish = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let publish = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let multihash = try fromB58String(idHash)
             try api.name.publish(hash: multihash) {
@@ -409,18 +410,18 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 XCTAssert(  (result.object?["Name"]?.string)! == self.nodeIdString &&
                             (result.object?["Value"]?.string)! == publishedPath)
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         self.tester(publish)
         
-        let resolve = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let resolve = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.name.resolve(){
                 result in
                 XCTAssert(result == publishedPath)
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -435,7 +436,7 @@ class SwiftIpfsApiTests: XCTestCase {
             let neighbour = self.altNodeIdString
             let multihash = try fromB58String("QmUFtMrBHqdjTtbebsL6YGebvjShh3Jud1insUv12fEVdA")
             
-            let findProvs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let findProvs = { (dispatchGroup: DispatchGroup) throws -> Void in
                 try api.dht.findProvs(multihash) {
                     result in
                     
@@ -461,7 +462,7 @@ class SwiftIpfsApiTests: XCTestCase {
                     
                     XCTAssert(pass)
                     
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
@@ -469,21 +470,21 @@ class SwiftIpfsApiTests: XCTestCase {
 //tester(findProvs)
             
             
-            let query = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let query = { (dispatchGroup: DispatchGroup) throws -> Void in
                 /// This nearest works for me but may need changing to something local to the tester.
                 let nearest = try fromB58String(neighbour)
                 try api.dht.query(nearest) {
                     result in
                     /// assert against some known return value
                     print(result)
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
 //            tester(query)
             
             
-            let findPeer = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let findPeer = { (dispatchGroup: DispatchGroup) throws -> Void in
                 /// This peer works for me but may need changing to something local to the tester.
                 let peer = try fromB58String(neighbour)
                 
@@ -502,7 +503,7 @@ class SwiftIpfsApiTests: XCTestCase {
                     }
                     XCTAssert(pass)
                     
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
@@ -523,10 +524,9 @@ class SwiftIpfsApiTests: XCTestCase {
     /// If this fails check from the command line that the ipns path actually resolves
     /// to the checkHash before thinking this is actually broken. Ipns links do change.
     func testFileLs() {
-        let lsIpns = { (dispatchGroup: dispatch_group_t) throws -> Void in
-            
+                
+        let lsIpns = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            
             /// basedir hash
             let path = "/ipns/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
             
@@ -534,16 +534,14 @@ class SwiftIpfsApiTests: XCTestCase {
             let checkHash = "QmSiTko9JZyabH56y2fussEt1A5oDqsFXB3CkvAqraFryz"
 
             try api.file.ls(path) { result in
-                
-                print(result)
                 XCTAssert(result.object?["Objects"]?.object?[checkHash]?.object?["Hash"]?.string == checkHash)
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
             
         tester(lsIpns)
         
-        let lsIpfs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let lsIpfs = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let checkHash = "QmQHAVCpAQxU21bK8VxeWisn19RRC4bLNFV4DiyXDDyLXM"
             let objHash = "QmQuQzFkULYToUBrMtyHg2tjvcd93N4kNHPCxfcFthB2kU"
@@ -552,7 +550,7 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.file.ls(path) {
                 result in
                 XCTAssert(result.object?["Objects"]?.object?[objHash]?.object?["Links"]?.array?[0].object?["Hash"]?.string == checkHash)
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
             
@@ -572,7 +570,7 @@ class SwiftIpfsApiTests: XCTestCase {
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
         
-            let rm = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let rm = { (dispatchGroup: DispatchGroup) throws -> Void in
                 
                 let tPeers = [tpMultiaddr, tpMultiaddr2]
                 
@@ -587,26 +585,26 @@ class SwiftIpfsApiTests: XCTestCase {
                     let b = try peers[1].string() == trustedPeer2
                     XCTAssert(peers.count == 2 && a && b)
                     
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
             tester(rm)
             
-            let bootstrap = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let bootstrap = { (dispatchGroup: DispatchGroup) throws -> Void in
                 
                 try api.bootstrap.list() {
                     (peers: [Multiaddr]) in
                     for peer in peers {
                        print(try peer.string())
                     }
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
             tester(bootstrap)
             
-            let add = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let add = { (dispatchGroup: DispatchGroup) throws -> Void in
                 
                 let tPeers = [tpMultiaddr, tpMultiaddr2]
                 
@@ -623,7 +621,7 @@ class SwiftIpfsApiTests: XCTestCase {
                         XCTAssert(t1 && t2)
                     } else { XCTFail() }
                     
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
@@ -639,7 +637,7 @@ class SwiftIpfsApiTests: XCTestCase {
         /// NB: This test will require the user to change the knownPeer to a known peer.
         let knownPeer = peerIPAddr+"/ipfs/"+self.altNodeIdString
         
-        let swarmPeers = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let swarmPeers = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.swarm.peers(){
                 (peers: [Multiaddr]) in
@@ -650,7 +648,7 @@ class SwiftIpfsApiTests: XCTestCase {
                     if pass { break }
                 }
                 XCTAssert(pass)
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -658,14 +656,14 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testSwarmAddrs() {
-        let swarmAddrs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let swarmAddrs = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.swarm.addrs(){
                 addrs in
 
                 XCTAssert(addrs.object?[self.altNodeIdString]?.array?[0].string == self.peerIPAddr)
                 
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -674,7 +672,7 @@ class SwiftIpfsApiTests: XCTestCase {
 
     func testSwarmConnect() {
         
-        let swarmDisConnect = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let swarmDisConnect = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
@@ -691,9 +689,8 @@ class SwiftIpfsApiTests: XCTestCase {
                     result in
                     
                     XCTAssert(result.object?["Strings"]?.array?[0].string! == "dis" + expectedMessage)
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
-                
             }
         }
         
@@ -703,44 +700,44 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testDiag() {
         
-        let net = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let net = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.diag.net() {
                 result in
                 print(result)
                 /// do comparison with truth here.
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         tester(net)
         
-        let sys = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let sys = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.diag.sys() {
                 result in
                 print(result)
                 /// do comparison with truth here.
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         tester(sys)
     }
     
     func testConfig() {
-        let show = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let show = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.config.show() {
                 result in
                 print(result)
                 /// do comparison with truth here. Currently by visual inspection :/
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
         tester(show)
         
-        let set = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let set = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.config.set("Teo", value: "42") {
                 result in
@@ -748,10 +745,10 @@ class SwiftIpfsApiTests: XCTestCase {
                 try api.config.get("Teo") {
                     result in
                     /// do comparison with truth here.
-                    if case .String(let strResult) = result where strResult == "42" { } else {
+                    if case .String(let strResult) = result, strResult == "42" { } else {
                         XCTFail()
                     }
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
         }
@@ -759,15 +756,15 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(set)
         
    
-        let get = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let get = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.config.get("Datastore.Type") {
                 result in
                 /// do comparison with truth here.
-                if case .String(let strResult) = result where strResult == "leveldb" { } else {
+                if case .String(let strResult) = result, strResult == "leveldb" { } else {
                     XCTFail()
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -779,7 +776,7 @@ class SwiftIpfsApiTests: XCTestCase {
     func testBaseCommands() {
         
         /// For this test assert that the resulting links' name is Mel.html and MelKaye.png
-        let lsTest = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let lsTest = { (dispatchGroup: DispatchGroup) throws -> Void in
 
             let multihash = try fromB58String("QmPXME1oRtoT627YKaDPDQ3PwA8tdP9rWuAAweLzqSwAWT")
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
@@ -788,7 +785,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 var pass = false
                 let node = results[0]
-                if let links = node.links where
+                if let links = node.links ,
                         links.count == 5 &&
                         links[0].name! == "contact" &&
                         links[1].name! == "help" &&
@@ -801,7 +798,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 XCTAssert(pass)
                 
                 /// do comparison with truth here.
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
 
         }
@@ -809,15 +806,15 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(lsTest)
             
             
-        let catTest = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let catTest = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let multihash = try fromB58String("QmYeQA5P2YuCKxZfSbjhiEGD3NAnwtdwLL6evFoVgX1ULQ")
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
             try api.cat(multihash) {
                 result in
-                print("cat:",String(bytes: result, encoding: NSUTF8StringEncoding)!)
-                dispatch_group_leave(dispatchGroup)
+                print("cat:",String(bytes: result, encoding: String.Encoding.utf8)!)
+                dispatchGroup.leave()
             }
         }
         
@@ -827,7 +824,7 @@ class SwiftIpfsApiTests: XCTestCase {
 
     func testPing() {
         
-        let ping = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let ping = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.ping(self.altNodeIdString) {
                result in
@@ -840,7 +837,7 @@ class SwiftIpfsApiTests: XCTestCase {
                     }
                 }
 
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -853,23 +850,23 @@ class SwiftIpfsApiTests: XCTestCase {
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let idString = self.nodeIdString
             
-            let id = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let id = { (dispatchGroup: DispatchGroup) throws -> Void in
                 try api.id(idString) {
                     result in
                     
                     XCTAssert(result.object?["ID"]?.string == idString)
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
             tester(id)
             
-            let idDefault = { (dispatchGroup: dispatch_group_t) throws -> Void in
+            let idDefault = { (dispatchGroup: DispatchGroup) throws -> Void in
                 try api.id() {
                     result in
                     
                     XCTAssert(result.object?["ID"]?.string == idString)
-                    dispatch_group_leave(dispatchGroup)
+                    dispatchGroup.leave()
                 }
             }
             
@@ -882,12 +879,12 @@ class SwiftIpfsApiTests: XCTestCase {
     
     
     func testVersion() {
-        let version = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let version = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.version() {
                 version in
                 print(version)
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -896,7 +893,7 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testCommands() {
-        let commands = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let commands = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.commands(true) {
                 result in
@@ -907,7 +904,7 @@ class SwiftIpfsApiTests: XCTestCase {
                         print("v: ",v)
                     }
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -916,7 +913,7 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testStats() {
-        let stats = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let stats = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.stats.bw() {
                 result in
@@ -928,7 +925,7 @@ class SwiftIpfsApiTests: XCTestCase {
                     result.object?["RateIn"] != nil &&
                     result.object?["RateOut"] != nil )
                 
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -937,9 +934,9 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testLog() {
-        let log = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let log = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            let updateHandler = { (data: NSData) -> Bool in
+            let updateHandler = { (data: Data) -> Bool in
                 print("Got an update. Closing.")
                 return false
             }
@@ -950,7 +947,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 for entry in log {
                     print(entry)
                 }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -959,7 +956,7 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testdns() {
-        let dns = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let dns = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
             let domain    = "ipfs.io"
             try api.dns(domain) {
@@ -969,7 +966,7 @@ class SwiftIpfsApiTests: XCTestCase {
 //                if domainString != "/ipfs/QmcQBvKTP8R7p8DgLEtKuoeuz1BBbotGpmofEFBEYBfc97" {
 //                    XCTFail("domain string mismatch.")
 //                }
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -977,16 +974,16 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testMount() {
-        let mount = { (dispatchGroup: dispatch_group_t) throws -> Void in
-//            let api = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
+        let mount = { (dispatchGroup: DispatchGroup) throws -> Void in
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
+            
             try api.mount() {
                 result in
                 
                 print("Mount got", result)
                 XCTAssert(  result.object?["IPFS"]?.string == "/ipfs" &&
                             result.object?["IPNS"]?.string == "/ipns")
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
             
         }
@@ -995,7 +992,7 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testResolveIpfs() {
-        let resolve = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let resolve = { (dispatchGroup: DispatchGroup) throws -> Void in
             
 //            let api = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
@@ -1004,7 +1001,7 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.resolve("ipfs", hash: multihash, recursive: false) {
                 result in
                 print("Resolve IPFS got", result)
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -1012,7 +1009,7 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testResolveIpns() {
-        let resolve = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let resolve = { (dispatchGroup: DispatchGroup) throws -> Void in
             
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
 //            let api = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
@@ -1024,7 +1021,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 XCTAssert(result.object?["Path"]?.string == "/ipfs/QmeXS82nS8YDXQpiqFeT4gCHc1HGoxZe5zH6Srj4HhkiFy")
                 
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -1036,11 +1033,12 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testAdd() {
         
-        let add = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let add = { (dispatchGroup: DispatchGroup) throws -> Void in
             let filePaths = [   "file:///Users/teo/tmp/rb2.patch",
                                 "file:///Users/teo/tmp/notred.png",
                                 "file:///Users/teo/tmp/woot"]
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            
             
             try api.add(filePaths) {
                 result in
@@ -1052,12 +1050,12 @@ class SwiftIpfsApiTests: XCTestCase {
                 
                 //for mt in result {
                 for i in 0..<resultCount {
-                    XCTAssert(result[i].name! == filePaths[i].componentsSeparatedByString("/").last)
-                    print("Name:", filePaths[i].componentsSeparatedByString("/").last)
+					XCTAssert(result[i].name! == filePaths[i].components(separatedBy: "/").last)
+					print("Name:", filePaths[i].components(separatedBy: "/").last)
                     print("Hash:", b58String(result[i].hash!))
                 }
                 
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         
@@ -1065,7 +1063,7 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testRefs() {
-        let refs = { (dispatchGroup: dispatch_group_t) throws -> Void in
+        let refs = { (dispatchGroup: DispatchGroup) throws -> Void in
             let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
@@ -1079,7 +1077,7 @@ class SwiftIpfsApiTests: XCTestCase {
 //                    print(b58String(mh))
 //                }
                 
-                dispatch_group_leave(dispatchGroup)
+                dispatchGroup.leave()
             }
         }
         tester(refs)
@@ -1089,26 +1087,26 @@ class SwiftIpfsApiTests: XCTestCase {
     
     /// Utility functions
     
-    func tester(test: (dispatchGroup: dispatch_group_t) throws -> Void) {
+    func tester(_ test: (_ dispatchGroup: DispatchGroup) throws -> Void) {
         
-        let group = dispatch_group_create()
+        let group = DispatchGroup()
         
-        dispatch_group_enter(group)
+        group.enter()
         
         do {
             /// Perform the test.
-            try test(dispatchGroup: group)
+            try test(group)
             
         } catch  {
             XCTFail("tester error: \(error)")
         }
         
-        dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
+        group.wait(timeout: DispatchTime.distantFuture)
     }
     
     func testPerformanceExample() {
         // This is an example of a performance test case.
-        self.measureBlock {
+        self.measure {
             // Put the code you want to measure the time of here.
         }
     }
