@@ -14,7 +14,7 @@ import SwiftMultihash
 
 class SwiftIpfsApiTests: XCTestCase {
 
-    var hostString      = "192.168.5.8"
+    var hostString      = "127.0.0.1"//"192.168.5.8"
     let hostPort        = 5001
     
     /// Your own IPNS node hash

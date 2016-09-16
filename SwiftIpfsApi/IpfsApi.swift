@@ -80,23 +80,7 @@ extension IpfsApiClient {
                 return
             }
 
-//			print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
-//			let fixedData: Data = fixStreamJson(data)
-//			print("The fixed data:",NSString(data: fixedData, encoding: String.Encoding.utf8.rawValue))
-			
-			var json: Any
-			do {
-				json = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments)
-			} catch {
-				/// So the serialization might have failed due to the json being concatenated.
-				/// Let's try fixing it
-				let fixedData: Data = fixStreamJson(data)
-				/// and try again
-				json = try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments)
-			}
-            /// At this point we could check to see if the json contains a code/message for flagging errors.
-            
-            try completionHandler(JsonType.parse(json as AnyObject))
+            try completionHandler(dataToJsonType(data: data))
         }
     }
     
@@ -232,13 +216,13 @@ public class IpfsApi : IpfsApiClient {
         try net.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
             data in
             do {
-                /// If there was no data fetched pass an empty dictionary and return.
-                let fixedData = fixStreamJson(data)
-                
-                
-                let json = JsonType.parse(try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments) as AnyObject)
-                print(json)
-                
+//                /// If there was no data fetched pass an empty dictionary and return.
+//                let fixedData = fixStreamJson(data)
+//                
+//                
+//                let json = JsonType.parse(try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments) as AnyObject)
+//                print(json)
+				let json = try dataToJsonType(data: data)
                 let res = try merkleNodesFromJson(json)
                 guard res.count > 0 else { throw IpfsApiError.jsonSerializationFailed }
                 
@@ -372,18 +356,10 @@ public class IpfsApi : IpfsApiClient {
             
         let update = { (data: Data, task: URLSessionDataTask) -> Bool in
             
-            let fixed = fixStreamJson(data)
-            let json = try JSONSerialization.jsonObject(with: fixed, options: JSONSerialization.ReadingOptions.allowFragments)
-                
-            if let arr = json as? [AnyObject] {
-                for res in arr {
-                    print(res)
-                }
-            } else {
-                if let dict = json as? [String: AnyObject] {
-                    print("It's a dict!:",dict )
-                }
-            }
+//            let fixed = fixStreamJson(data)
+//            let json = try JSONSerialization.jsonObject(with: fixed, options: JSONSerialization.ReadingOptions.allowFragments)
+			let json = try dataToJsonType(data: data)
+			/// see eg. func refs for how to handle the json output.
             return true
         }
         
@@ -413,6 +389,21 @@ extension IpfsApiClient {
 
 
 /// Utility functions
+
+public func dataToJsonType(data: Data) throws -> JsonType {
+	var json: Any
+	do {
+		json = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments)
+	} catch {
+		/// The serialization above might have failed due to the json being concatenated.
+		/// Let's try fixing it.
+		let fixedData: Data = fixStreamJson(data)
+		/// and try again
+		json = try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments)
+	}
+	
+	return JsonType.parse(json as AnyObject)
+}
 
 /** Deal with concatenated JSON (since JSONSerialization doesn't) by wrapping it
  in array brackets and comma separating the various root components. */

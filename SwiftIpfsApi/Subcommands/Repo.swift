@@ -16,17 +16,4 @@ public class Repo : ClientSubCommand {
     public func gc(_ completionHandler: @escaping (JsonType) -> Void) throws {
         try parent!.fetchJson("repo/gc", completionHandler: completionHandler)
     }
-//    public func gc(completionHandler: ([[String : AnyObject]]) -> Void) throws {
-//        try parent!.fetchData("repo/gc") {
-//            (rawJson: NSData) in
-//            
-//            /// Check for streamed JSON format and wrap & separate.
-//            let data = fixStreamJson(rawJson)
-//            
-//            guard let json = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments) as? [[String : AnyObject]] else { throw IpfsApiError.JsonSerializationFailed
-//            }
-//            
-//            completionHandler(json)
-//        }
-//    }
 }
