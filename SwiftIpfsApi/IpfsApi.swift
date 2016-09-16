@@ -260,7 +260,7 @@ public class IpfsApi : IpfsApiClient {
     }
     
     public func get(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
-        try self.cat(hash, completionHandler: completionHandler)
+        try fetchBytes("get/\(b58String(hash))", completionHandler: completionHandler)
     }
 
 
