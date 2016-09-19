@@ -1029,33 +1029,73 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
 
-    
+    func testGet() {
+        let getTest = { (dispatchGroup: DispatchGroup) throws -> Void in
+            
+            defer { dispatchGroup.leave() }
+            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            
+            let expectedData = "QmT78zSuBmuS4z925WZfrqQ1qHaJ56DQaTfyMUF7F8ff5o0000644000000000000000000000001412767754647016703 0ustar0000000000000000hello world"
+            /// First we get (assuming that works) the files we want to add and
+            /// store them in the user's temporary directory.
+            let multihash = try fromB58String("QmT78zSuBmuS4z925WZfrqQ1qHaJ56DQaTfyMUF7F8ff5o")
+            
+            try api.get(multihash) {
+                result in
+                let res = String(bytes: result, encoding: String.Encoding.utf8)
+                XCTAssertTrue(res == expectedData)
+                
+            }
+        }
+        
+        tester(getTest)
+        
+    }
     
     func testAdd() {
         
         let add = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let filePaths = [   "file:///Users/teo/tmp/rb2.patch",
-                                "file:///Users/teo/tmp/notred.png",
-                                "file:///Users/teo/tmp/woot"]
+            
+            defer { dispatchGroup.leave() }
+            let filePaths = [   "file://\(NSTemporaryDirectory())image.jpg",
+                                "file://\(NSTemporaryDirectory())sentence.txt",
+                                "file://\(NSTemporaryDirectory())sound.mp3"]
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
+            let expectedData = "QmT78zSuBmuS4z925WZfrqQ1qHaJ56DQaTfyMUF7F8ff5o0000644000000000000000000000001412767754647016703 0ustar0000000000000000hello world"
+            /// First we get (assuming that works) the files we want to add and
+            /// store them in the user's temporary directory.
+            let multihash = try fromB58String("QmT78zSuBmuS4z925WZfrqQ1qHaJ56DQaTfyMUF7F8ff5o")
             
-            try api.add(filePaths) {
+            try api.get(multihash) {
                 result in
-                
-                /// Subtract one because last element is an empty directory to ignore
-                let resultCount = result.count
-                
-                XCTAssert(resultCount == filePaths.count)
-                
-                //for mt in result {
-                for i in 0..<resultCount {
-					XCTAssert(result[i].name! == filePaths[i].components(separatedBy: "/").last)
-					print("Name:", filePaths[i].components(separatedBy: "/").last)
-                    print("Hash:", b58String(result[i].hash!))
+                                
+                if let url = URL(string: "file://"+NSTemporaryDirectory()+"addtest") {
+                    do {
+                        try data.write(to: url, options: NSData.WritingOptions.atomicWrite)
+                        
+                        try api.add(filePaths) {
+                            result in
+                            
+                            /// Subtract one because last element is an empty directory to ignore
+                            let resultCount = result.count
+                            
+                            XCTAssert(resultCount == filePaths.count)
+                            
+                            //for mt in result {
+                            for i in 0..<resultCount {
+                                XCTAssert(result[i].name! == filePaths[i].components(separatedBy: "/").last)
+                                print("Name:", filePaths[i].components(separatedBy: "/").last)
+                                print("Hash:", b58String(result[i].hash!))
+                            }
+                            
+//                            dispatchGroup.leave()
+                        }
+
+                    } catch {
+                        print("Error \(error) writing data. Exiting.")
+                    }
                 }
-                
-                dispatchGroup.leave()
             }
         }
         
