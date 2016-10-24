@@ -57,19 +57,6 @@ extension IpfsApiClient {
         try net.streamFrom(baseUrl + path, updateHandler: updateHandler, completionHandler: completionHandler)
     }
 	
-	
-//	let stream: InputStream = InputStream(data: data)
-//	var buffer = [UInt8](repeating: 0, count: data.count)
-//	stream.open()
-//	
-//	if stream.hasBytesAvailable {
-//	//let result :Int = stream.read(&buffer, maxLength: buffer.count)
-//	let myson = try JSONSerialization.jsonObject(with: stream)
-//	print("streams \(myson)")
-//	}
-//	stream.close()
-	
-	
     func fetchJson(_ path: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try fetchData(path) {
             (data: Data) in

@@ -19,14 +19,22 @@ public struct HttpIo : NetworkIo {
 
     public func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws {
         
-        guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
+        guard let url = URL(string: source) else {
+            throw HttpIoError.urlError("Invalid URL")
+        }
         
         let task = URLSession.shared.dataTask(with: url) {
             (data: Data?, response: URLResponse?, error: Error?) in
             
             do {
-                guard error == nil else { throw HttpIoError.transmissionError((error?.localizedDescription)!) }
-                guard let data = data else { throw IpfsApiError.nilData }
+                
+                guard error == nil else {
+                    throw HttpIoError.transmissionError((error?.localizedDescription)!)
+                }
+                
+                guard let data = data else {
+                    throw IpfsApiError.nilData
+                }
                 
 //                print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
                 
@@ -119,6 +127,8 @@ public struct HttpIo : NetworkIo {
 //    }
 //    return nil
 //}
+
+///FIXME: Make this use URLSessionStreamDelegate instead?
 
 public class StreamHandler : NSObject, URLSessionDataDelegate {
     
