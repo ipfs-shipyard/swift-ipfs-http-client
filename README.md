@@ -26,7 +26,7 @@ In the root of your project:
 
 -  Add a Cartfile (or use an existing one) with the following:
 ```
-github "ipfs/swift-ipfs-api"
+github "ipfs/swift-ipfs-api" "master"
 ```
 - To fetch and build the dependencies, type:
 
