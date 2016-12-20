@@ -30,15 +30,7 @@ github "ipfs/swift-ipfs-api"
 ```
 - To fetch and build the dependencies, type:
 
-```carthage update --platform Mac```
-
-or
-
-```carthage update --platform iOS```
-
-or
-
-```carthage update .```
+```carthage update```
 
 if you want both platforms.
 
