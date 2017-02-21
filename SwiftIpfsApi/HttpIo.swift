@@ -56,7 +56,8 @@ public struct HttpIo : NetworkIo {
     }
     
     public func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws {
-        var multipart = try Multipart(targetUrl: target, charset: "UTF8")
+
+        var multipart = try Multipart(targetUrl: target, encoding: .utf8)
         multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
@@ -64,30 +65,56 @@ public struct HttpIo : NetworkIo {
 
     public func sendTo(_ target: String, content: [String], completionHandler: @escaping (Data) -> Void) throws {
 
-        var multipart = try Multipart(targetUrl: target, charset: "UTF8")
-        /// Then build up the data from the urls
-        for source in content {
-            
-            /** We could add a check here to see if the string is
-            to a local file. Eg. if missing a :// prefix, check if the
-            file exists locally (using NSFileManager fileExistsAtPath)
-            and prepend file:// to it. For now assume the user has added
-            the necessary prefix...Hahahaha. */
-            /// The idea here is that the contains check is a lot quicker than replacingOccurences
-            
-            let path = source.hasPrefix("file://") ? source.substring(from: source.index(source.startIndex, offsetBy:7)) : source
-            
-            guard FileManager.default.fileExists(atPath: path) else { throw HttpIoError.urlError("file not found at given path: \(path)") }
-            
-            guard let sourceUrl = URL(string: source) else {
-                throw HttpIoError.urlError("Cannot make URL from "+source)
-            }
-            guard let fData = try? Data(contentsOf: sourceUrl) else { continue }
-            
-            multipart = try Multipart.addFilePart(multipart, fileName: sourceUrl.lastPathComponent , fileData: fData)
-        }
+        var multipart = try Multipart(targetUrl: target, encoding: .utf8)
+        
+        multipart = try handle(oldMultipart: multipart, files: content)
         
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
+    }
+    
+    func handle(oldMultipart: Multipart, files: [String]) throws -> Multipart{
+        
+        var multipart = oldMultipart
+        let filemgr = FileManager.default
+        var isDir : ObjCBool = false
+
+        for file in files {
+            
+            let path = file.hasPrefix("file://") ? file.substring(from: file.index(file.startIndex, offsetBy:7)) : file
+            
+            guard filemgr.fileExists(atPath: path, isDirectory: &isDir) else { throw HttpIoError.urlError("file not found at given path: \(path)") }
+
+            
+            if isDir.boolValue == true {
+                
+                /// Expand directory and call recursively with the contents.
+                
+                multipart = try Multipart.addDirectoryPart(oldMultipart: multipart, path: path)
+                
+                let dirFiles = try filemgr.contentsOfDirectory(atPath: path)
+                
+                let newPaths = dirFiles.map { aFile in (path as NSString).appendingPathComponent(aFile)}
+                
+                if dirFiles.count > 0 {
+                    multipart = try handle(oldMultipart: multipart, files: newPaths)
+                }
+                
+            } else {
+                
+                /// Add the contents of the file to multipart message.
+                
+                let fileUrl = URL(fileURLWithPath: path)
+                
+                guard let fileData = try? Data(contentsOf: fileUrl) else { throw MultipartError.failedURLCreation }
+                
+                var fileName = fileUrl.absoluteString //.lastPathComponent
+                fileName = fileName.substring(from: file.index(file.startIndex, offsetBy:7))
+                
+                multipart = try Multipart.addFilePart(multipart, fileName: fileName, fileData: fileData)
+            }
+        }
+        
+        return multipart
     }
     
     func fetchUpdateHandler(_ data: Data, task: URLSessionDataTask) {

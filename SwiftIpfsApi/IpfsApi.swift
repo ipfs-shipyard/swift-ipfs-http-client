@@ -230,6 +230,7 @@ public class IpfsApi : IpfsApiClient {
     public func add(_ filePaths: [String], completionHandler: @escaping ([MerkleNode]) -> Void) throws {
 
         try net.sendTo(baseUrl+"add?stream-channels=true", content: filePaths) {
+//        try net.sendTo(baseUrl+"add?r", content: filePaths) {
             data in
             do {
                 /// If there was no data fetched pass an empty dictionary and return.
