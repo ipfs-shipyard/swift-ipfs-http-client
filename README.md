@@ -38,7 +38,7 @@ or
 
 or
 
-```carthage update .```
+```carthage update```
 
 if you want both platforms.
 
