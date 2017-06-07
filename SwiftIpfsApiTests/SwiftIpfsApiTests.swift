@@ -1038,7 +1038,10 @@ class SwiftIpfsApiTests: XCTestCase {
 //                                "file:///Users/teo/tmp/notred.png",
 //                                "file:///Users/teo/tmp/F4115_WU5086.jpeg"]
 //            let filePaths = [   "file:///Users/teo/Library/Services/FilesToIpfs.workflow"]
-            let filePaths = [   "file:///Users/teo/tmp/addtest3"]
+            let filePaths = [
+                "file:///Users/teo/tmp/ipfssized.txt",
+                "file:///Users/teo/tmp/ipfssized-2.txt",
+                                ]
 
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             

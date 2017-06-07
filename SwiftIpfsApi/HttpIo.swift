@@ -16,12 +16,15 @@ enum HttpIoError : Error {
 }
 
 public struct HttpIo : NetworkIo {
-
+    
     public func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws {
         
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         
-        let task = URLSession.shared.dataTask(with: url) {
+        let sesh = URLSession(configuration: URLSessionConfiguration.default, delegate: DataTaskHelper(), delegateQueue: nil)
+        
+//        let task = URLSession.shared.dataTask(with: url) {
+        let task = sesh.dataTask(with: url) /*{
             (data: Data?, response: URLResponse?, error: Error?) in
             
             do {
@@ -35,7 +38,8 @@ public struct HttpIo : NetworkIo {
             } catch {
                 print("Error ", error, "in completionHandler passed to fetchData ")
             }
-        }
+        }*/
+        
         
         task.resume()
     }
@@ -54,6 +58,7 @@ public struct HttpIo : NetworkIo {
         
         task.resume()
     }
+    
     
     public func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws {
 
@@ -179,4 +184,59 @@ public class StreamHandler : NSObject, URLSessionDataDelegate {
             print("In StreamHandler: completionHandler error: \(error)")
         }
     }
+}
+
+/// New API
+extension HttpIo {
+    
+    public func send(urlRequest: String, with payload: Data?, progress: ((Int)->Void)?, completion: @escaping (Data)->Void) throws {
+        
+        if let payload = payload {
+            
+        } else {
+            
+        }
+    }
+}
+
+class DataTaskHelper : NSObject, URLSessionTaskDelegate, URLSessionDataDelegate {
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        print("Progress. Did send \(bytesSent) bytes.")
+    }
+    
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        print("datatask didreceive initial response")
+        completionHandler(.allow)
+        /// Could also pass a .becomeDownload to turn the task into a download task.
+    }
+    
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        print("did receive data")
+    }
+
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        print("Completed")
+    }
+    
+//    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, willCacheResponse proposedResponse: CachedURLResponse, completionHandler: @escaping (CachedURLResponse?) -> Void) {
+//        print("completion")
+//        completionHandler(nil)
+//        
+//    }
+    
+/*
+     optional public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Swift.Void)
+     
+     
+     @available(OSX 10.9, *)
+     optional public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didBecome downloadTask: URLSessionDownloadTask)
+     
+     
+     @available(OSX 10.11, *)
+     optional public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didBecome streamTask: URLSessionStreamTask)
+     
+     @available(OSX 10.9, *)
+     optional public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, willCacheResponse proposedResponse: CachedURLResponse, completionHandler: @escaping (CachedURLResponse?) -> Swift.Void)
+
+ */
 }

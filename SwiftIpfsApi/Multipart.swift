@@ -37,6 +37,7 @@ public struct Multipart {
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary="+boundary, forHTTPHeaderField: "content-type")
         request.setValue("Swift IPFS Client", forHTTPHeaderField: "user-agent")
+        request.setValue("close", forHTTPHeaderField: "Connection")
     }
 }
 
