@@ -5,6 +5,8 @@
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
+![](https://ipfs.io/ipfs/QmQJ68PFMDdAsgCZvA1UVzzn18asVcf7HVvCDgpjiSCAse)
+
 > A Swift client library for the IPFS API.
 
 For more information about [IPFS](http://ipfs.io) or the [API commands](http://ipfs.io/docs/commands) click the links.
@@ -38,7 +40,7 @@ or
 
 or
 
-```carthage update .```
+```carthage update```
 
 if you want both platforms.
 
