@@ -190,7 +190,7 @@ public class IpfsApi : IpfsApiClient {
     }
 
     public init(host: String, port: Int, version: String = "/api/v0/", ssl: Bool = false) throws {
-        self.scheme = ssl ? "http://" : "https://"
+        self.scheme = ssl ? "https://" : "http://"
         self.host = host
         self.port = port
         self.version = version
