@@ -149,6 +149,7 @@ public class IpfsApi : IpfsApiClient {
 
     public var baseUrl: String = ""
     
+    public let scheme: String
     public let host: String
     public let port: Int
     public let version: String
@@ -188,13 +189,15 @@ public class IpfsApi : IpfsApiClient {
         try self.init(addr: newMultiaddr(addr))
     }
 
-    public init(host: String, port: Int, version: String = "/api/v0/") throws {
+    public init(host: String, port: Int, version: String = "/api/v0/", ssl: Bool = false) throws {
+        self.scheme = ssl ? "https://" : "http://"
         self.host = host
         self.port = port
         self.version = version
         
+        
         /// No https yet as TLS1.2 in OS X 10.11 is not allowing comms with the node.
-        baseUrl = "http://\(host):\(port)\(version)"
+        baseUrl = "\(scheme)\(host):\(port)\(version)"
         net = HttpIo()
         
         /** All of IPFSApi's properties need to be set before we can use self which
