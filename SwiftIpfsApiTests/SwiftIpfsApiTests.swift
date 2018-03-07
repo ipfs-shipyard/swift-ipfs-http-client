@@ -1065,6 +1065,43 @@ class SwiftIpfsApiTests: XCTestCase {
         tester(add)
     }
     
+    func testAddData() {
+        
+        let add = { (dispatchGroup: DispatchGroup) throws -> Void in
+
+            let content = "Awesome file content"
+            let fileData = content.data(using: .utf8)
+            
+            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            var hash: Multihash?
+            
+            try api.add(fileData!) {
+                result in
+                
+                /// Subtract one because last element is an empty directory to ignore
+                let resultCount = result.count
+                
+                XCTAssert(resultCount == 1)
+                hash = result[0].hash
+                print("Hash:", b58String(result[0].hash!))
+                
+                dispatchGroup.leave()
+            }
+            
+            dispatchGroup.wait()
+            
+            try api.cat(hash!) {
+                result in
+                let ipfsContent = String(bytes: result, encoding: String.Encoding.utf8)!
+                print("cat:", ipfsContent)
+                
+                XCTAssert(ipfsContent == content)
+            }
+        }
+        
+        tester(add)
+    }
+    
     func testRefs() {
         let refs = { (dispatchGroup: DispatchGroup) throws -> Void in
             let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
