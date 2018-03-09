@@ -257,6 +257,34 @@ public class IpfsApi : IpfsApiClient {
         }
     }
     
+    // Store binary data
+    
+    public func add(_ fileData: Data, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
+        
+        try net.sendTo(baseUrl+"add?stream-channels=true", content: fileData) {
+            data in
+            do {
+                /// If there was no data fetched pass an empty dictionary and return.
+                let fixedData = fixStreamJson(data)
+                
+                
+                let json = JsonType.parse(try JSONSerialization.jsonObject(with: fixedData, options: JSONSerialization.ReadingOptions.allowFragments) as AnyObject)
+                print(json)
+                
+                let res = try merkleNodesFromJson(json)
+                guard res.count > 0 else { throw IpfsApiError.jsonSerializationFailed }
+                
+                /// Unwrap optionals
+                let result = res.flatMap{ $0 }
+                
+                completionHandler( result )
+                
+            } catch {
+                print("Error inside add completion handler: \(error)")
+            }
+        }
+    }
+    
     public func ls(_ hash: Multihash, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
         
         try fetchJson("ls/\(b58String(hash))") {
