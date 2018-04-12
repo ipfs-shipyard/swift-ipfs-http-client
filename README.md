@@ -62,13 +62,17 @@ In your code:
 ```Swift
 import SwiftIpfsApi
 
-/// For brevity we are not catching failed try's. You should.
-let api = try! SwiftIpfsApi("127.0.0.1", "5001") 
+do {
+  let api = try IpfsApi(host: "127.0.0.1", port: 5001)
 
-try! api.id() {
-    (idData : JsonType) in
-                    
-    print("Yay, I've got an id: "+ idData.object?["ID"]?.string)
+  try api.id() { (idData : JsonType) in
+    guard let id = idData.object?["ID"]?.string else {
+      return
+    }
+    print("Yay, I've got an id: \(id)")
+  }
+} catch {
+  print(error.localizedDescription)
 }
 ```
 
