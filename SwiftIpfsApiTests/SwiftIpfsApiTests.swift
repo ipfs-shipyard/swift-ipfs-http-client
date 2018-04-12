@@ -39,7 +39,7 @@ class SwiftIpfsApiTests: XCTestCase {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         let soRandom = Multipart.createBoundary()
-        print(soRandom.characters.count)
+        print(soRandom.count)
     }
     
     func testRefsLocal() {
@@ -128,7 +128,7 @@ class SwiftIpfsApiTests: XCTestCase {
 
             let multihash = try fromB58String("QmTtqKeVpgQ73KbeoaaomvLoYMP7XKemhTgPNjasWjfh9b")
             try api.ls(multihash){ _ in tmpGroup.leave() }
-            tmpGroup.wait(timeout: DispatchTime.distantFuture)
+            _ = tmpGroup.wait(timeout: DispatchTime.distantFuture)
             
             
             try api.repo.gc() {
@@ -158,8 +158,8 @@ class SwiftIpfsApiTests: XCTestCase {
                 XCTAssert(b58String(result.hash!) == "QmR4MtZCAUkxzg8ewgNp6hDVgtqnyojDSWVF4AFG9RWsYw")
                 print("ipfs.block.put test:")
 //                for mt in result {
-                    print("Name:", result.name)
-                    print("Hash:", b58String(result.hash!))
+                    print("Name: ", result.name ?? "No name!")
+                    print("Hash: ", b58String(result.hash!))
 //                }
                 dispatchGroup.leave()
             }
@@ -1141,7 +1141,7 @@ class SwiftIpfsApiTests: XCTestCase {
             XCTFail("tester error: \(error)")
         }
         
-        group.wait(timeout: DispatchTime.distantFuture)
+        _ = group.wait(timeout: DispatchTime.distantFuture)
     }
     
     func testPerformanceExample() {

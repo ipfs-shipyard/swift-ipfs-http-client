@@ -29,7 +29,7 @@ public class Config : ClientSubCommand {
         try parent!.fetchJson("config?arg=" + key) {
             result in
             guard let value = result.object?["Value"] else {
-                throw IpfsApiError.swarmError("Config get error: \(result.object?["Message"]?.string)")
+                throw IpfsApiError.swarmError("Config get error: \(String(describing: result.object?["Message"]?.string))")
             }
             
             try completionHandler(value)

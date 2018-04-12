@@ -58,13 +58,15 @@ extension Multipart {
     static func createBoundary() -> String {
     
         let allowed     = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        let maxCount    = allowed.characters.count
+        let maxCount    = allowed.count
         let count       = 32
         var output      = ""
         
         for _ in 0 ..< count {
             let r = Int(arc4random_uniform(UInt32(maxCount)))
-			output += String(allowed.characters[allowed.characters.index(allowed.startIndex, offsetBy: r)])
+            let randomIndex = allowed.index(allowed.startIndex, offsetBy: r)
+//            output += String(allowed.characters[allowed.characters.index(allowed.startIndex, offsetBy: r)])
+			output += allowed[..<randomIndex]
         }
         
         return output
@@ -153,7 +155,7 @@ extension Multipart {
             (data: Data?, response: URLResponse?, error: Error?) -> Void in
             
             guard error == nil && data != nil else {
-                print("Error in dataTaskWithRequest: \(error)")//throw HttpIoError.TransmissionError("fail: \(error)")
+                print("Error in dataTaskWithRequest: \(String(describing: error))")//throw HttpIoError.TransmissionError("fail: \(error)")
                 return
             }
             

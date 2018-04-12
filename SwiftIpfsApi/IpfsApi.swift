@@ -175,7 +175,7 @@ public class IpfsApi : IpfsApiClient {
     public convenience init(addr: Multiaddr) throws {
         /// Get the host and port number from the Multiaddr
         let addressString = try addr.string()
-        var protoComponents = addressString.characters.split{$0 == "/"}.map(String.init)
+        var protoComponents = addressString.split{$0 == "/"}.map(String.init)
         if  protoComponents[0].hasPrefix("ip") == true &&
             protoComponents[2].hasPrefix("tcp") == true {
                 
@@ -247,7 +247,7 @@ public class IpfsApi : IpfsApiClient {
                 guard res.count > 0 else { throw IpfsApiError.jsonSerializationFailed }
                 
                 /// Unwrap optionals
-                let result = res.flatMap{ $0 }
+                let result = res.compactMap{ $0 }
                 
                 completionHandler( result )
                 
@@ -275,7 +275,7 @@ public class IpfsApi : IpfsApiClient {
                 guard res.count > 0 else { throw IpfsApiError.jsonSerializationFailed }
                 
                 /// Unwrap optionals
-                let result = res.flatMap{ $0 }
+                let result = res.compactMap{ $0 }
                 
                 completionHandler( result )
                 

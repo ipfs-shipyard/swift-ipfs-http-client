@@ -160,7 +160,7 @@ public func _merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
 
                         let tmplinks = try merkleNodesFromJson(JsonType.Array(rawLinks))
                         /// Unwrap optionals
-                        let links = tmplinks.flatMap{ $0 }
+                        let links = tmplinks.compactMap{ $0 }
                         
                         curMerkle.links = links
                     }

@@ -80,10 +80,9 @@ public struct HttpIo : NetworkIo {
 
         for file in files {
             
-            let path = file.hasPrefix("file://") ? file.substring(from: file.index(file.startIndex, offsetBy:7)) : file
+            let path = NSString(string: file).replacingOccurrences(of: "file://", with: "")
             
             guard filemgr.fileExists(atPath: path, isDirectory: &isDir) else { throw HttpIoError.urlError("file not found at given path: \(path)") }
-
             
             if isDir.boolValue == true {
                 
@@ -107,8 +106,9 @@ public struct HttpIo : NetworkIo {
                 
                 guard let fileData = try? Data(contentsOf: fileUrl) else { throw MultipartError.failedURLCreation }
                 
-                var fileName = fileUrl.absoluteString //.lastPathComponent
-                fileName = fileName.substring(from: file.index(file.startIndex, offsetBy:7))
+//                var fileName = fileUrl.absoluteString //.lastPathComponent
+//                fileName = fileName.substring(from: file.index(file.startIndex, offsetBy:7))
+                let fileName = NSString(string: fileUrl.absoluteString).replacingOccurrences(of: "file://", with: "")
                 
                 multipart = try Multipart.addFilePart(multipart, fileName: fileName, fileData: fileData)
             }
