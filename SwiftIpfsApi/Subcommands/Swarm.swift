@@ -21,7 +21,7 @@ public class Swarm : ClientSubCommand {
             result in
             
             var addresses: [Multiaddr] = []
-            if let swarmPeers = result.object?["Strings"]?.array {
+            if let swarmPeers = result.object?["Peers"]?.array {
                 /// Make an array of Multiaddr from each peer in swarmPeers.
                 addresses = try swarmPeers.map { try newMultiaddr($0.string!) }
             }
