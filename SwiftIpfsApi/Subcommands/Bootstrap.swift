@@ -58,7 +58,7 @@ public class Bootstrap : ClientSubCommand {
             result in
             
             var addresses: [Multiaddr] = []
-            if let peers = result.object?["Peers"]?.array {
+            if let peers = result.object?[IpfsCmdString.Peers.rawValue]?.array {
                 /// Make an array of Multiaddr from each peer
                 addresses = try peers.map { try newMultiaddr($0.string!) }
             }

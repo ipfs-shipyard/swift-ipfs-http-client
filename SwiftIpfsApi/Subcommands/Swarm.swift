@@ -21,7 +21,7 @@ public class Swarm : ClientSubCommand {
             result in
             
             var addresses: [Multiaddr] = []
-            if let swarmPeers = result.object?["Peers"]?.array {
+            if let swarmPeers = result.object?[IpfsCmdString.Peers.rawValue]?.array {
                 /// Make an array of Multiaddr from each peer in swarmPeers.
                 addresses = try swarmPeers.map { try newMultiaddr($0.string!) }
             }
@@ -36,7 +36,7 @@ public class Swarm : ClientSubCommand {
         
         try parent!.fetchJson("swarm/addrs?stream-channels=true") {
             result in
-            guard let addrsData = result.object?["Addrs"] else {
+            guard let addrsData = result.object?[IpfsCmdString.Addrs.rawValue] else {
                 throw IpfsApiError.swarmError("Swarm.addrs error: No Addrs key in JSON data.")
             }
             try completionHandler(addrsData)

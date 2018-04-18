@@ -35,7 +35,7 @@ public class Name : ClientSubCommand {
         try parent!.fetchJson(request) {
             result in
             
-            let resolvedName = result.object?["Path"]?.string ?? ""
+            let resolvedName = result.object?[IpfsCmdString.Path.rawValue]?.string ?? ""
             completionHandler(resolvedName)
         }
 //        try parent!.fetchData(request) {

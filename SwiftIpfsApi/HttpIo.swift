@@ -101,13 +101,9 @@ public struct HttpIo : NetworkIo {
             } else {
                 
                 /// Add the contents of the file to multipart message.
-                
                 let fileUrl = URL(fileURLWithPath: path)
-                
                 guard let fileData = try? Data(contentsOf: fileUrl) else { throw MultipartError.failedURLCreation }
                 
-//                var fileName = fileUrl.absoluteString //.lastPathComponent
-//                fileName = fileName.substring(from: file.index(file.startIndex, offsetBy:7))
                 let fileName = NSString(string: fileUrl.absoluteString).replacingOccurrences(of: "file://", with: "")
                 
                 multipart = try Multipart.addFilePart(multipart, fileName: fileName, fileData: fileData)

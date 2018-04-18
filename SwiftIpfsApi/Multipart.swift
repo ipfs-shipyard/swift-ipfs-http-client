@@ -65,8 +65,8 @@ extension Multipart {
         for _ in 0 ..< count {
             let r = Int(arc4random_uniform(UInt32(maxCount)))
             let randomIndex = allowed.index(allowed.startIndex, offsetBy: r)
-//            output += String(allowed.characters[allowed.characters.index(allowed.startIndex, offsetBy: r)])
-			output += allowed[..<randomIndex]
+
+			output += String(allowed[randomIndex])
         }
         
         return output
@@ -144,12 +144,12 @@ extension Multipart {
     public static func finishMultipart(_ multipart: Multipart, completionHandler: @escaping (Data) -> Void) {
         
         let outString = "--" + multipart.boundary + "--" + lineFeed
+        
         multipart.body.append(outString.data(using: String.Encoding.utf8)!)
         
         multipart.request.setValue(String(multipart.body.length), forHTTPHeaderField: "content-length")
         multipart.request.httpBody = multipart.body as Data
-        
-        
+
         /// Send off the request
         let task = URLSession.shared.dataTask(with: (multipart.request as URLRequest)) {
             (data: Data?, response: URLResponse?, error: Error?) -> Void in

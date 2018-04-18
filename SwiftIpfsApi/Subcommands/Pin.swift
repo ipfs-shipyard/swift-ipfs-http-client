@@ -19,7 +19,7 @@ public class Pin : ClientSubCommand {
         try parent!.fetchJson("pin/add?stream-channels=true&arg=\(b58String(hash))") {
             result in
             
-            guard let objects = result.object?["Pinned"]?.array else {
+            guard let objects = result.object?[IpfsCmdString.Pinned.rawValue]?.array else {
                 throw IpfsApiError.pinError("Pin.add error: No Pinned objects in JSON data.")
             }
             
@@ -53,7 +53,7 @@ public class Pin : ClientSubCommand {
         try parent!.fetchJson("pin/ls?stream-channels=true&t=" + pinType.rawValue) {
             result in
             
-            guard let objects = result.object?["Keys"] else {
+            guard let objects = result.object?[IpfsCmdString.Keys.rawValue] else {
                 throw IpfsApiError.pinError("Pin.ls error: No Keys Dictionary in JSON data.")
             }
             
@@ -70,7 +70,7 @@ public class Pin : ClientSubCommand {
         try parent!.fetchJson("pin/rm?stream-channels=true&r=\(recursive)&arg=\(b58String(hash))") {
             result in
             
-            guard let objects = result.object?["Pinned"]?.array else {
+            guard let objects = result.object?[IpfsCmdString.Pinned.rawValue]?.array else {
                 throw IpfsApiError.pinError("Pin.rm error: No Pinned objects in JSON data.")
             }
             

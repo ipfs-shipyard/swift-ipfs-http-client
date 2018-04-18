@@ -28,8 +28,8 @@ public class Config : ClientSubCommand {
     public func get(_ key: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
         try parent!.fetchJson("config?arg=" + key) {
             result in
-            guard let value = result.object?["Value"] else {
-                throw IpfsApiError.swarmError("Config get error: \(String(describing: result.object?["Message"]?.string))")
+            guard let value = result.object?[IpfsCmdString.Value.rawValue] else {
+                throw IpfsApiError.swarmError("Config get error: \(String(describing: result.object?[IpfsCmdString.Message.rawValue]?.string))")
             }
             
             try completionHandler(value)

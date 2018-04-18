@@ -14,7 +14,8 @@ import SwiftMultihash
 
 class SwiftIpfsApiTests: XCTestCase {
 
-    var hostString      = "127.0.0.1" //"192.168.5.8"
+//    var hostString      = "ipfs-thing.localhost"//192.168.5.9" //127.0.0.1" //"192.168.5.8"
+    var hostString      = "127.0.0.1"
     let hostPort        = 5001
     
     /// Your own IPNS node hash
@@ -847,6 +848,7 @@ class SwiftIpfsApiTests: XCTestCase {
     func testIds() {
         
         do {
+//            let api = try IpfsApi(host: self.hostString, port: self.hostPort, ssl: true)
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let idString = self.nodeIdString
             
@@ -854,7 +856,9 @@ class SwiftIpfsApiTests: XCTestCase {
                 try api.id(idString) {
                     result in
                     
-                    XCTAssert(result.object?["ID"]?.string == idString)
+////                    XCTAssert(result.object?["ID"]?.string == idString)
+                    XCTAssert(result.object?[IpfsCmdString.ID.rawValue]?.string == idString)
+                    
                     dispatchGroup.leave()
                 }
             }
@@ -1038,7 +1042,7 @@ class SwiftIpfsApiTests: XCTestCase {
 //                                "file:///Users/teo/tmp/notred.png",
 //                                "file:///Users/teo/tmp/F4115_WU5086.jpeg"]
 //            let filePaths = [   "file:///Users/teo/Library/Services/FilesToIpfs.workflow"]
-            let filePaths = [   "file:///Users/teo/tmp/addtest3"]
+            let filePaths = [   "file:///Users/teo/tmp/addtest5"]
 
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
