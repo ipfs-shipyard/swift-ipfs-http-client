@@ -1042,6 +1042,7 @@ class SwiftIpfsApiTests: XCTestCase {
 //                                "file:///Users/teo/tmp/notred.png",
 //                                "file:///Users/teo/tmp/F4115_WU5086.jpeg"]
 //            let filePaths = [   "file:///Users/teo/Library/Services/FilesToIpfs.workflow"]
+//            let filePaths = [   "file:///Users/teo/tmp/addtest/adir", "file:///Users/teo/tmp/addtest5"]
             let filePaths = [   "file:///Users/teo/tmp/addtest5"]
 
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
@@ -1059,7 +1060,7 @@ class SwiftIpfsApiTests: XCTestCase {
                 for i in 0..<resultCount {
 					//XCTAssert(result[i].name! == filePaths[i].components(separatedBy: "/").last)
 					//print("Name:", filePaths[i].components(separatedBy: "/").last)
-                    print("Hash:", b58String(result[i].hash!))
+                    print("Name: \(String(describing: result[i].name)) Hash:", b58String(result[i].hash!))
                 }
                 
                 dispatchGroup.leave()

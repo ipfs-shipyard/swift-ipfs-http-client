@@ -72,7 +72,7 @@ public struct HttpIo : NetworkIo {
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
     
-    func handle(oldMultipart: Multipart, files: [String]) throws -> Multipart{
+    func handle(oldMultipart: Multipart, files: [String], prePath: String? = nil) throws -> Multipart{
         
         var multipart = oldMultipart
         let filemgr = FileManager.default
@@ -81,21 +81,23 @@ public struct HttpIo : NetworkIo {
         for file in files {
             
             let path = NSString(string: file).replacingOccurrences(of: "file://", with: "")
-            
+            let prePath = prePath ?? (path as NSString).deletingLastPathComponent + "/"
             guard filemgr.fileExists(atPath: path, isDirectory: &isDir) else { throw HttpIoError.urlError("file not found at given path: \(path)") }
             
             if isDir.boolValue == true {
                 
-                /// Expand directory and call recursively with the contents.
+                let trimmedPath = path.replacingOccurrences(of: prePath, with: "")
+                print("trimmed path is \(trimmedPath)")
                 
-                multipart = try Multipart.addDirectoryPart(oldMultipart: multipart, path: path)
+                /// Expand directory and call recursively with the contents.
+                multipart = try Multipart.addDirectoryPart(oldMultipart: multipart, path: trimmedPath)
                 
                 let dirFiles = try filemgr.contentsOfDirectory(atPath: path)
                 
                 let newPaths = dirFiles.map { aFile in (path as NSString).appendingPathComponent(aFile)}
                 
                 if dirFiles.count > 0 {
-                    multipart = try handle(oldMultipart: multipart, files: newPaths)
+                    multipart = try handle(oldMultipart: multipart, files: newPaths, prePath: prePath)
                 }
                 
             } else {
@@ -103,10 +105,9 @@ public struct HttpIo : NetworkIo {
                 /// Add the contents of the file to multipart message.
                 let fileUrl = URL(fileURLWithPath: path)
                 guard let fileData = try? Data(contentsOf: fileUrl) else { throw MultipartError.failedURLCreation }
+                let trimmedFilePath = path.replacingOccurrences(of: prePath, with: "")
                 
-                let fileName = NSString(string: fileUrl.absoluteString).replacingOccurrences(of: "file://", with: "")
-                
-                multipart = try Multipart.addFilePart(multipart, fileName: fileName, fileData: fileData)
+                multipart = try Multipart.addFilePart(multipart, fileName: trimmedFilePath, fileData: fileData)
             }
         }
         

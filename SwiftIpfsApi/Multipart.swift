@@ -151,6 +151,7 @@ extension Multipart {
         multipart.request.httpBody = multipart.body as Data
 
         /// Send off the request
+        print("actual request: \(multipart.request)")
         let task = URLSession.shared.dataTask(with: (multipart.request as URLRequest)) {
             (data: Data?, response: URLResponse?, error: Error?) -> Void in
             
