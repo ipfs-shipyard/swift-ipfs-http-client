@@ -1036,38 +1036,52 @@ class SwiftIpfsApiTests: XCTestCase {
     
     
     func testAdd() {
-        
-        let add = { (dispatchGroup: DispatchGroup) throws -> Void in
+
 //            let filePaths = [   "file:///Users/teo/tmp/outstream.txt",
 //                                "file:///Users/teo/tmp/notred.png",
-//                                "file:///Users/teo/tmp/F4115_WU5086.jpeg"]
+//                                "file:///Users/teo/tmp/game.jpg"]
 //            let filePaths = [   "file:///Users/teo/Library/Services/FilesToIpfs.workflow"]
-//            let filePaths = [   "file:///Users/teo/tmp/addtest/adir", "file:///Users/teo/tmp/addtest5"]
-            let filePaths = [   "file:///Users/teo/tmp/addtest5"]
+            let pathsToHashes = [   "file:///Users/teo/tmp/addtest/adir" : "QmY9Ks5KhpTZ6udF7F7Buq7gQ71aAKvynBXjHFhbpLLRrS",
+                                "file:///Users/teo/tmp/addtest5" : "Qma97dios2R9rndBXyzfVmYEaCF8hkcyA6ULnw4WLu8Yk6"]
+//            let filePaths = [   "file:///Users/teo/tmp/addtest5"]
 
+        var testExpectations = [XCTestExpectation]()
+        
+        do {
+            
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
-            
-            try api.add(filePaths) {
-                result in
+            for pathToHash in pathsToHashes {
+        
+                let expectation = XCTestExpectation(description: pathToHash.key)
+                testExpectations.append(expectation)
                 
-                /// Subtract one because last element is an empty directory to ignore
-                let resultCount = result.count
-                
-                //XCTAssert(resultCount == filePaths.count)
-                
-                //for mt in result {
-                for i in 0..<resultCount {
-					//XCTAssert(result[i].name! == filePaths[i].components(separatedBy: "/").last)
-					//print("Name:", filePaths[i].components(separatedBy: "/").last)
-                    print("Name: \(String(describing: result[i].name)) Hash:", b58String(result[i].hash!))
+                try api.add(pathToHash.key) {
+                    result in
+                    
+                    /// Subtract one because last element is an empty directory to ignore
+                    let resultCount = result.count
+                    
+                    for i in 0..<resultCount {
+                        
+                        print("Name: \(String(describing: result[i].name)) Hash:", b58String(result[i].hash!))
+                        
+                        if let hash = result[i].hash, b58String(hash) == pathToHash.value {
+                            expectation.fulfill()
+                            return
+                        }
+                    }
+                    
+                    // Did not find a match after going through all hashes in the result.
+                    expectation.fulfill()
+                    XCTFail()
                 }
-                
-                dispatchGroup.leave()
             }
+        } catch {
+            print("Error in testAdd: \(error)")
         }
         
-        tester(add)
+        wait(for: testExpectations, timeout: 60.0)
     }
     
     func testAddData() {

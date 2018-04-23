@@ -48,7 +48,6 @@ public struct HttpIo : NetworkIo {
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         let config = URLSessionConfiguration.default
         let handler = StreamHandler(updateHandler: updateHandler, completionHandler: completionHandler)
-//        let handler = FetchHandler(updateHandler: updateHandler, completionHandler: completionHandler)
         let session = URLSession(configuration: config, delegate: handler, delegateQueue: nil)
         let task = session.dataTask(with: url)
         
@@ -63,13 +62,14 @@ public struct HttpIo : NetworkIo {
     }
 
 
-    public func sendTo(_ target: String, content: [String], completionHandler: @escaping (Data) -> Void) throws {
-
+    public func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Data) -> Void) throws {
+        
         var multipart = try Multipart(targetUrl: target, encoding: .utf8)
         
-        multipart = try handle(oldMultipart: multipart, files: content)
+        multipart = try handle(oldMultipart: multipart, files: [filePath])
         
         Multipart.finishMultipart(multipart, completionHandler: completionHandler)
+        
     }
     
     func handle(oldMultipart: Multipart, files: [String], prePath: String? = nil) throws -> Multipart{
@@ -87,7 +87,6 @@ public struct HttpIo : NetworkIo {
             if isDir.boolValue == true {
                 
                 let trimmedPath = path.replacingOccurrences(of: prePath, with: "")
-                print("trimmed path is \(trimmedPath)")
                 
                 /// Expand directory and call recursively with the contents.
                 multipart = try Multipart.addDirectoryPart(oldMultipart: multipart, path: trimmedPath)
@@ -115,7 +114,7 @@ public struct HttpIo : NetworkIo {
     }
     
     func fetchUpdateHandler(_ data: Data, task: URLSessionDataTask) {
-        print("fetch update")
+        
         /// At this point we could decide to stop the task.
         if task.countOfBytesReceived > 1024 {
             print("fetch task cancel")
@@ -124,25 +123,12 @@ public struct HttpIo : NetworkIo {
     }
     
     func fetchCompletionHandler(_ result: AnyObject) {
-        print("fetch completion:")
+        
         for res in result as! [[String : AnyObject]] {
             print(res)
         }
     }
 }
-
-//public func getMIMETypeFromURL(location: NSURL) -> String? {
-//    /// is this a file?
-//    if  location.fileURL,
-//        let fileExtension: CFStringRef = location.pathExtension,
-//        let exportedUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, fileExtension, nil)?.takeRetainedValue(),
-//        let mimeType = UTTypeCopyPreferredTagWithClass(exportedUTI, kUTTagClassMIMEType) {
-//        
-//        
-//        return mimeType.takeUnretainedValue() as String
-//    }
-//    return nil
-//}
 
 public class StreamHandler : NSObject, URLSessionDataDelegate {
     
@@ -156,7 +142,7 @@ public class StreamHandler : NSObject, URLSessionDataDelegate {
     }
     
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        print("HANDLER:")
+        
         dataStore.append(data)
         
         do {
@@ -168,7 +154,7 @@ public class StreamHandler : NSObject, URLSessionDataDelegate {
     }
     
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        print("Completed")
+        
         session.invalidateAndCancel()
         do {
             try completionHandler(dataStore)

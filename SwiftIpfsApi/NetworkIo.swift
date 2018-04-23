@@ -18,6 +18,6 @@ public protocol NetworkIo {
     
     func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws
 
-    /// If we want to send a bunch of location addressed content (eg.files)
-    func sendTo(_ target: String, content: [String], completionHandler: @escaping (Data) -> Void) throws
+    /// If we want to send location addressed content
+    func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Data) -> Void) throws
 }

@@ -242,12 +242,8 @@ public class IpfsApi : IpfsApiClient {
     /// base commands
     
     public func add(_ filePath: String, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
-        try self.add([filePath], completionHandler: completionHandler)
-    }
-    
-    public func add(_ filePaths: [String], completionHandler: @escaping ([MerkleNode]) -> Void) throws {
-
-        try net.sendTo(baseUrl+"add", content: filePaths) {
+        
+        try net.sendTo(baseUrl+"add?s", filePath: filePath) {
             data in
             do {
                 /// If there was no data fetched pass an empty dictionary and return.

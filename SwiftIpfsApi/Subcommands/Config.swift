@@ -20,7 +20,7 @@ public class Config : ClientSubCommand {
     }
     
     public func replace(_ filePath: String, completionHandler: (Bool) -> Void) throws {
-        try parent!.net.sendTo(parent!.baseUrl+"config/replace?stream-channels=true", content: [filePath]) {
+        try parent!.net.sendTo(parent!.baseUrl+"config/replace?stream-channels=true", filePath: filePath) {
             _ in
         }
     }
