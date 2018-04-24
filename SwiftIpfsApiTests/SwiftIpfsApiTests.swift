@@ -960,25 +960,34 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testdns() {
-        let dns = { (dispatchGroup: DispatchGroup) throws -> Void in
+        
+        let expectation = XCTestExpectation(description: "testdns")
+        
+        do {
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
             let domain    = "ipfs.io"
-            try api.dns(domain) {
-                domainString in
+            // Change domainHash to match whatever the actual hash of ipfs.io currently resolves to.
+            let domainHash = "QmYNQJoKGNHTpPxCBPh9KkDpaExgd2duMa3aF6ytMpHdao"
+            
+            try api.dns(domain) { domainString in
                 
                 print("Domain: ",domainString)
-//                if domainString != "/ipfs/QmcQBvKTP8R7p8DgLEtKuoeuz1BBbotGpmofEFBEYBfc97" {
-//                    XCTFail("domain string mismatch.")
-//                }
-                dispatchGroup.leave()
+                XCTAssert(domainString == "/ipfs/\(domainHash)")
+
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testdns failed with error \(error)")
         }
-        
-        tester(dns)
+    
+        wait(for: [expectation], timeout: 120.0)
     }
     
     func testMount() {
-        let mount = { (dispatchGroup: DispatchGroup) throws -> Void in
+        
+        let expectation = XCTestExpectation(description: "testMount")
+
+        do {
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
             
             try api.mount() {
@@ -987,53 +996,58 @@ class SwiftIpfsApiTests: XCTestCase {
                 print("Mount got", result)
                 XCTAssert(  result.object?["IPFS"]?.string == "/ipfs" &&
                             result.object?["IPNS"]?.string == "/ipns")
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
             
+        } catch {
+            XCTFail("testMount failed with error \(error)")
         }
         
-        tester(mount)
+        wait(for: [expectation], timeout: 120.0)
     }
     
     func testResolveIpfs() {
-        let resolve = { (dispatchGroup: DispatchGroup) throws -> Void in
-            
+        
+        let expectation = XCTestExpectation(description: "testResolveIpfs")
+        do {
             let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
-            let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
+            let multihash = try fromB58String("QmeZy1fGbwgVSrqbfh9fKQrAWgeyRnj7h8fsHS1oy3k99x")
             
-            try api.resolve("ipfs", hash: multihash, recursive: false) {
-                result in
+            try api.resolve("ipfs", hash: multihash, recursive: false) { result in
+                
 				XCTAssert(result.object?["Path"]?.string == "/ipfs/QmW2WQi7j6c7UgJTarActp7tDNikE4B2qXtFCfLPdsgaTQ")
-//                print("Resolve IPFS got", result)
-                dispatchGroup.leave()
+                
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail()
         }
         
-        tester(resolve)
+        wait(for: [expectation], timeout: 120.0)
     }
     
     func testResolveIpns() {
         
-        do {
-        let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
-        let multihash = try fromB58String(self.nodeIdString)
         let expectation = XCTestExpectation(description: "testResolveIpns")
-        
-        try api.resolve("ipns", hash: multihash, recursive: false) {
-            result in
+        do {
+            let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
+            let multihash = try fromB58String(self.nodeIdString)
             
-            // Replace the resolved string for your own.
-            let resolvedIpnsString = "/ipfs/QmeVYFFc4gDmBkNB44RykvunsUFK777iYN1SH1J1VFYn15"
-            
-            XCTAssert(result.object?["Path"]?.string == resolvedIpnsString)
-            
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 120.0)
+            try api.resolve("ipns", hash: multihash, recursive: false) {
+                result in
+                
+                // Replace the resolved string for your own.
+                let resolvedIpnsString = "/ipfs/QmeVYFFc4gDmBkNB44RykvunsUFK777iYN1SH1J1VFYn15"
+                
+                XCTAssert(result.object?["Path"]?.string == resolvedIpnsString)
+                
+                expectation.fulfill()
+            }
         } catch {
+            XCTFail()
             print("Error in testResolveIpns \(error)")
         }
+        wait(for: [expectation], timeout: 120.0)
     }
     
 

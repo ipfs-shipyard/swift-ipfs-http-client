@@ -338,7 +338,7 @@ public class IpfsApi : IpfsApiClient {
             completionHandler(refs)
         }
     }
-	
+
     public func resolve(_ scheme: String, hash: Multihash, recursive: Bool, completionHandler: @escaping (JsonType) -> Void) throws {
         try fetchJson("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
     }
