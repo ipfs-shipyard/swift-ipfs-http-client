@@ -26,6 +26,8 @@ class SwiftIpfsApiTests: XCTestCase {
 
     let peerIPAddr = "/ip4/104.236.176.52/tcp/4001"
     
+    let currentIpfsVersion = "0.4.14"
+    
     override func setUp() {
         super.setUp()
         
@@ -883,44 +885,57 @@ class SwiftIpfsApiTests: XCTestCase {
     
     
     func testVersion() {
-        let version = { (dispatchGroup: DispatchGroup) throws -> Void in
+        
+        let expectation = XCTestExpectation(description: "testVersion")
+        do {
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.version() {
-                version in
-                print(version)
-                dispatchGroup.leave()
+            try api.version() { version in
+                
+                XCTAssert(version == self.currentIpfsVersion)
+                
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testVersion failed with error \(error)")
         }
         
-        tester(version)
-        
+        wait(for: [expectation], timeout: 5.0)
     }
     
     func testCommands() {
-        let commands = { (dispatchGroup: DispatchGroup) throws -> Void in
+        
+        let expectation = XCTestExpectation(description: "testCommands")
+        do {
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.commands(true) {
                 result in
                
+                // Short of having a gigantic (and regularly changing) table to
+                // check against I don't know how to verify this. For now a
+                // visual inspection will have to do.
                 if let commands = result.object {
                     for (k,v) in commands {
                         print("k: ",k)
                         print("v: ",v)
                     }
                 }
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testCommands failed with error \(error)")
         }
         
-        tester(commands)
-        
+        wait(for: [expectation], timeout: 5.0)
     }
     
     func testStats() {
-        let stats = { (dispatchGroup: DispatchGroup) throws -> Void in
+
+        let expectation = XCTestExpectation(description: "testStats")
+        do {
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.stats.bw() {
-                result in
+            try api.stats.bw() { result in
                
                 /// We can't check for the values as they change constantly but at 
                 /// least we can check for the keys being there.
@@ -929,16 +944,19 @@ class SwiftIpfsApiTests: XCTestCase {
                     result.object?["RateIn"] != nil &&
                     result.object?["RateOut"] != nil )
                 
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testStats failed with error \(error)")
         }
-        
-        tester(stats)
-        
+    
+        wait(for: [expectation], timeout: 5.0)
     }
     
     func testLog() {
-        let log = { (dispatchGroup: DispatchGroup) throws -> Void in
+        
+        let expectation = XCTestExpectation(description: "testLog")
+        do {
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let updateHandler = { (data: Data) -> Bool in
                 print("Got an update. Closing.")
@@ -951,12 +969,13 @@ class SwiftIpfsApiTests: XCTestCase {
                 for entry in log {
                     print(entry)
                 }
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testLog failed with error \(error)")
         }
         
-        //tester(log)
-        
+        wait(for: [expectation], timeout: 5.0)
     }
     
     func testdns() {
