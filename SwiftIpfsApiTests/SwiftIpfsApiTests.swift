@@ -849,38 +849,33 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testIds() {
         
+        let idt1Expectation = XCTestExpectation(description: "testIds 1")
+        let idt2Expectation = XCTestExpectation(description: "testIds 2")
+        
         do {
-//            let api = try IpfsApi(host: self.hostString, port: self.hostPort, ssl: true)
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             let idString = self.nodeIdString
             
-            let id = { (dispatchGroup: DispatchGroup) throws -> Void in
-                try api.id(idString) {
-                    result in
-                    
-////                    XCTAssert(result.object?["ID"]?.string == idString)
-                    XCTAssert(result.object?[IpfsCmdString.ID.rawValue]?.string == idString)
-                    
-                    dispatchGroup.leave()
-                }
+            try api.id(idString) { result in
+                
+                XCTAssert(result.object?[IpfsCmdString.ID.rawValue]?.string == idString)
+                
+                idt1Expectation.fulfill()
             }
+        
             
-            tester(id)
-            
-            let idDefault = { (dispatchGroup: DispatchGroup) throws -> Void in
-                try api.id() {
-                    result in
-                    
-                    XCTAssert(result.object?["ID"]?.string == idString)
-                    dispatchGroup.leave()
-                }
+            try api.id() {
+                result in
+                
+                XCTAssert(result.object?["ID"]?.string == idString)
+                idt2Expectation.fulfill()
             }
-            
-            tester(idDefault)
             
         } catch {
-            print("testIds error:\(error)")
+            XCTFail("testIds failed with error \(error)")
         }
+        
+        wait(for: [idt1Expectation, idt2Expectation], timeout: 15.0)
     }
     
     
