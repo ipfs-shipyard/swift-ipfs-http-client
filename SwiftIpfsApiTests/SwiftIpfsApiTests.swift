@@ -728,106 +728,121 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testConfig() {
-        let show = { (dispatchGroup: DispatchGroup) throws -> Void in
+        
+        do {
+            let configShowExpectation = XCTestExpectation(description: "testConfigShow")
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            
             try api.config.show() {
                 result in
                 print(result)
                 /// do comparison with truth here. Currently by visual inspection :/
-                dispatchGroup.leave()
+                configShowExpectation.fulfill()
             }
-        }
-        
-        tester(show)
-        
-        let set = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+
+            let configSetExpectation = XCTestExpectation(description: "testConfigSet")
+            let configSetGetExpectation = XCTestExpectation(description: "setGetExpectation")
+            
+            // Set a value in the config and read back the same to confirm.
             try api.config.set("Teo", value: "42") {
                 result in
                 
+                configSetExpectation.fulfill()
+                
                 try api.config.get("Teo") {
                     result in
-                    /// do comparison with truth here.
-                    if case .String(let strResult) = result, strResult == "42" { } else {
-                        XCTFail()
-                    }
-                    dispatchGroup.leave()
+                    
+                    if let strValue = result.string {
+                        XCTAssertTrue(strValue == "42")
+                    } else {  XCTFail() }
+                    
+                    configSetGetExpectation.fulfill()
                 }
+                
             }
-        }
-    
-        tester(set)
-        
-   
-        let get = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.config.get("Datastore.Type") {
-                result in
-                /// do comparison with truth here.
-                if case .String(let strResult) = result, strResult == "leveldb" { } else {
-                    XCTFail()
-                }
-                dispatchGroup.leave()
-            }
+            
+            wait(for: [configShowExpectation, configSetExpectation, configSetGetExpectation], timeout: 25.0)
+
+        } catch {
+            XCTFail("testConfig failed with error \(error)")
         }
         
-        tester(get)
+//
+//
+//
+
+//            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+//            try api.config.get("Datastore.Type") {
+//                result in
+//                /// do comparison with truth here.
+//                if case .String(let strResult) = result, strResult == "leveldb" { } else {
+//                    XCTFail()
+//                }
+//                dispatchGroup.leave()
+//            }
 
     }
     
     
-    func testBaseCommands() {
+    func testLs() {
         
-        /// For this test assert that the resulting links' name is Mel.html and MelKaye.png
-        let lsTest = { (dispatchGroup: DispatchGroup) throws -> Void in
-
+        let expectation = XCTestExpectation(description: "testLs")
+        do {
             let multihash = try fromB58String("QmPXME1oRtoT627YKaDPDQ3PwA8tdP9rWuAAweLzqSwAWT")
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.ls(multihash) {
                 results in
                 
-                var pass = false
+                
                 let node = results[0]
-                if let links = node.links ,
-                        links.count == 5 &&
+                if let links = node.links {
+                    let pass = (links.count == 5 &&
                         links[0].name! == "contact" &&
                         links[1].name! == "help" &&
                         links[2].name! == "quick-start" &&
                         links[3].name! == "readme" &&
-                        links[4].name! == "security-notes" {
-                    pass = true
+                        links[4].name! == "security-notes")
+                    
+                    XCTAssertTrue(pass)
+                } else {
+                    XCTFail("testLs no links found.")
                 }
                 
-                XCTAssert(pass)
-                
-                /// do comparison with truth here.
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
-
+        } catch {
+            XCTFail("testLs failed with error \(error)")
         }
-            
-        tester(lsTest)
-            
-            
-        let catTest = { (dispatchGroup: DispatchGroup) throws -> Void in
-            
+        
+        wait(for: [expectation], timeout: 5.0)
+    }
+        
+    func testCat() {
+
+        let expectation = XCTestExpectation(description: "testCat")
+        do {
+
             let multihash = try fromB58String("QmYeQA5P2YuCKxZfSbjhiEGD3NAnwtdwLL6evFoVgX1ULQ")
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
             try api.cat(multihash) {
                 result in
                 print("cat:",String(bytes: result, encoding: String.Encoding.utf8)!)
-                dispatchGroup.leave()
+                
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testCat failed with error \(error)")
         }
         
-        tester(catTest)
-        
+        wait(for: [expectation], timeout: 5.0)
     }
 
     func testPing() {
         
-        let ping = { (dispatchGroup: DispatchGroup) throws -> Void in
+        let expectation = XCTestExpectation(description: "testPing")
+        do {
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             try api.ping(self.altNodeIdString) {
                result in
@@ -840,11 +855,13 @@ class SwiftIpfsApiTests: XCTestCase {
                     }
                 }
 
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testPing failed with error \(error)")
         }
         
-        tester(ping)
+        wait(for: [expectation], timeout: 15.0)
     }
     
     func testIds() {
