@@ -1013,23 +1013,27 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testResolveIpns() {
-        let resolve = { (dispatchGroup: DispatchGroup) throws -> Void in
+        
+        do {
+        let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
+        let multihash = try fromB58String(self.nodeIdString)
+        let expectation = XCTestExpectation(description: "testResolveIpns")
+        
+        try api.resolve("ipns", hash: multihash, recursive: false) {
+            result in
             
-            let api       = try IpfsApi(addr: "/ip4/\(self.hostString)/tcp/\(self.hostPort)")
-//            let api = try IpfsApi(addr: "/ip4/127.0.0.1/tcp/5001")
-            let multihash = try fromB58String(self.nodeIdString)
+            // Replace the resolved string for your own.
+            let resolvedIpnsString = "/ipfs/QmeVYFFc4gDmBkNB44RykvunsUFK777iYN1SH1J1VFYn15"
             
+            XCTAssert(result.object?["Path"]?.string == resolvedIpnsString)
             
-            try api.resolve("ipns", hash: multihash, recursive: false) {
-                result in
-                
-                XCTAssert(result.object?["Path"]?.string == "/ipfs/QmeXS82nS8YDXQpiqFeT4gCHc1HGoxZe5zH6Srj4HhkiFy")
-                
-                dispatchGroup.leave()
-            }
+            expectation.fulfill()
         }
         
-        tester(resolve)
+        wait(for: [expectation], timeout: 120.0)
+        } catch {
+            print("Error in testResolveIpns \(error)")
+        }
     }
     
 
