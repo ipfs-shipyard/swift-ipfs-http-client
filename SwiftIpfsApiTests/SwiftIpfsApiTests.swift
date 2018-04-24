@@ -703,28 +703,23 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testDiag() {
         
-        let net = { (dispatchGroup: DispatchGroup) throws -> Void in
+        let expectation = XCTestExpectation(description: "testDiagSys")
+        do {
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.diag.net() {
-                result in
-                print(result)
-                /// do comparison with truth here.
-                dispatchGroup.leave()
-            }
-        }
-        
-        tester(net)
-        
-        let sys = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            
             try api.diag.sys() {
                 result in
-                print(result)
+                print("diag sys result: \(result)")
                 /// do comparison with truth here.
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+
+        } catch {
+            XCTFail("testDiag failed with error \(error)")
         }
-        tester(sys)
+        
+        wait(for: [expectation], timeout: 5.0)
     }
     
     func testConfig() {
@@ -766,21 +761,6 @@ class SwiftIpfsApiTests: XCTestCase {
         } catch {
             XCTFail("testConfig failed with error \(error)")
         }
-        
-//
-//
-//
-
-//            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-//            try api.config.get("Datastore.Type") {
-//                result in
-//                /// do comparison with truth here.
-//                if case .String(let strResult) = result, strResult == "leveldb" { } else {
-//                    XCTFail()
-//                }
-//                dispatchGroup.leave()
-//            }
-
     }
     
     
