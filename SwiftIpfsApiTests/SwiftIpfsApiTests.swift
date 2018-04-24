@@ -1121,9 +1121,10 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     func testRefs() {
-        let refs = { (dispatchGroup: DispatchGroup) throws -> Void in
+        do {
             let multihash = try fromB58String("QmXsnbVWHNnLk3QGfzGCMy1J9GReWN7crPvY1DKmFdyypK")
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            let expectation = XCTestExpectation(description: "testRefs")
             
             try api.refs(multihash, recursive: false) {
                 result in
@@ -1131,14 +1132,14 @@ class SwiftIpfsApiTests: XCTestCase {
                 XCTAssert(  result.count == 2 &&
                             b58String(result[0]) == "QmZX6Wrte3EqkUCwLHqBbuDhmH5yqPurNNTxKQc4NFfDxT" &&
                             b58String(result[1]) == "QmaLB324wDRKEJbGGr8FWg3qWnpTxdc2oEKDT62qhe8tMR" )
-//                for mh in result {
-//                    print(b58String(mh))
-//                }
                 
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+            
+            wait(for: [expectation], timeout: 5.0)
+        } catch {
+            print("Error testRefs \(error)")
         }
-        tester(refs)
     }
     
     
