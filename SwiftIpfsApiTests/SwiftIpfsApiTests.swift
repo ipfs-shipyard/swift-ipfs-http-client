@@ -1086,39 +1086,38 @@ class SwiftIpfsApiTests: XCTestCase {
     
     func testAddData() {
         
-        let add = { (dispatchGroup: DispatchGroup) throws -> Void in
-
-            let content = "Awesome file content"
-            let fileData = content.data(using: .utf8)
-            
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            var hash: Multihash?
-            
-            try api.add(fileData!) {
-                result in
-                
-                /// Subtract one because last element is an empty directory to ignore
-                let resultCount = result.count
-                
-                XCTAssert(resultCount == 1)
-                hash = result[0].hash
-                print("Hash:", b58String(result[0].hash!))
-                
-                dispatchGroup.leave()
-            }
-            
-            dispatchGroup.wait()
-            
-            try api.cat(hash!) {
-                result in
-                let ipfsContent = String(bytes: result, encoding: String.Encoding.utf8)!
-                print("cat:", ipfsContent)
-                
-                XCTAssert(ipfsContent == content)
-            }
-        }
+        let content = "Awesome file content"
+        let contentHash = "QmQKqsRQYuiEzAwxfZxppGBsN8knJAGvVSV3GhnrTrLpzm"
+        let fileData = content.data(using: .utf8)
+        let expectation = XCTestExpectation(description: "testAddData")
         
-        tester(add)
+        do {
+            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            
+            try api.add(fileData!) { result in
+                
+                guard result.count == 1, let hash = result[0].hash else {
+                    XCTFail()
+                    expectation.fulfill()
+                    return
+                }
+                
+                XCTAssert(b58String(hash) == contentHash)
+                
+                try? api.cat(hash) { result in
+                    
+                    let ipfsContent = String(bytes: result, encoding: String.Encoding.utf8)!
+                    
+                    XCTAssert(ipfsContent == content)
+                    
+                    expectation.fulfill()
+                }
+            }
+            
+            wait(for: [expectation], timeout: 5.0)
+        } catch {
+            print("Error in testAddData \(error)")
+        }
     }
     
     func testRefs() {
