@@ -19,7 +19,8 @@ class SwiftIpfsApiTests: XCTestCase {
     let hostPort        = 5001
     
     /// Your own IPNS node hash
-    let nodeIdString    = "QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1"
+//    let nodeIdString    = "QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1"
+    let nodeIdString    = "QmRzsihDMWML1dNPa51qwD2dacvZPfTrqsQt4pi1DWGJFP"
     
     /// Another known neighbouring hash
 //    let altNodeIdString = "QmWqjusr86LThkYgjAbNMa8gJ55wzVufkcv5E2TFfzYZXu"
@@ -445,27 +446,12 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.dht.findProvs(multihash, numProviders: 1) {
                 result in
                 
-                var pass = false
-                repeat {
-                    guard case .Array(let providers) = result else { break }
-                    
-                    for prov in providers {
-                        
-                        guard   case .Object(let obj) = prov,
-                                case .Array(let responses) = obj["Responses"]! else { continue }
-                        
-                        for response in responses {
-                            
-                            guard   case .Object(let ars) = response,
-                                    case .String(let provHash) = ars["ID"]! else { continue }
-                            
-                            /// This node should definitely be in the dht.
-                            if provHash == self.nodeIdString { pass = true }
-                        }
-                    }
-                } while false
+                // For each (if any) element in the result array we filter out
+                // any objects with an ID that matches the localhost node's id hash.
+                let matchingProviders = result.array?.compactMap { $0.object?["Responses"]?.array?.filter { $0.object?["ID"]?.string == self.nodeIdString }}
                 
-                XCTAssert(pass)
+                let count = matchingProviders?.count ?? 0
+                XCTAssert(count > 0)
                 
                 expectation.fulfill()
             }
@@ -473,7 +459,7 @@ class SwiftIpfsApiTests: XCTestCase {
             XCTFail("test failed with error \(error)")
         }
         
-        wait(for: [expectation], timeout: 5.0)
+        wait(for: [expectation], timeout: 15.0)
     }
     
     // This test fails on timeout because the api doesn't actually end and thus doesn't return. Fix somehow.
