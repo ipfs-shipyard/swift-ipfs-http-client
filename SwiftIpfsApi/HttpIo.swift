@@ -147,6 +147,7 @@ public class StreamHandler : NSObject, URLSessionDataDelegate {
         
         do {
             // fire the update handler
+            // FIX: Use the return value of the update handler to signal that we want to end the stream.
             try _ = updateHandler(data, dataTask)
         } catch {
             print("In StreamHandler: updateHandler error: \(error)")

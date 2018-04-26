@@ -21,10 +21,11 @@ class SwiftIpfsApiTests: XCTestCase {
     /// Your own IPNS node hash
     let nodeIdString    = "QmWNwhBWa9sWPvbuS5XNaLp6Phh5vRN77BZRF5xPWG3FN1"
     
-    /// Another know neighbouring hash
+    /// Another known neighbouring hash
+//    let altNodeIdString = "QmWqjusr86LThkYgjAbNMa8gJ55wzVufkcv5E2TFfzYZXu"
     let altNodeIdString = "QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z"
 
-    let peerIPAddr = "/ip4/104.236.176.52/tcp/4001"
+    let peerIPAddr = "/ip4/10.12.0.8/tcp/4001"
     
     let currentIpfsVersion = "0.4.14"
     
@@ -431,208 +432,208 @@ class SwiftIpfsApiTests: XCTestCase {
         self.tester(resolve)
     }
     
-    func testDht() {
-        
+    // Fails on timeout because the api doesn't return – it keeps looking.
+    func testDhtFindProvs() {
+
+        let expectation = XCTestExpectation(description: "testFindProvs")
         do {
             /// Common
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            let neighbour = self.altNodeIdString
+
             let multihash = try fromB58String("QmUFtMrBHqdjTtbebsL6YGebvjShh3Jud1insUv12fEVdA")
             
-            let findProvs = { (dispatchGroup: DispatchGroup) throws -> Void in
-                try api.dht.findProvs(multihash) {
-                    result in
-                    
-                    var pass = false
-                    repeat {
-                        guard case .Array(let providers) = result else { break }
-                        
-                        for prov in providers {
-                            
-                            guard   case .Object(let obj) = prov,
-                                    case .Array(let responses) = obj["Responses"]! else { continue }
-                            
-                            for response in responses {
-                                
-                                guard   case .Object(let ars) = response,
-                                        case .String(let provHash) = ars["ID"]! else { continue }
-                                
-                                /// This node should definitely be in the dht.
-                                if provHash == self.nodeIdString { pass = true }
-                            }
-                        }
-                    } while false
-                    
-                    XCTAssert(pass)
-                    
-                    dispatchGroup.leave()
-                }
-            }
-            
-/// redo this test to account for the fact that it must be explicitly stopped
-//tester(findProvs)
-            
-            
-            let query = { (dispatchGroup: DispatchGroup) throws -> Void in
-                /// This nearest works for me but may need changing to something local to the tester.
-                let nearest = try fromB58String(neighbour)
-                try api.dht.query(nearest) {
-                    result in
-                    /// assert against some known return value
-                    print(result)
-                    dispatchGroup.leave()
-                }
-            }
-            
-//            tester(query)
-            
-            
-            let findPeer = { (dispatchGroup: DispatchGroup) throws -> Void in
-                /// This peer works for me but may need changing to something local to the tester.
-                let peer = try fromB58String(neighbour)
+            try api.dht.findProvs(multihash, numProviders: 1) {
+                result in
                 
-                /// At the moment the findpeer wraps the stream json in an array
-                try api.dht.findpeer(peer) {
-                    result in
+                var pass = false
+                repeat {
+                    guard case .Array(let providers) = result else { break }
                     
-                    var pass = false
-                    
-                    if let resArray = result.object?["Responses"]?.array {
-                        for res in resArray {
-                            if res.object?["ID"]?.string == neighbour {
-                                pass = true
-                            }
+                    for prov in providers {
+                        
+                        guard   case .Object(let obj) = prov,
+                                case .Array(let responses) = obj["Responses"]! else { continue }
+                        
+                        for response in responses {
+                            
+                            guard   case .Object(let ars) = response,
+                                    case .String(let provHash) = ars["ID"]! else { continue }
+                            
+                            /// This node should definitely be in the dht.
+                            if provHash == self.nodeIdString { pass = true }
                         }
                     }
-                    XCTAssert(pass)
-                    
-                    dispatchGroup.leave()
+                } while false
+                
+                XCTAssert(pass)
+                
+                expectation.fulfill()
+            }
+        } catch {
+            XCTFail("test failed with error \(error)")
+        }
+        
+        wait(for: [expectation], timeout: 5.0)
+    }
+    
+    // This test fails on timeout because the api doesn't actually end and thus doesn't return. Fix somehow.
+    func testDhtQuery() {
+        
+        let expectation = XCTestExpectation(description: "testDhtQuery")
+        do {
+            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            let neighbour = self.altNodeIdString
+            /// This nearest works for me but may need changing to something local to the tester.
+            let nearest = try fromB58String(neighbour)
+            try api.dht.query(nearest) {
+                result in
+                /// assert against some known return value
+                print(result)
+                expectation.fulfill()
+            }
+        } catch {
+            XCTFail("test failed with error \(error)")
+        }
+        
+        wait(for: [expectation], timeout: 120.0)
+    }
+    
+    func testDhtFindPeer() {
+        
+        let expectation = XCTestExpectation(description: "testDhtFindPeer")
+        do {
+            
+            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            let neighbour = self.altNodeIdString
+            /// This peer works for me but may need changing to something local to the tester.
+            let peer = try fromB58String(neighbour)
+            
+            /// At the moment the findpeer wraps the stream json in an array
+            try api.dht.findpeer(peer) {
+                result in
+                
+                var pass = false
+                
+                if let resArray = result.object?["Responses"]?.array {
+                    for res in resArray {
+                        if res.object?["ID"]?.string == neighbour {
+                            pass = true
+                        }
+                    }
                 }
+                XCTAssert(pass)
+                
+                expectation.fulfill()
             }
             
-            tester(findPeer)
-            
-//            let put = { (dispatchGroup: dispatch_group_t) throws -> Void in
-//            }
-//            tester(put)
-//            let get = { (dispatchGroup: dispatch_group_t) throws -> Void in
-//            }
-//            tester(get)
-            
         } catch {
-            print("testDht error \(error)")
+            XCTFail("test failed with error \(error)")
         }
+        
+        wait(for: [expectation], timeout: 5.0)
     }
     
     /// If this fails check from the command line that the ipns path actually resolves
     /// to the checkHash before thinking this is actually broken. Ipns links do change.
     func testFileLs() {
                 
-        let lsIpns = { (dispatchGroup: DispatchGroup) throws -> Void in
+        let ipnsExpectation = XCTestExpectation(description: "testIpnsLs")
+        let ipfsExpectation = XCTestExpectation(description: "testIpfsLs")
+        
+        do {
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             /// basedir hash
-            let path = "/ipns/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+            var path = "/ipns/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
             
             /// lvl2file hash
-            let checkHash = "QmSiTko9JZyabH56y2fussEt1A5oDqsFXB3CkvAqraFryz"
+            let checkIpnsHash = "QmV1imZz8VRiYFw7ZSSUtTFtcaYA5iJXURkxLhEJssBXvy"
 
             try api.file.ls(path) { result in
-                XCTAssert(result.object?["Objects"]?.object?[checkHash]?.object?["Hash"]?.string == checkHash)
-                dispatchGroup.leave()
+                
+                if let foundHash = result.object?["Objects"]?.object?[checkIpnsHash]?.object?["Hash"]?.string {
+                    
+                    XCTAssert(foundHash == checkIpnsHash)
+                } else { XCTFail() }
+                
+                ipnsExpectation.fulfill()
             }
-        }
             
-        tester(lsIpns)
-        
-        let lsIpfs = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            let checkHash = "QmQHAVCpAQxU21bK8VxeWisn19RRC4bLNFV4DiyXDDyLXM"
             let objHash = "QmQuQzFkULYToUBrMtyHg2tjvcd93N4kNHPCxfcFthB2kU"
-            let path = "/ipfs/" + objHash
+            let checkIpfsHash = "QmQHAVCpAQxU21bK8VxeWisn19RRC4bLNFV4DiyXDDyLXM"
+            path = "/ipfs/" + objHash
             
-            try api.file.ls(path) {
-                result in
-                XCTAssert(result.object?["Objects"]?.object?[objHash]?.object?["Links"]?.array?[0].object?["Hash"]?.string == checkHash)
-                dispatchGroup.leave()
+            try api.file.ls(path) { result in
+                
+                XCTAssert(result.object?["Objects"]?.object?[objHash]?.object?["Links"]?.array?[0].object?["Hash"]?.string == checkIpfsHash)
+                
+                ipfsExpectation.fulfill()
             }
+        } catch {
+            XCTFail("testFileLs failed with error \(error)")
         }
-            
-        tester(lsIpfs)
         
+        wait(for: [ipnsExpectation, ipfsExpectation], timeout: 35.0)
     }
     
     func testBootstrap() {
         
+        let trustedPeer = "/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+        let trustedPeer2 = "/ip4/104.236.176.52/tcp/4001/ipfs/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z"
+    
+        let bootstrapRmExpectation = XCTestExpectation(description: "testBootstrapRm")
+        let bootstrapListExpectation = XCTestExpectation(description: "testBootstrapList")
+        let bootstrapAddExpectation = XCTestExpectation(description: "testBootstrapAdd")
+        
         do {
-            
-            let trustedPeer = "/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
-            let trustedPeer2 = "/ip4/104.236.176.52/tcp/4001/ipfs/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z"
-
             let tpMultiaddr = try newMultiaddr(trustedPeer)
             let tpMultiaddr2 = try newMultiaddr(trustedPeer2)
             
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-        
-            let rm = { (dispatchGroup: DispatchGroup) throws -> Void in
+
+            let tPeers = [tpMultiaddr, tpMultiaddr2]
+            
+            try api.bootstrap.list() { (peers: [Multiaddr]) in
                 
-                let tPeers = [tpMultiaddr, tpMultiaddr2]
+                for peer in peers {
+                    print(try peer.string())
+                }
+                bootstrapListExpectation.fulfill()
+            }
+            
+            try api.bootstrap.add(tPeers) { (peers: [Multiaddr]) in
                 
-                try api.bootstrap.rm(tPeers) {
-                    (peers: [Multiaddr]) in
+                for peer in peers {
+                    print(try peer.string())
+                }
+                
+                if peers.count == 2 {
+                    let t1 = try peers[0].string() == trustedPeer
+                    let t2 = try peers[1].string() == trustedPeer2
+                    XCTAssert(t1 && t2)
+                } else { XCTFail() }
+                
+                bootstrapAddExpectation.fulfill()
+                
+                try api.bootstrap.rm(tPeers) { (peers: [Multiaddr]) in
                     
                     for peer in peers {
                         print(try peer.string())
                     }
-
+                    
                     let a = try peers[0].string() == trustedPeer
                     let b = try peers[1].string() == trustedPeer2
                     XCTAssert(peers.count == 2 && a && b)
                     
-                    dispatchGroup.leave()
+                    bootstrapRmExpectation.fulfill()
                 }
             }
-            
-            tester(rm)
-            
-            let bootstrap = { (dispatchGroup: DispatchGroup) throws -> Void in
-                
-                try api.bootstrap.list() {
-                    (peers: [Multiaddr]) in
-                    for peer in peers {
-                       print(try peer.string())
-                    }
-                    dispatchGroup.leave()
-                }
-            }
-            
-            tester(bootstrap)
-            
-            let add = { (dispatchGroup: DispatchGroup) throws -> Void in
-                
-                let tPeers = [tpMultiaddr, tpMultiaddr2]
-                
-                try api.bootstrap.add(tPeers) {
-                    (peers: [Multiaddr]) in
-                    
-                    for peer in peers {
-                        print(try peer.string())
-                    }
 
-                    if peers.count == 2 {
-                        let t1 = try peers[0].string() == trustedPeer
-                        let t2 = try peers[1].string() == trustedPeer2
-                        XCTAssert(t1 && t2)
-                    } else { XCTFail() }
-                    
-                    dispatchGroup.leave()
-                }
-            }
-            
-            tester(add)
-        
         } catch {
-            print("Bootstrap test error: \(error)")
+            XCTFail("testLog failed with error \(error)")
         }
+        
+        wait(for: [bootstrapRmExpectation, bootstrapListExpectation, bootstrapAddExpectation], timeout: 5.0)
     }
     
     func testSwarmPeers() {
@@ -640,64 +641,82 @@ class SwiftIpfsApiTests: XCTestCase {
         /// NB: This test will require the user to change the knownPeer to a known peer.
         let knownPeer = peerIPAddr+"/ipfs/"+self.altNodeIdString
         
-        let swarmPeers = { (dispatchGroup: DispatchGroup) throws -> Void in
+        let expectation = XCTestExpectation(description: "testSwarmPeers")
+        do {
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.swarm.peers(){
-                (peers: [Multiaddr]) in
+            try api.swarm.peers(){ (peers: [Multiaddr]) in
                 
                 var pass = false
                 for peer in peers {
                     pass = (try peer.string() == knownPeer)
                     if pass { break }
                 }
+                
                 XCTAssert(pass)
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testSwarmPeers failed with error \(error)")
         }
         
-        tester(swarmPeers)
+        wait(for: [expectation], timeout: 5.0)
     }
     
     func testSwarmAddrs() {
-        let swarmAddrs = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.swarm.addrs(){
-                addrs in
+        
+        let expectation = XCTestExpectation(description: "testSwarmAddrs")
+        do {
 
-                XCTAssert(addrs.object?[self.altNodeIdString]?.array?[0].string == self.peerIPAddr)
+            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
+            try api.swarm.addrs(){ addrs in
+
+                if let addr = addrs.object?[self.altNodeIdString]?.array?[0].string {
+                    XCTAssert(addr == self.peerIPAddr)
+                } else { XCTFail() }
                 
-                dispatchGroup.leave()
+                expectation.fulfill()
             }
+        } catch {
+            XCTFail("testSwarmAddrs failed with error \(error)")
         }
         
-        tester(swarmAddrs)
+        wait(for: [expectation], timeout: 5.0)
     }
 
     func testSwarmConnect() {
         
-        let swarmDisConnect = { (dispatchGroup: DispatchGroup) throws -> Void in
-            
+        let expectation = XCTestExpectation(description: "testSwarmConnect")
+        do {
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
             
             /// NB: This test will require the user to change the peerAddress to a known peer.
             let peerAddress = self.peerIPAddr+"/ipfs/"+self.altNodeIdString
             let expectedMessage = "connect \(self.altNodeIdString) success"
             
-            try api.swarm.connect(peerAddress){
-                result in
+            try api.swarm.connect(peerAddress){ result in
                 
-                XCTAssert(result.object?["Strings"]?.array?[0].string! == expectedMessage)
+                if let msg = result.object?["Strings"]?.array?[0].string {
+                    XCTAssert(msg == expectedMessage)
+                } else { XCTFail() }
                 
-                try api.swarm.disconnect(peerAddress) {
-                    result in
+                // Not currently working as expected due to circuit relay implementation.
+                // see https://discuss.ipfs.io/t/ipfs-swarm-disconnect-failure-conn-not-found/2553/6
+                try api.swarm.disconnect(peerAddress) { result in
                     
-                    XCTAssert(result.object?["Strings"]?.array?[0].string! == "dis" + expectedMessage)
-                    dispatchGroup.leave()
+                    if let msg = result.object?["Strings"]?.array?[0].string {
+                        XCTAssert(msg == "dis" + expectedMessage)
+                    } else { XCTFail() }
+                    
+                    expectation.fulfill()
                 }
             }
+        } catch {
+            XCTFail("testSwarmConnect failed with error \(error)")
         }
         
-        tester(swarmDisConnect)
+        wait(for: [expectation], timeout: 5.0)
     }
     
     

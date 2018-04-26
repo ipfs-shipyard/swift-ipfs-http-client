@@ -28,6 +28,9 @@ public extension JsonType {
         case let value as Swift.String: return .String(value)
             
         case let value as NSNumber: return .Number(value)
+            
+        case let value as JsonType: return value
+            
         default: return .null
         }
     }

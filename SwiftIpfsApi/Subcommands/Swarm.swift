@@ -23,7 +23,11 @@ public class Swarm : ClientSubCommand {
             var addresses: [Multiaddr] = []
             if let swarmPeers = result.object?[IpfsCmdString.Peers.rawValue]?.array {
                 /// Make an array of Multiaddr from each peer in swarmPeers.
-                addresses = try swarmPeers.map { try newMultiaddr($0.string!) }
+                addresses = try swarmPeers.map {
+                    guard let peer = $0.object?["Addr"]?.string else {  throw IpfsApiError.nilData }
+                    // Broken until multiaddr can deal with p2p-circuit multiaddr
+                    return try newMultiaddr(peer)
+                }
             }
             
             /// convert the data into a Multiaddr array and pass it to the handler
