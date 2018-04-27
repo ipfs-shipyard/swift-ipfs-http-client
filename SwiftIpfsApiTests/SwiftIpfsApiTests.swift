@@ -388,50 +388,50 @@ class SwiftIpfsApiTests: XCTestCase {
     }
     
     
-    func testName() {
-    
-        var idHash: String = ""
-        /// Start test by storing the existing hash so we can restore it after testing.
-        let nameResolvePublish = { (dispatchGroup: DispatchGroup) throws -> Void in
+    func testNameResolve() {
+        
+        let nameResolveExpectation = XCTestExpectation(description: "testNameResolve")
+        let namePublishExpectation = XCTestExpectation(description: "testNamePublish")
+        let nameResolve2Expectation = XCTestExpectation(description: "testNameResolve2")
+        
+        do {
+
+            var idHash: String = ""
+            /// Start test by storing the existing hash so we can restore it after testing.
+
             let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.name.resolve(){
-                result in
+            try api.name.resolve(){ result in
                 
-//                idHash = result.stringByReplacingOccurrencesOfString("/ipfs/", withString: "")
                 idHash = result.replacingOccurrences(of: "/ipfs/", with: "")
-                dispatchGroup.leave()
-            }
-        }
-        
-        tester(nameResolvePublish)
-        
-        let publishedPath = "/ipfs/" + idHash
-        
-        let publish = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            let multihash = try fromB58String(idHash)
-            try api.name.publish(hash: multihash) {
-                result in
                 
-                XCTAssert(  (result.object?["Name"]?.string)! == self.nodeIdString &&
-                            (result.object?["Value"]?.string)! == publishedPath)
-                dispatchGroup.leave()
+                nameResolveExpectation.fulfill()
+                
+                let publishedPath = "/ipfs/" + idHash
+                let multihash = try fromB58String(idHash)
+                
+                try api.name.publish(hash: multihash) { result in
+                    
+                    XCTAssert(  (result.object?["Name"]?.string)! == self.nodeIdString &&
+                        (result.object?["Value"]?.string)! == publishedPath)
+                    
+                    namePublishExpectation.fulfill()
+                    
+                    try api.name.resolve(){ result in
+                        XCTAssert(result == publishedPath)
+                        nameResolve2Expectation.fulfill()
+                    }
+                }
+
             }
+            
+
+        } catch {
+            XCTFail("test failed with error \(error)")
         }
         
-        self.tester(publish)
-        
-        let resolve = { (dispatchGroup: DispatchGroup) throws -> Void in
-            let api = try IpfsApi(host: self.hostString, port: self.hostPort)
-            try api.name.resolve(){
-                result in
-                XCTAssert(result == publishedPath)
-                dispatchGroup.leave()
-            }
-        }
-        
-        self.tester(resolve)
+        wait(for: [nameResolveExpectation, namePublishExpectation, nameResolve2Expectation], timeout: 5.0)
     }
+    
     
     // Fails on timeout because the api doesn't return – it keeps looking.
     func testDhtFindProvs() {
