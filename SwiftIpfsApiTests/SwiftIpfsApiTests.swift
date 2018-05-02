@@ -116,7 +116,7 @@ class SwiftIpfsApiTests: XCTestCase {
             XCTFail("test failed with error \(error)")
         }
         
-        wait(for: [pinAddExpectation, pinlLsExpectation, pinRmExpectation], timeout: 50.0)
+        wait(for: [pinAddExpectation, pinLsExpectation, pinRmExpectation], timeout: 50.0)
     }
     
     func testRepo() {
