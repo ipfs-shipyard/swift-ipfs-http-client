@@ -80,9 +80,9 @@ extension IpfsApiClient {
                 return
             }
 
-//			print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
-//			let fixedData: Data = fixStreamJson(data)
-//			print("The fixed data:",NSString(data: fixedData, encoding: String.Encoding.utf8.rawValue))
+            print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
+            let fixedData: Data = fixStreamJson(data)
+            print("The fixed data:",NSString(data: fixedData, encoding: String.Encoding.utf8.rawValue))
 			
 			var json: Any
 			do {
@@ -151,7 +151,6 @@ enum IpfsCmdString : String {
     case Path    = "Path"
     case Version = "Version"
     case Name    = "Name"
-    case Pinned  = "Pinned"
     case Keys    = "Keys"
     case Peers   = "Peers"
     case ID      = "ID"

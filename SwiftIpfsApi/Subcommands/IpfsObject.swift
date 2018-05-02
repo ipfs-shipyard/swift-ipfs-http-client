@@ -97,13 +97,44 @@ public class IpfsObject : ClientSubCommand {
         try parent!.fetchBytes("object/data?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
+//    public func patch(_ root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: @escaping (MerkleNode) throws -> Void) throws {
+//
+//        var request: String = "object/patch?arg=\(b58String(root))&arg=\(cmd.rawValue)&"
+//
+//        if cmd == .AddLink && args.count != 2 {
+//            throw IpfsApiError.ipfsObjectError("Wrong number of arguments to \(cmd.rawValue)")
+//        }
+//
+//        request += buildArgString(args)
+//
+//        try parent!.fetchJson(request) {
+//            result in
+//            try completionHandler(try merkleNodeFromJson2(result))
+//        }
+//    }
+    // change root to String ?
     public func patch(_ root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: @escaping (MerkleNode) throws -> Void) throws {
         
-        var request: String = "object/patch?arg=\(b58String(root))&arg=\(cmd.rawValue)&"
-        
-        if cmd == .AddLink && args.count != 2 {
-            throw IpfsApiError.ipfsObjectError("Wrong number of arguments to \(cmd.rawValue)")
+        var request: String = "object/patch"
+        switch cmd {
+        case .AddLink:
+            print("patch add link")
+            guard args.count == 2 else {
+                throw IpfsApiError.ipfsObjectError("Wrong number of arguments to \(cmd.rawValue)")
+            }
+            request += "/add-link"
+        case .RmLink:
+            print("patch remove link")
+            request += "/rm-link"
+        case .SetData:
+            print("patch set data")
+            request += "/set-data"
+        case .AppendData:
+            print("patch append data")
+            request += "/append-data"
         }
+        
+        request += "?arg=\(b58String(root))&"
         
         request += buildArgString(args)
         

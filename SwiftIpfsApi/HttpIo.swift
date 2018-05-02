@@ -18,9 +18,8 @@ enum HttpIoError : Error {
 public struct HttpIo : NetworkIo {
 
     public func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws {
-        
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
-        
+        print("HttpIo receiveFrom url is \(url)")
         let task = URLSession.shared.dataTask(with: url) {
             (data: Data?, response: URLResponse?, error: Error?) in
             
