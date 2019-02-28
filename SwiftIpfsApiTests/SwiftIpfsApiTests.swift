@@ -60,7 +60,10 @@ class SwiftIpfsApiTests: XCTestCase {
             try api.refs.local() { (localRefs: [Multihash]) in
                 
                 for mh in localRefs {
-                    print(b58String(mh))
+                    // Bad assumption that the string is necessarily in base 58.
+                    // Check first.
+                    print("multihash string :\(mh.string())")
+//                    print(b58String(mh))
                 }
                 
                 expectation.fulfill()

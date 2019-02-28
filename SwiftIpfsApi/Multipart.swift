@@ -154,11 +154,14 @@ extension Multipart {
         let task = URLSession.shared.dataTask(with: (multipart.request as URLRequest)) {
             (data: Data?, response: URLResponse?, error: Error?) -> Void in
             
-            guard error == nil && data != nil else {
-                print("Error in dataTaskWithRequest: \(String(describing: error))")//throw HttpIoError.TransmissionError("fail: \(error)")
+            // FIXME: use Swift 5 Result type rather than passing nil data.
+            if error != nil || data == nil {
+                print("Error in dataTaskWithRequest: \(String(describing: error))")
+                let emptyData = Data()
+                completionHandler(emptyData)
                 return
             }
-            
+
             completionHandler(data!)
             
         }

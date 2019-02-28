@@ -1,1 +1,2 @@
 github "NeoTeo/SwiftMultiaddr"
+#git "file:///Users/teo/source/Apple/macOS/Libraries/SwiftMultiaddr" "test"
