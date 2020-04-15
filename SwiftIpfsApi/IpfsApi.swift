@@ -462,12 +462,13 @@ public func fixStreamJson(_ rawJson: Data) -> Data {
     var bytesRead        = 0
     let output           = NSMutableData()
 
-    rawJson.withUnsafeBytes { (bytes: UnsafePointer<UInt8>)->Void in
-        
-        var newStart         = bytes
+    rawJson.withUnsafeBytes { pointer in
+        let bytes = pointer.bindMemory(to: UInt8.self).baseAddress!
+
+        var newStart = bytes
         /// Start the output off with a JSON opening array bracket [.
         output.append([91] as [UInt8], length: 1)
-        
+
         for i in 0 ..< rawJson.count {
             switch bytes[i] {
 
@@ -478,14 +479,14 @@ public func fixStreamJson(_ rawJson: Data) -> Data {
             case 123 where (brackets+1) == 1:   /// check for {
                 brackets += 1
                 newStart = bytes+i
-                
+
             case 125 where (brackets-1) == 0:   /// Check for }
                 brackets -= 1
                 /// Separate sections with a comma except the first one.
                 if output.length > 1 {
                     output.append([44] as [UInt8], length: 1)
                 }
-                
+
                 output.append(Data(bytes: UnsafePointer<UInt8>(newStart), count: bytesRead+1))
                 bytesRead = 0
                 sections += 1
@@ -493,10 +494,11 @@ public func fixStreamJson(_ rawJson: Data) -> Data {
             default:
                 break
             }
-            
+
             if brackets > 0 { bytesRead += 1 }
         }
     }
+
     /// There was nothing to fix. Bail.
     if sections == 1 { return rawJson }
     
