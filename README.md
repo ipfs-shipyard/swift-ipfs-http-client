@@ -96,7 +96,7 @@ dispatch_group_wait(group, DISPATCH_TIME_FOREVER)
 ```
 
 ## Requirements
-Swift 3
+Swift 5
 
 ## Contribute
 
