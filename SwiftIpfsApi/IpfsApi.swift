@@ -12,8 +12,8 @@ import SwiftMultihash
 
 /// This is to allow a Multihash to be used as a Dictionary key.
 extension Multihash : Hashable {
-    public var hashValue: Int {
-        return String(describing: value).hash
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(value)
     }
 }
 
