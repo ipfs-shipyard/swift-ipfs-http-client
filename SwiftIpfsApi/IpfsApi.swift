@@ -189,7 +189,7 @@ public class IpfsApi : IpfsApiClient {
     public convenience init(addr: Multiaddr) throws {
         /// Get the host and port number from the Multiaddr
         let addressString = try addr.string()
-        var protoComponents = addressString.split{$0 == "/"}.map(String.init)
+        let protoComponents = addressString.split{$0 == "/"}.map(String.init)
         if  protoComponents[0].hasPrefix("ip") == true &&
             protoComponents[2].hasPrefix("tcp") == true {
                 
