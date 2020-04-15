@@ -80,9 +80,9 @@ extension IpfsApiClient {
                 return
             }
 
-            print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
+            print("The data:", String(data: data, encoding: .utf8) ?? "n/a")
             let fixedData: Data = fixStreamJson(data)
-            print("The fixed data:",NSString(data: fixedData, encoding: String.Encoding.utf8.rawValue))
+            print("The fixed data:", String(data: fixedData, encoding: .utf8) ?? "n/a")
 			
 			var json: Any
 			do {
