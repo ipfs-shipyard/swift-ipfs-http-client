@@ -21,14 +21,9 @@ struct MerkleData {
     var type: Int?
     var links: [MerkleNode]?
     var data: [UInt8]?
-    
-//    init(hash: String? = nil, name: String? = nil, size: Int? = nil, type: Int? = nil, links: [MerkleNode]? = nil, data: [UInt8]? = nil) {
-//        self.name = name
-//    }
 }
 
-/// TODO: Change this to a struct?
-public class MerkleNode {
+public struct MerkleNode: Equatable {
     public let hash: Multihash?
     public let name: String?
     public let size: Int?
@@ -36,19 +31,19 @@ public class MerkleNode {
     public let links: [MerkleNode]?
     public let data: [UInt8]?
     
-    public convenience init(hash: String) throws {
+    public init(hash: String) throws {
         try self.init(hash: hash, name: nil)
     }
     
-    public convenience init(hash: String, name: String?) throws {
+    public init(hash: String, name: String?) throws {
         try self.init(hash: hash, name: name, size: nil, type: nil, links: nil, data: nil)
     }
     
-    convenience init(data: MerkleData) throws {
-        guard data.hash != nil else {
+    init(data: MerkleData) throws {
+        guard let safeHash = data.hash else {
             throw MerkleNodeError.requiredValueMissing("No hash provided!")
         }
-        try self.init(hash: data.hash!, name: data.name, size: data.size, type: data.type, links: data.links, data: data.data)
+        try self.init(hash: safeHash, name: data.name, size: data.size, type: data.type, links: data.links, data: data.data)
     }
     
     public init(hash: String, name: String?, size: Int?, type: Int?, links: [MerkleNode]?, data: [UInt8]?) throws {
@@ -67,6 +62,8 @@ public class MerkleNode {
         }
     }
 }
+
+
 public func merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
     var nodes = [MerkleNode?]()
     
@@ -244,8 +241,4 @@ public func merkleNodeFromJson(_ rawJson: AnyObject) throws -> MerkleNode {
     }
 
     return try MerkleNode(hash: hash, name: name, size: size, type: type, links: links, data: data)
-}
-
-public func == (lhs: MerkleNode, rhs: MerkleNode) -> Bool {
-    return lhs.hash == rhs.hash
 }
