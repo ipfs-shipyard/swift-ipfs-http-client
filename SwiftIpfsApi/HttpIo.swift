@@ -17,28 +17,23 @@ enum HttpIoError : Error {
 
 public struct HttpIo : NetworkIo {
 
-    public func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws {
-        guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
-        print("HttpIo receiveFrom url is \(url)")
-        let task = URLSession.shared.dataTask(with: url) {
-            (data: Data?, response: URLResponse?, error: Error?) in
-            
-            do {
-                guard error == nil else { throw HttpIoError.transmissionError((error?.localizedDescription)!) }
-                guard let data = data else { throw IpfsApiError.nilData }
-                
-//                print("The data:",NSString(data: data, encoding: String.Encoding.utf8.rawValue))
-                
-                try completionHandler(data)
-                
-            } catch {
-                print("Error ", error, "in completionHandler passed to fetchData ")
-            }
+    public func receiveFrom(_ source: String, completionHandler: @escaping (Result<Data, Error>) -> Void) {
+        guard let url = URL(string: source) else {
+            return completionHandler(.failure(HttpIoError.urlError("Invalid URL")))
         }
-        
-        task.resume()
+
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let safeError = error {
+                return completionHandler(.failure(safeError))
+            }
+
+            guard let safeData = data else {
+                return completionHandler(.failure(IpfsApiError.nilData))
+            }
+
+            return completionHandler(.success(safeData))
+        }.resume()
     }
-   
     
     public func streamFrom( _ source: String,
                             updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool,
@@ -53,22 +48,26 @@ public struct HttpIo : NetworkIo {
         task.resume()
     }
     
-    public func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws {
+    public func sendTo(_ target: String, content: Data, completionHandler: @escaping (Result<Data, Error>) -> Void) {
+        do {
+            var multipart = try Multipart(targetUrl: target, encoding: .utf8)
+            multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
 
-        var multipart = try Multipart(targetUrl: target, encoding: .utf8)
-        multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
-        Multipart.finishMultipart(multipart, completionHandler: completionHandler)
+            Multipart.finishMultipart(multipart, completionHandler: completionHandler)
+        } catch {
+            completionHandler(.failure(error))
+        }
     }
 
+    public func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Result<Data, Error>) -> Void) {
+        do {
+            var multipart = try Multipart(targetUrl: target, encoding: .utf8)
+            multipart = try handle(oldMultipart: multipart, files: [filePath])
 
-    public func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Data) -> Void) throws {
-        
-        var multipart = try Multipart(targetUrl: target, encoding: .utf8)
-        
-        multipart = try handle(oldMultipart: multipart, files: [filePath])
-        
-        Multipart.finishMultipart(multipart, completionHandler: completionHandler)
-        
+            Multipart.finishMultipart(multipart, completionHandler: completionHandler)
+        } catch {
+            completionHandler(.failure(error))
+        }
     }
     
     func handle(oldMultipart: Multipart, files: [String], prePath: String? = nil) throws -> Multipart{
@@ -83,7 +82,7 @@ public struct HttpIo : NetworkIo {
             let prePath = prePath ?? (path as NSString).deletingLastPathComponent + "/"
             guard filemgr.fileExists(atPath: path, isDirectory: &isDir) else { throw HttpIoError.urlError("file not found at given path: \(path)") }
             
-            if isDir.boolValue == true {
+            if isDir.boolValue {
                 
                 let trimmedPath = path.replacingOccurrences(of: prePath, with: "")
                 
@@ -93,11 +92,12 @@ public struct HttpIo : NetworkIo {
                 let dirFiles = try filemgr.contentsOfDirectory(atPath: path)
                 
                 let newPaths = dirFiles.map { aFile in (path as NSString).appendingPathComponent(aFile)}
-                
-                if dirFiles.count > 0 {
-                    multipart = try handle(oldMultipart: multipart, files: newPaths, prePath: prePath)
+
+                guard !dirFiles.isEmpty else {
+                    return multipart
                 }
-                
+
+                multipart = try handle(oldMultipart: multipart, files: newPaths, prePath: prePath)
             } else {
                 
                 /// Add the contents of the file to multipart message.

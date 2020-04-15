@@ -21,50 +21,65 @@ public class Bootstrap : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    
-    public func list(_ completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
-        try fetchPeers("bootstrap/", completionHandler: completionHandler)
+    public func list(_ completionHandler: @escaping (Result<[Multiaddr], Error>) -> Void) {
+        fetchPeers("bootstrap/", completionHandler: completionHandler)
     }
     
-    public func add(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
-        let multiaddresses = try addresses.map { try $0.string() }
-        let request = "bootstrap/add?" + buildArgString(multiaddresses)
-        
-        try fetchPeers(request, completionHandler: completionHandler)
+    public func add(_ addresses: [Multiaddr], completionHandler: @escaping (Result<[Multiaddr], Error>) -> Void) {
+        do {
+            let multiaddresses = try addresses.map { try $0.string() }
+            let request = "bootstrap/add?" + buildArgString(multiaddresses)
+
+            fetchPeers(request, completionHandler: completionHandler)
+        } catch {
+            completionHandler(.failure(error))
+        }
     }
     
-    public func rm(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
-        try self.rm(addresses, all: false, completionHandler: completionHandler)
+    public func rm(_ addresses: [Multiaddr], completionHandler: @escaping (Result<[Multiaddr], Error>) -> Void) {
+        rm(addresses, all: false, completionHandler: completionHandler)
     }
     
-    public func rm(_ addresses: [Multiaddr], all: Bool, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
-        let multiaddresses = try addresses.map { try $0.string() }
-        var request = "bootstrap/rm?"
-        
-        if all { request += "all=true&" }
-        
-        request += buildArgString(multiaddresses)
-        
-        try fetchPeers(request, completionHandler: completionHandler)
-    }
-    
-    private func fetchPeers(_ request: String, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-                                                        
-        try parent!.fetchJson(request) {
-            result in
-            
-            var addresses: [Multiaddr] = []
-            if let peers = result.object?[IpfsCmdString.Peers.rawValue]?.array {
-                /// Make an array of Multiaddr from each peer
-                addresses = try peers.map { try newMultiaddr($0.string!) }
+    public func rm(_ addresses: [Multiaddr], all: Bool, completionHandler: @escaping (Result<[Multiaddr], Error>) -> Void) {
+        do {
+            let multiaddresses = try addresses.map { try $0.string() }
+            var request = "bootstrap/rm?"
+
+            if all {
+                request += "all=true&"
             }
-                
-            /// convert the data into a Multiaddr array and pass it to the handler
-            try completionHandler(addresses)
+
+            request += buildArgString(multiaddresses)
+
+            fetchPeers(request, completionHandler: completionHandler)
+        } catch {
+            completionHandler(.failure(error))
+        }
+    }
+    
+    private func fetchPeers(_ request: String, completionHandler: @escaping (Result<[Multiaddr], Error>) -> Void) {
+        parent!.fetchJson(request) { result in
+            let transformation = result.flatMap { json -> Result<[Multiaddr], Error> in
+                do {
+                    guard let peers = json.object?[IpfsCmdString.Peers.rawValue]?.array else {
+                        return .success([])
+                    }
+
+                    // Make an array of Multiaddr from each peer
+                    let addresses: [Multiaddr] = try peers.compactMap {
+                        guard let safeString = $0.string else {
+                            return nil
+                        }
+
+                        return try newMultiaddr(safeString)
+                    }
+
+                    return .success(addresses)
+                } catch {
+                    return .failure(error)
+                }
+            }
+            completionHandler(transformation)
         }
     }
 }

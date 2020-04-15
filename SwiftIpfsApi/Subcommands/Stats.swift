@@ -16,7 +16,7 @@ public class Stats : ClientSubCommand {
         proto: String? = nil,
         poll: Bool = false,
         interval: String? = nil,
-        completionHandler: @escaping (JsonType) -> Void) throws {
-            try parent!.fetchJson("stats/bw", completionHandler: completionHandler)
+        completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
+            parent!.fetchJson("stats/bw", completionHandler: completionHandler)
     }
 }

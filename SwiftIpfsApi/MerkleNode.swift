@@ -68,11 +68,11 @@ public func merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
     var nodes = [MerkleNode?]()
     
     switch rawJson {
-    case .Object(_):
+    case .object(_):
         return [try merkleNodeFromJson2(rawJson)]
 //        return try merkleNodesFromJson(JsonType.Array([rawJson]))
         
-    case .Array(let arr):
+    case .array(let arr):
         for obj in arr {
             nodes.append(try merkleNodeFromJson2(obj))
         }
@@ -84,88 +84,56 @@ public func merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
 /** This method will find all the objects in the rawJson that refer to the same
     name and build merkle nodes from them. It will return the new merkle nodes.
  */
-/// FIXME: Assumption that hash is always last is incorrect.
+// FIXME: Assumption that hash is always last is incorrect.
 public func _merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
     
     var nodes = [MerkleNode?]()
     
     switch rawJson {
-    case .Object(_):
-        //return [try merkleNodeFromJson2(rawJson)]
-        return try merkleNodesFromJson(JsonType.Array([rawJson]))
+    case .object(_):
+        return try merkleNodesFromJson(JsonType.array([rawJson]))
         
-    case .Array(let arr):
+    case .array(let arr):
         
         /// we need a place to hold the objects with the same name
         _ = [String : MerkleData]()
-//        var curMerkle: MerkleData?
         var curMerkle = MerkleData()
         
         for obj in arr {
-//            print("arr obj is \(obj)")
-//            let name = obj.object?["Name"]!
-//            print("name is \(name)")
-            
             /// Go through all values for the object and add them to the merkledata
             for (key, value) in obj.object! {
                 switch key {
                 case "Name":
-                    
                     guard let name = value.string else { continue }
                     curMerkle.name = name
-//                    curMerkle = merkles[name]
-//                    if curMerkle == nil {
-//                        curMerkle = MerkleData()//name: name)
-//                        curMerkle?.name = name
-//                        merkles[name] = curMerkle
-//                        
-//                    }
                     
                 case "Bytes", "Size":
-//                    guard curMerkle != nil else { print("Bytes, no current merkle!") ; continue }
                     guard let bytes = value.number?.intValue else { continue }
 
                     /// Add to previous size if it exists.
-//                    curMerkle!.size = (curMerkle!.size ?? 0) + bytes
                     curMerkle.size = (curMerkle.size ?? 0) + bytes
-                    
-//                    merkles[curMerkle!.name!] = curMerkle
-                    
+
                 case "Hash":
-//                    guard curMerkle != nil else { print("Hash, no current merkle!") ; continue }
-//                    curMerkle?.hash = value.string
                     curMerkle.hash = value.string
                     /** The hash marks the end of the objects of a given name, so 
                         we create a MerkleNode and add it to our return array. 
                      */
-//                    nodes.append(try MerkleNode(data: curMerkle!))
+
                     nodes.append(try MerkleNode(data: curMerkle))
                     /// time to make a new merkledata
                     curMerkle = MerkleData()
                     
                 case "Type":
-//                    guard curMerkle != nil else { print("Type, no current merkle!") ; continue }
-//                    curMerkle?.type = value.number?.intValue
                       curMerkle.type = value.number?.intValue
                 case "Links":
-//                    guard curMerkle != nil else { print("Links, no current merkle!") ; continue }
                     
                     if let rawLinks = value.array {
-//                        curMerkle?.links = try rawLinks.map { try merkleNodeFromJson2($0) }
-//                        curMerkle.links = try rawLinks.map { try merkleNodeFromJson2($0) }
-                        
-
-                        let tmplinks = try merkleNodesFromJson(JsonType.Array(rawLinks))
-                        /// Unwrap optionals
-                        let links = tmplinks.compactMap{ $0 }
-                        
-                        curMerkle.links = links
+                        let tmplinks = try merkleNodesFromJson(JsonType.array(rawLinks))
+                        curMerkle.links = tmplinks.compactMap{ $0 }
                     }
 
                 case "Data":
-//                    guard curMerkle != nil else { print("Data, no current merkle!") ; continue }
                     if let strDat = value.string {
-//                        curMerkle!.data = [UInt8](strDat.utf8)
                         curMerkle.data = [UInt8](strDat.utf8)
                     }
                    
@@ -174,7 +142,7 @@ public func _merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
                         throw IpfsApiError.swarmError("ls error: No Objects in JSON data.")
                     }
 
-                    return try merkleNodesFromJson(JsonType.Array(objects))
+                    return try merkleNodesFromJson(JsonType.array(objects))
                     
                 default:
                     print("\(key) Not yet handled")
@@ -190,17 +158,13 @@ public func _merkleNodesFromJson(_ rawJson: JsonType) throws -> [MerkleNode?] {
 }
 
 public func merkleNodeFromJson2(_ rawJson: JsonType) throws -> MerkleNode {
-    guard case .Object(let objs) = rawJson else {
+    guard case .object(let objs) = rawJson else {
         throw MerkleNodeError.jsonFormatError
     }
     
     guard let hash: String = objs["Hash"]?.string ?? objs["Key"]?.string else {
         throw MerkleNodeError.requiredValueMissing("Neither Hash nor Key exist")
     }
-//    var hash: String
-//    if let jsonHash = objs["Hash"]?.string { hash = jsonHash }
-//    else if let jsonKey = objs["Key"]?.string { hash = jsonKey }
-//    else { throw MerkleNodeError.RequiredValueMissing("Neither Hash nor Key exist") }
 
     let name     = objs["Name"]?.string
     let size     = objs["Size"]?.number as? Int
@@ -221,7 +185,7 @@ public func merkleNodeFromJson2(_ rawJson: JsonType) throws -> MerkleNode {
 }
 
 public func merkleNodeFromJson(_ rawJson: AnyObject) throws -> MerkleNode {
-    /// turn it into a dictionary
+    // turn it into a dictionary
     let objs     = rawJson as! [String : AnyObject]
     
     let hash     = objs["Hash"] == nil ? objs["Key"] as! String : objs["Hash"] as! String
@@ -234,7 +198,7 @@ public func merkleNodeFromJson(_ rawJson: AnyObject) throws -> MerkleNode {
         links    = try rawLinks.map { try merkleNodeFromJson($0) }
     }
 
-    /// Should this be UInt8? The command line output looks like UInt16
+    // Should this be UInt8? The command line output looks like UInt16
     var data: [UInt8]?
     if let strDat = objs["Data"] as? String {
         data = [UInt8](strDat.utf8)

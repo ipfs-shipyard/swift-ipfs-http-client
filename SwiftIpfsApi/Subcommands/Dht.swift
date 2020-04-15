@@ -16,11 +16,8 @@ public class Dht : ClientSubCommand {
     var parent: IpfsApiClient?
     
     /** FindProviders will return a list of peers who are able to provide the value requested. */
-//    public func findProvs(_ hash: Multihash, numProviders: Int = 20, completionHandler: @escaping (JsonType) -> Void) throws {
-//        try parent!.fetchJson("dht/findprovs?arg=\(b58String(hash))&num-providers=\(numProviders)", completionHandler: completionHandler)
-//    }
     public func findProvs(_ hash: Multihash, numProviders: Int = 20, completionHandler: @escaping (JsonType) -> Void) throws {
-        /// Two test closures to be passed to the fetchStreamJson as parameters.
+        // Two test closures to be passed to the fetchStreamJson as parameters.
         let comp = { (result: AnyObject) -> Void in
             print("Job done")
         }
@@ -47,27 +44,15 @@ public class Dht : ClientSubCommand {
             var providers = [JsonType]()
             // A valid response can either be an array of objects or an object.
             switch parsedJ {
-            case JsonType.Array(let array):
-//                print("we iz got de arrays")
+            case JsonType.array(let array):
                 providers += array.filter { $0.object?["Type"]?.number == 4 }
-//                for obj in array {
-//                    if let jobj = obj.object, jobj["Type"]?.number == 4 {
-//                            providers += jobj
-//                    }
-//                }
-            case JsonType.Object(let obj):
-//                print("we iz got de hobj innit? \(obj)")
+            case JsonType.object(let obj):
                 if obj["Type"]?.number == 4 {
                     providers.append(parsedJ)
                 }
-//                if let provs = getHash(from: obj, forResponse: 4) {
-//                    providers += provs
-//                }
-                
             default:
-                print("fukkal")
+                break
             }
-            
             
             if providers.count >= numProviders {
                 print("We found these providers \(providers)")
@@ -76,26 +61,6 @@ public class Dht : ClientSubCommand {
                 
             }
 
-//            guard let jarray = parsedJ.array else {
-//                print("No array in parsed json update \(parsedJ)")
-//                return true
-//            }
-//
-//            for obj in jarray {
-//                print("json: \(String(describing: obj.object?["Type"]))")
-//            }
-            
-//            print("json: \(json)")
-//
-//            if let arr = json as? [AnyObject] {
-//                for res in arr {
-//                    print(res)
-//                }
-//            } else {
-//                if let dict = json as? [String: AnyObject] {
-//                    print("It's a dict!:",dict )
-//                }
-//            }
             return true
         }
         
@@ -103,22 +68,22 @@ public class Dht : ClientSubCommand {
     }
    
     /** Run a 'findClosestPeers' query through the DHT */
-    public func query(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
-        try parent!.fetchJson("dht/query?arg=" + b58String(hash) , completionHandler: completionHandler)
+    public func query(_ hash: Multihash, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
+        parent!.fetchJson("dht/query?arg=" + b58String(hash) , completionHandler: completionHandler)
     }
     
     /** Run a 'FindPeer' query through the DHT */
-    public func findpeer(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
-        try parent!.fetchJson("dht/findpeer?arg=" + b58String(hash), completionHandler: completionHandler)
+    public func findpeer(_ hash: Multihash, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
+        parent!.fetchJson("dht/findpeer?arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
     /** Will return the value stored in the dht at the given key */
-    public func get(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
-        try parent!.fetchJson("dht/get?arg=" + b58String(hash), completionHandler: completionHandler)
+    public func get(_ hash: Multihash, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
+        parent!.fetchJson("dht/get?arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
     /** Will store the given key value pair in the dht. */
-    public func put(_ key: String, value: String, completionHandler: @escaping (JsonType) -> Void) throws {
-        try parent!.fetchJson("dht/put?arg=\(key)&arg=\(value)", completionHandler: completionHandler)
+    public func put(_ key: String, value: String, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
+        parent!.fetchJson("dht/put?arg=\(key)&arg=\(value)", completionHandler: completionHandler)
     }
 }

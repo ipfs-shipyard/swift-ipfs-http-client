@@ -25,53 +25,47 @@ public class Name : ClientSubCommand {
         case key
     }
     
-    public func publish(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
-        try self.publish(nil, hash: hash, completionHandler: completionHandler)
+    public func publish(_ hash: Multihash, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
+        publish(nil, hash: hash, completionHandler: completionHandler)
     }
     
-    public func publish(_ id: String? = nil, hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
+    public func publish(_ id: String? = nil, hash: Multihash, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
         var request = "name/publish?arg="
-        if id != nil { request += id! + "&arg=" }
-//        try parent!.fetchJson(request + "/ipfs/" + b58String(hash), completionHandler: completionHandler)
-        try parent!.fetchJson(request + b58String(hash), completionHandler: completionHandler)
+        if let safeIdentifier = id {
+            request += safeIdentifier + "&arg="
+        }
+
+        parent!.fetchJson(request + b58String(hash), completionHandler: completionHandler)
     }
     
-    public func publish(ipfsPath: String, args: [NamePublishArgType : Any]? = nil, completionHandler: @escaping (JsonType) -> Void) throws {
+    public func publish(ipfsPath: String, args: [NamePublishArgType : Any]? = nil, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
         // strip the prefix
 //        let path = ipfsPath.replacingOccurrences(of: "/ipfs/", with: "")
         let path = ipfsPath.replacingOccurrences(of: "/", with: "%2F")
         var request = "name/publish?arg=\(path)"
 
-        
         let lifetime = args?[.lifetime] ?? "24h"
         let resolve = args?[.resolve] ?? "true"
         
         request += "&lifetime=\(lifetime)&resolve=\(resolve)"
         
-        try parent!.fetchJson(request, completionHandler: completionHandler)
+        parent!.fetchJson(request, completionHandler: completionHandler)
     }
 
-    public func resolve(_ hash: Multihash? = nil, completionHandler: @escaping (String) -> Void) throws {
-        
+    public func resolve(_ hash: Multihash? = nil, completionHandler: @escaping (Result<String, Error>) -> Void) {
         var request = "name/resolve"
-        if hash != nil { request += "?arg=" + b58String(hash!) }
-        
-        try parent!.fetchJson(request) {
-            result in
-            
-            let resolvedName = result.object?[IpfsCmdString.Path.rawValue]?.string ?? ""
-            completionHandler(resolvedName)
+
+        if let safeHash = hash {
+            request += "?arg=" + b58String(safeHash)
         }
-//        try parent!.fetchData(request) {
-//            (rawJson: NSData) in
-//            print(rawJson)
-//            
-//            guard let json = try NSJSONSerialization.JSONObjectWithData(rawJson, options: NSJSONReadingOptions.AllowFragments) as? [String : AnyObject] else { throw IpfsApiError.JsonSerializationFailed
-//            }
-//            
-//            let resolvedName = json["Path"] as? String ?? ""
-//            completionHandler(resolvedName)
-//        }
         
+        parent!.fetchJson(request) { result in
+            switch result {
+            case .success(let json):
+                completionHandler(.success(json.object?[IpfsCmdString.Path.rawValue]?.string ?? ""))
+            case .failure(let error):
+                completionHandler(.failure(error))
+            }
+        }
     }
 }

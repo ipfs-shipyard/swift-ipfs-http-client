@@ -14,30 +14,27 @@ public class Block : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    public func get(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
-        try parent!.fetchBytes("block/get?stream-channels=true&arg=\(b58String(hash))", completionHandler: completionHandler)
+    public func get(_ hash: Multihash, completionHandler: @escaping (Result<[UInt8], Error>) -> Void) {
+        parent!.fetchBytes("block/get?stream-channels=true&arg=\(b58String(hash))", completionHandler: completionHandler)
     }                                                                
     
-    public func put(_ data: [UInt8], completionHandler: @escaping (MerkleNode) -> Void) throws {
-        let data2 = Data(bytes: UnsafePointer<UInt8>(data), count: data.count)
+    public func put(_ data: [UInt8], completionHandler: @escaping (Result<MerkleNode, Error>) -> Void) {
+        let data = Data(bytes: UnsafePointer<UInt8>(data), count: data.count)
         
-        try parent!.net.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
-            result in
-            
-            do {
-                guard let json = try JSONSerialization.jsonObject(with: result, options: JSONSerialization.ReadingOptions.allowFragments) as? [String : AnyObject] else {
+        parent!.net.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data) { result in
+            let transformation: Result<MerkleNode, Error> = .init {
+                guard let json = try JSONSerialization.jsonObject(with: data,
+                                                                  options: .allowFragments) as? [String : AnyObject] else {
                     throw IpfsApiError.jsonSerializationFailed
                 }
-                
-                completionHandler(try merkleNodeFromJson(json as AnyObject))
-            } catch {
-                print("Block Error:\(error)")
+
+                return try merkleNodeFromJson(json as AnyObject)
             }
+            completionHandler(transformation)
         }
     }
     
-    public func stat(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
-        
-        try parent!.fetchJson("block/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
+    public func stat(_ hash: Multihash, completionHandler: @escaping (Result<JsonType, Error>) -> Void) {
+        parent!.fetchJson("block/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
 }
