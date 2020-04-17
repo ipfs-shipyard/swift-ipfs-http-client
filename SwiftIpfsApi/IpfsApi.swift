@@ -52,7 +52,7 @@ extension IpfsApiClient {
     
     func fetchStreamJson(   _ path: String,
                             updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool,
-                            completionHandler: @escaping (AnyObject) throws -> Void) throws {
+                            completionHandler: @escaping (AnyObject) throws -> Void) throws -> CancellableRequest {
         /// We need to use the passed in completionHandler
         try net.streamFrom(baseUrl + path, updateHandler: updateHandler, completionHandler: completionHandler)
     }
@@ -69,9 +69,10 @@ extension IpfsApiClient {
 //	}
 //	stream.close()
 	
-	
-    func fetchJson(_ path: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
-        try fetchData(path) {
+
+    @discardableResult
+    func fetchJson(_ path: String, completionHandler: @escaping (JsonType) throws -> Void) throws -> CancellableRequest {
+       return try fetchData(path) {
             (data: Data) in
 
             /// If there was no data fetched pass an empty dictionary and return.
@@ -99,13 +100,14 @@ extension IpfsApiClient {
             try completionHandler(JsonType.parse(json as AnyObject))
         }
     }
-    
-    func fetchData(_ path: String, completionHandler: @escaping (Data) throws -> Void) throws {
-        
+
+    @discardableResult
+    func fetchData(_ path: String, completionHandler: @escaping (Data) throws -> Void) throws -> CancellableRequest {
         try net.receiveFrom(baseUrl + path, completionHandler: completionHandler)
     }
-    
-    func fetchBytes(_ path: String, completionHandler: @escaping ([UInt8]) throws -> Void) throws {
+
+    @discardableResult
+    func fetchBytes(_ path: String, completionHandler: @escaping ([UInt8]) throws -> Void) throws -> CancellableRequest {
         try fetchData(path) {
             (data: Data) in
             
@@ -239,9 +241,9 @@ public class IpfsApi : IpfsApiClient {
     
     
     /// base commands
-    
-    public func add(_ filePath: String, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
-        
+
+    @discardableResult
+    public func add(_ filePath: String, completionHandler: @escaping ([MerkleNode]) -> Void) throws -> CancellableRequest {
         try net.sendTo(baseUrl+"add?s", filePath: filePath) {
             data in
             do {
@@ -265,9 +267,9 @@ public class IpfsApi : IpfsApiClient {
     }
     
     // Store binary data
-    
-    public func add(_ fileData: Data, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
-        
+
+    @discardableResult
+    public func add(_ fileData: Data, completionHandler: @escaping ([MerkleNode]) -> Void) throws -> CancellableRequest {
         try net.sendTo(baseUrl+"add?stream-channels=true", content: fileData) {
             data in
             do {
@@ -291,9 +293,9 @@ public class IpfsApi : IpfsApiClient {
             }
         }
     }
-    
-    public func ls(_ hash: Multihash, completionHandler: @escaping ([MerkleNode]) -> Void) throws {
-        
+
+    @discardableResult
+    public func ls(_ hash: Multihash, completionHandler: @escaping ([MerkleNode]) -> Void) throws -> CancellableRequest {
         try fetchJson("ls/\(b58String(hash))") {
             json in
             
@@ -310,17 +312,18 @@ public class IpfsApi : IpfsApiClient {
         }
     }
 
-    public func cat(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
+    @discardableResult
+    public func cat(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws -> CancellableRequest {
         try fetchBytes("cat/\(b58String(hash))", completionHandler: completionHandler)
     }
-    
-    public func get(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
+
+    @discardableResult
+    public func get(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws -> CancellableRequest {
         try self.cat(hash, completionHandler: completionHandler)
     }
 
-
-    public func refs(_ hash: Multihash, recursive: Bool, completionHandler: @escaping ([Multihash]) -> Void) throws {
-        
+    @discardableResult
+    public func refs(_ hash: Multihash, recursive: Bool, completionHandler: @escaping ([Multihash]) -> Void) throws -> CancellableRequest {
         try fetchJson("refs?arg=" + b58String(hash) + "&r=\(recursive)") {
 			result in
             guard let results = result.array else { throw IpfsApiError.unexpectedReturnType }
@@ -338,11 +341,13 @@ public class IpfsApi : IpfsApiClient {
         }
     }
 
-    public func resolve(_ scheme: String, hash: Multihash, recursive: Bool, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func resolve(_ scheme: String, hash: Multihash, recursive: Bool, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try fetchJson("resolve?arg=/\(scheme)/\(b58String(hash))&r=\(recursive)", completionHandler: completionHandler)
     }
-    
-    public func dns(_ domain: String, completionHandler: @escaping (String) -> Void) throws {
+
+    @discardableResult
+    public func dns(_ domain: String, completionHandler: @escaping (String) -> Void) throws -> CancellableRequest {
         try fetchJson("dns?arg=" + domain) {
             result in
             
@@ -350,8 +355,9 @@ public class IpfsApi : IpfsApiClient {
                 completionHandler(path)
         }
     }
-    
-    public func mount(_ ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: @escaping (JsonType) -> Void) throws {
+
+    @discardableResult
+    public func mount(_ ipfsRootPath: String = "/ipfs", ipnsRootPath: String = "/ipns", completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         
         let fileManager = FileManager.default
         
@@ -363,25 +369,27 @@ public class IpfsApi : IpfsApiClient {
             try fileManager.createDirectory(atPath: ipnsRootPath, withIntermediateDirectories: false, attributes: nil)
         }
         
-        try fetchJson("mount?arg=" + ipfsRootPath + "&arg=" + ipnsRootPath, completionHandler: completionHandler)
+        return try fetchJson("mount?arg=" + ipfsRootPath + "&arg=" + ipnsRootPath, completionHandler: completionHandler)
     }
     
     /** ping is a tool to test sending data to other nodes. 
         It finds nodes via the routing system, send pings, wait for pongs, 
         and prints out round- trip latency information. */
-    public func ping(_ target: String, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func ping(_ target: String, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try fetchJson("ping/" + target, completionHandler: completionHandler)
     }
     
-    
-    public func id(_ target: String? = nil, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func id(_ target: String? = nil, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         var request = "id"
         if target != nil { request += "/\(target!)" }
         
-        try fetchJson(request, completionHandler: completionHandler)
+        return try fetchJson(request, completionHandler: completionHandler)
     }
-    
-    public func version(_ completionHandler: @escaping (String) -> Void) throws {
+
+    @discardableResult
+    public func version(_ completionHandler: @escaping (String) -> Void) throws -> CancellableRequest {
         try fetchJson("version") {
             json in
             let version = json.object?[IpfsCmdString.Version.rawValue]?.string ?? ""
@@ -390,19 +398,21 @@ public class IpfsApi : IpfsApiClient {
     }
     
     /** List all available commands. */
-    public func commands(_ showOptions: Bool = false, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func commands(_ showOptions: Bool = false, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         
         var request = "commands" //+ (showOptions ? "?flags=true&" : "")
         if showOptions { request += "?flags=true&" }
         
-        try fetchJson(request, completionHandler: completionHandler)
+        return try fetchJson(request, completionHandler: completionHandler)
     }
     
     /** This method should take both a completion handler and an update handler.
         Since the log tail won't stop until interrupted, the update handler
         should return false when it wants the updates to stop.
     */
-    public func log(_ updateHandler: (Data) throws -> Bool, completionHandler: @escaping ([[String : AnyObject]]) -> Void) throws {
+    @discardableResult
+    public func log(_ updateHandler: (Data) throws -> Bool, completionHandler: @escaping ([[String : AnyObject]]) -> Void) throws -> CancellableRequest {
         
         /// Two test closures to be passed to the fetchStreamJson as parameters.
         let comp = { (result: AnyObject) -> Void in
@@ -426,7 +436,7 @@ public class IpfsApi : IpfsApiClient {
             return true
         }
         
-        try fetchStreamJson("log/tail", updateHandler: update, completionHandler: comp)
+        return try fetchStreamJson("log/tail", updateHandler: update, completionHandler: comp)
     }
 }
 
@@ -434,8 +444,9 @@ public class IpfsApi : IpfsApiClient {
 
 /** Show or edit the list of bootstrap peers */
 extension IpfsApiClient {
-    
-    public func bootstrap(_ completionHandler: @escaping ([Multiaddr]) -> Void) throws {
+
+    @discardableResult
+    public func bootstrap(_ completionHandler: @escaping ([Multiaddr]) -> Void) throws -> CancellableRequest {
         try bootstrap.list(completionHandler)
     }
 }

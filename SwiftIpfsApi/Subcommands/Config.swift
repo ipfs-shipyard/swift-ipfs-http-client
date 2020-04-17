@@ -13,19 +13,21 @@
 public class Config : ClientSubCommand {
     
     var parent: IpfsApiClient?
-    
-    public func show(_ completionHandler: @escaping (JsonType) -> Void) throws {
-        
+
+    @discardableResult
+    public func show(_ completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest{
         try parent!.fetchJson("config/show",completionHandler: completionHandler )
     }
-    
-    public func replace(_ filePath: String, completionHandler: (Bool) -> Void) throws {
+
+    @discardableResult
+    public func replace(_ filePath: String, completionHandler: (Bool) -> Void) throws -> CancellableRequest {
         try parent!.net.sendTo(parent!.baseUrl+"config/replace?stream-channels=true", filePath: filePath) {
             _ in
         }
     }
-    
-    public func get(_ key: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
+
+    @discardableResult
+    public func get(_ key: String, completionHandler: @escaping (JsonType) throws -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("config?arg=" + key) {
             result in
             guard let value = result.object?[IpfsCmdString.Value.rawValue] else {
@@ -36,9 +38,9 @@ public class Config : ClientSubCommand {
             
         }
     }
-    
-    public func set(_ key: String, value: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
-        
+
+    @discardableResult
+    public func set(_ key: String, value: String, completionHandler: @escaping (JsonType) throws -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("config?arg=\(key)&arg=\(value)", completionHandler: completionHandler )
     }
 }

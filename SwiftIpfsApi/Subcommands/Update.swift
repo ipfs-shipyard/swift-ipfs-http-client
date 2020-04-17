@@ -10,14 +10,14 @@
 public class Update : ClientSubCommand {
     
     var parent: IpfsApiClient?
-    
-    public func check(_ completionHandler: @escaping (JsonType) -> Void) throws {
-        
+
+    @discardableResult
+    public func check(_ completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("update/check", completionHandler: completionHandler )
     }
-    
-    public func log(_ completionHandler: @escaping (JsonType) -> Void) throws {
-        
+
+    @discardableResult
+    public func log(_ completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("update/log", completionHandler: completionHandler )
     }
 }

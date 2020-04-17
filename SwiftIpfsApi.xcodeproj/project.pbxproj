@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F47CB9E244988B9006F251C /* CancellableRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F47CB9D244988B9006F251C /* CancellableRequest.swift */; };
+		1F47CBA024498C67006F251C /* CancellableRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F47CB9F24498C67006F251C /* CancellableRequestTests.swift */; };
 		AB0A3AB81BD6705B0090C97A /* SwiftIpfsApi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0A3AAD1BD6705B0090C97A /* SwiftIpfsApi.framework */; };
 		AB0A3ABD1BD6705B0090C97A /* SwiftIpfsApiTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0A3ABC1BD6705B0090C97A /* SwiftIpfsApiTests.swift */; };
 		AB0A3AC81BD671320090C97A /* MerkleNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0A3AC71BD671320090C97A /* MerkleNode.swift */; };
@@ -43,6 +45,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1F47CB9D244988B9006F251C /* CancellableRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellableRequest.swift; sourceTree = "<group>"; };
+		1F47CB9F24498C67006F251C /* CancellableRequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellableRequestTests.swift; sourceTree = "<group>"; };
 		AB0A3AAD1BD6705B0090C97A /* SwiftIpfsApi.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftIpfsApi.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB0A3AB21BD6705B0090C97A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB0A3AB71BD6705B0090C97A /* SwiftIpfsApiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftIpfsApiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -120,6 +124,7 @@
 				AB0A3AB21BD6705B0090C97A /* Info.plist */,
 				AB0A3AC71BD671320090C97A /* MerkleNode.swift */,
 				ABEDF91D1BF0BE58007A1B2B /* JsonType.swift */,
+				1F47CB9D244988B9006F251C /* CancellableRequest.swift */,
 				AB490F8B1BF232F3005C5F57 /* Subcommands */,
 			);
 			path = SwiftIpfsApi;
@@ -129,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				AB0A3ABC1BD6705B0090C97A /* SwiftIpfsApiTests.swift */,
+				1F47CB9F24498C67006F251C /* CancellableRequestTests.swift */,
 				AB0A3ABE1BD6705B0090C97A /* Info.plist */,
 			);
 			path = SwiftIpfsApiTests;
@@ -302,6 +308,7 @@
 				AB490F8A1BF232D4005C5F57 /* Refs.swift in Sources */,
 				ABEDF91E1BF0BE58007A1B2B /* JsonType.swift in Sources */,
 				AB490F9F1BF23516005C5F57 /* Config.swift in Sources */,
+				1F47CB9E244988B9006F251C /* CancellableRequest.swift in Sources */,
 				AB490F9D1BF234F1005C5F57 /* Diag.swift in Sources */,
 				AB2C9EE01BD79F9B00BCCF01 /* HttpIo.swift in Sources */,
 				AB490F881BF231F7005C5F57 /* Pin.swift in Sources */,
@@ -324,6 +331,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F47CBA024498C67006F251C /* CancellableRequestTests.swift in Sources */,
 				AB0A3ABD1BD6705B0090C97A /* SwiftIpfsApiTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
