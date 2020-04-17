@@ -12,11 +12,12 @@ public class Stats : ClientSubCommand {
     var parent: IpfsApiClient?
     
     /** Print ipfs bandwidth information. Currently ignores flags.*/
+    @discardableResult
     public func bw( _ peer: String? = nil,
         proto: String? = nil,
         poll: Bool = false,
         interval: String? = nil,
-        completionHandler: @escaping (JsonType) -> Void) throws {
+        completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
             try parent!.fetchJson("stats/bw", completionHandler: completionHandler)
     }
 }

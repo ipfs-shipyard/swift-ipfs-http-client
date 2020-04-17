@@ -34,11 +34,11 @@ public class IpfsObject : ClientSubCommand {
      Available templates:
     	* unixfs-dir
      */
-    public func new(_ template: ObjectTemplates? = nil, completionHandler: @escaping (MerkleNode) throws -> Void) throws {
+    @discardableResult
+    public func new(_ template: ObjectTemplates? = nil, completionHandler: @escaping (MerkleNode) throws -> Void) throws -> CancellableRequest {
         var request = "object/new?stream-channels=true"
         if template != nil { request += "&arg=\(template!.rawValue)" }
-        try parent!.fetchJson(request) {
-            result in
+        return try parent!.fetchJson(request) { result in
             try completionHandler( try merkleNodeFromJson2(result) )
         }
     }
@@ -46,10 +46,11 @@ public class IpfsObject : ClientSubCommand {
     /** IpfsObject put is a plumbing command for storing DAG nodes.
      Its input is a byte array, and the output is a base58 encoded multihash.
      */
-    public func put(_ data: [UInt8], completionHandler: @escaping (MerkleNode) -> Void) throws {
+    @discardableResult
+    public func put(_ data: [UInt8], completionHandler: @escaping (MerkleNode) -> Void) throws -> CancellableRequest {
         let data2 = Data(bytes: UnsafePointer<UInt8>(data), count: data.count)
         
-        try parent!.net.sendTo(parent!.baseUrl+"object/put?stream-channels=true", content: data2) {
+        return try parent!.net.sendTo(parent!.baseUrl+"object/put?stream-channels=true", content: data2) {
             result in
             
             do {
@@ -68,32 +69,30 @@ public class IpfsObject : ClientSubCommand {
     /** IpfsObject get is a plumbing command for retreiving DAG nodes.
      Its input is a base58 encoded Multihash and it returns a MerkleNode.
      */
-    public func get(_ hash: Multihash, completionHandler: @escaping (MerkleNode) -> Void) throws {
-        
-        try parent!.fetchJson("object/get?stream-channels=true&arg=" + b58String(hash)){
-            result in
+    @discardableResult
+    public func get(_ hash: Multihash, completionHandler: @escaping (MerkleNode) -> Void) throws -> CancellableRequest {
+        try parent!.fetchJson("object/get?stream-channels=true&arg=" + b58String(hash)){ result in
             
             guard var res = result.object else { throw IpfsApiError.resultMissingData("No object found!")}
             res["Hash"] = .String(b58String(hash))
             completionHandler(try merkleNodeFromJson2(.Object(res)))
         }
     }
-    
-    public func links(_ hash: Multihash, completionHandler: @escaping (MerkleNode) throws -> Void) throws {
-        
-        try parent!.fetchJson("object/links?stream-channels=true&arg=" + b58String(hash)){
-            result in
+
+    @discardableResult
+    public func links(_ hash: Multihash, completionHandler: @escaping (MerkleNode) throws -> Void) throws -> CancellableRequest {
+        try parent!.fetchJson("object/links?stream-channels=true&arg=" + b58String(hash)) { result in
             try completionHandler(try merkleNodeFromJson2(result))
         }
     }
-    
-    public func stat(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
-        
+
+    @discardableResult
+    public func stat(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("object/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
-    
-    public func data(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
-        
+
+    @discardableResult
+    public func data(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws -> CancellableRequest {
         try parent!.fetchBytes("object/data?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
@@ -113,7 +112,8 @@ public class IpfsObject : ClientSubCommand {
 //        }
 //    }
     // change root to String ?
-    public func patch(_ root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: @escaping (MerkleNode) throws -> Void) throws {
+    @discardableResult
+    public func patch(_ root: Multihash, cmd: ObjectPatchCommand, args: String..., completionHandler: @escaping (MerkleNode) throws -> Void) throws -> CancellableRequest {
         
         var request: String = "object/patch"
         switch cmd {
@@ -138,7 +138,7 @@ public class IpfsObject : ClientSubCommand {
         
         request += buildArgString(args)
         
-        try parent!.fetchJson(request) {
+        return try parent!.fetchJson(request) {
             result in
             try completionHandler(try merkleNodeFromJson2(result))
         }

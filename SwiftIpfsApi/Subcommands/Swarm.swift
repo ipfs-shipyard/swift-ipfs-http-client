@@ -16,7 +16,8 @@ public class Swarm : ClientSubCommand {
     /** Lists the set of peers this node is connected to.
         The completionHandler is passed an array of Multiaddr that represent the peers.
      */
-    public func peers(_ completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
+    @discardableResult
+    public func peers(_ completionHandler: @escaping ([Multiaddr]) throws -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("swarm/peers?stream-channels=true") {
             result in
             
@@ -36,8 +37,8 @@ public class Swarm : ClientSubCommand {
     }
     
     /** lists all addresses this node is aware of. */
-    public func addrs(_ completionHandler: @escaping (JsonType) throws -> Void) throws {
-        
+    @discardableResult
+    public func addrs(_ completionHandler: @escaping (JsonType) throws -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("swarm/addrs?stream-channels=true") {
             result in
             guard let addrsData = result.object?[IpfsCmdString.Addrs.rawValue] else {
@@ -48,11 +49,13 @@ public class Swarm : ClientSubCommand {
     }
     
     /** opens a new direct connection to a peer address. */
-    public func connect(_ multiaddr: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
+    @discardableResult
+    public func connect(_ multiaddr: String, completionHandler: @escaping (JsonType) throws -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("swarm/connect?arg=" + multiaddr, completionHandler: completionHandler)
     }
-    
-    public func disconnect(_ multiaddr: String, completionHandler: @escaping (JsonType) throws -> Void) throws {
+
+    @discardableResult
+    public func disconnect(_ multiaddr: String, completionHandler: @escaping (JsonType) throws -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("swarm/disconnect?arg=" + multiaddr, completionHandler: completionHandler)
     }
 }

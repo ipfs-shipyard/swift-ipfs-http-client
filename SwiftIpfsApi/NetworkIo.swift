@@ -11,13 +11,15 @@
 import Foundation
 
 public protocol NetworkIo {
-    
-    func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws
 
-    func streamFrom(_ source: String, updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool, completionHandler: @escaping (AnyObject) throws -> Void) throws
-    
-    func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws
+    func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws -> CancellableRequest
+
+    func streamFrom(_ source: String,
+                    updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool,
+                    completionHandler: @escaping (AnyObject) throws -> Void) throws -> CancellableRequest
+
+    func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws -> CancellableRequest
 
     /// If we want to send location addressed content
-    func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Data) -> Void) throws
+    func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Data) -> Void) throws -> CancellableRequest
 }

@@ -13,15 +13,17 @@ import Foundation
 public class Block : ClientSubCommand {
     
     var parent: IpfsApiClient?
-    
-    public func get(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws {
+
+    @discardableResult
+    public func get(_ hash: Multihash, completionHandler: @escaping ([UInt8]) -> Void) throws -> CancellableRequest {
         try parent!.fetchBytes("block/get?stream-channels=true&arg=\(b58String(hash))", completionHandler: completionHandler)
     }                                                                
-    
-    public func put(_ data: [UInt8], completionHandler: @escaping (MerkleNode) -> Void) throws {
+
+    @discardableResult
+    public func put(_ data: [UInt8], completionHandler: @escaping (MerkleNode) -> Void) throws -> CancellableRequest {
         let data2 = Data(bytes: UnsafePointer<UInt8>(data), count: data.count)
         
-        try parent!.net.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
+        return try parent!.net.sendTo(parent!.baseUrl+"block/put?stream-channels=true", content: data2) {
             result in
             
             do {
@@ -35,9 +37,9 @@ public class Block : ClientSubCommand {
             }
         }
     }
-    
-    public func stat(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
-        
+
+    @discardableResult
+    public func stat(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("block/stat?stream-channels=true&arg=" + b58String(hash), completionHandler: completionHandler)
     }
 }

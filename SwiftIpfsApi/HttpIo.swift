@@ -17,9 +17,10 @@ enum HttpIoError : Error {
 
 public struct HttpIo : NetworkIo {
 
-    public func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws {
+    public func receiveFrom(_ source: String, completionHandler: @escaping (Data) throws -> Void) throws -> CancellableRequest {
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         print("HttpIo receiveFrom url is \(url)")
+
         let task = URLSession.shared.dataTask(with: url) {
             (data: Data?, response: URLResponse?, error: Error?) in
             
@@ -35,14 +36,16 @@ public struct HttpIo : NetworkIo {
                 print("Error ", error, "in completionHandler passed to fetchData ")
             }
         }
-        
+
         task.resume()
+        
+        return CancellableDataTask(request: task)
     }
    
     
     public func streamFrom( _ source: String,
                             updateHandler: @escaping (Data, URLSessionDataTask) throws -> Bool,
-                            completionHandler: @escaping (AnyObject) throws -> Void) throws {
+                            completionHandler: @escaping (AnyObject) throws -> Void) throws -> CancellableRequest {
     
         guard let url = URL(string: source) else { throw HttpIoError.urlError("Invalid URL") }
         let config = URLSessionConfiguration.default
@@ -51,23 +54,24 @@ public struct HttpIo : NetworkIo {
         let task = session.dataTask(with: url)
         
         task.resume()
+        return CancellableDataTask(request: task)
     }
     
-    public func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws {
+    public func sendTo(_ target: String, content: Data, completionHandler: @escaping (Data) -> Void) throws -> CancellableRequest {
 
         var multipart = try Multipart(targetUrl: target, encoding: .utf8)
         multipart = try Multipart.addFilePart(multipart, fileName: nil , fileData: content)
-        Multipart.finishMultipart(multipart, completionHandler: completionHandler)
+        return Multipart.finishMultipart(multipart, completionHandler: completionHandler)
     }
 
 
-    public func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Data) -> Void) throws {
+    public func sendTo(_ target: String, filePath: String, completionHandler: @escaping (Data) -> Void) throws -> CancellableRequest {
         
         var multipart = try Multipart(targetUrl: target, encoding: .utf8)
         
         multipart = try handle(oldMultipart: multipart, files: [filePath])
         
-        Multipart.finishMultipart(multipart, completionHandler: completionHandler)
+        return Multipart.finishMultipart(multipart, completionHandler: completionHandler)
         
     }
     

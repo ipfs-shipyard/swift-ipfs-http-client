@@ -19,7 +19,9 @@ public class Dht : ClientSubCommand {
 //    public func findProvs(_ hash: Multihash, numProviders: Int = 20, completionHandler: @escaping (JsonType) -> Void) throws {
 //        try parent!.fetchJson("dht/findprovs?arg=\(b58String(hash))&num-providers=\(numProviders)", completionHandler: completionHandler)
 //    }
-    public func findProvs(_ hash: Multihash, numProviders: Int = 20, completionHandler: @escaping (JsonType) -> Void) throws {
+
+    @discardableResult
+    public func findProvs(_ hash: Multihash, numProviders: Int = 20, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         /// Two test closures to be passed to the fetchStreamJson as parameters.
         let comp = { (result: AnyObject) -> Void in
             print("Job done")
@@ -99,26 +101,30 @@ public class Dht : ClientSubCommand {
             return true
         }
         
-        try parent!.fetchStreamJson("dht/findprovs?arg=\(b58String(hash))&num-providers=\(numProviders)", updateHandler: update, completionHandler: comp)
+        return try parent!.fetchStreamJson("dht/findprovs?arg=\(b58String(hash))&num-providers=\(numProviders)", updateHandler: update, completionHandler: comp)
     }
    
     /** Run a 'findClosestPeers' query through the DHT */
-    public func query(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func query(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("dht/query?arg=" + b58String(hash) , completionHandler: completionHandler)
     }
     
     /** Run a 'FindPeer' query through the DHT */
-    public func findpeer(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func findpeer(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("dht/findpeer?arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
     /** Will return the value stored in the dht at the given key */
-    public func get(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func get(_ hash: Multihash, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("dht/get?arg=" + b58String(hash), completionHandler: completionHandler)
     }
     
     /** Will store the given key value pair in the dht. */
-    public func put(_ key: String, value: String, completionHandler: @escaping (JsonType) -> Void) throws {
+    @discardableResult
+    public func put(_ key: String, value: String, completionHandler: @escaping (JsonType) -> Void) throws -> CancellableRequest {
         try parent!.fetchJson("dht/put?arg=\(key)&arg=\(value)", completionHandler: completionHandler)
     }
 }

@@ -21,27 +21,26 @@ public class Bootstrap : ClientSubCommand {
     
     var parent: IpfsApiClient?
     
-    
-    public func list(_ completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
+    @discardableResult
+    public func list(_ completionHandler: @escaping ([Multiaddr]) throws -> Void) throws -> CancellableRequest {
         try fetchPeers("bootstrap/", completionHandler: completionHandler)
     }
-    
-    public func add(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
+
+    @discardableResult
+    public func add(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws -> CancellableRequest {
         let multiaddresses = try addresses.map { try $0.string() }
         let request = "bootstrap/add?" + buildArgString(multiaddresses)
         
-        try fetchPeers(request, completionHandler: completionHandler)
+        return try fetchPeers(request, completionHandler: completionHandler)
     }
-    
-    public func rm(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
+
+    @discardableResult
+    public func rm(_ addresses: [Multiaddr], completionHandler: @escaping ([Multiaddr]) throws -> Void) throws -> CancellableRequest {
         try self.rm(addresses, all: false, completionHandler: completionHandler)
     }
-    
-    public func rm(_ addresses: [Multiaddr], all: Bool, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-        
+
+    @discardableResult
+    public func rm(_ addresses: [Multiaddr], all: Bool, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws -> CancellableRequest {
         let multiaddresses = try addresses.map { try $0.string() }
         var request = "bootstrap/rm?"
         
@@ -49,11 +48,11 @@ public class Bootstrap : ClientSubCommand {
         
         request += buildArgString(multiaddresses)
         
-        try fetchPeers(request, completionHandler: completionHandler)
+        return try fetchPeers(request, completionHandler: completionHandler)
     }
-    
-    private func fetchPeers(_ request: String, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws {
-                                                        
+
+    @discardableResult
+    private func fetchPeers(_ request: String, completionHandler: @escaping ([Multiaddr]) throws -> Void) throws -> CancellableRequest {
         try parent!.fetchJson(request) {
             result in
             

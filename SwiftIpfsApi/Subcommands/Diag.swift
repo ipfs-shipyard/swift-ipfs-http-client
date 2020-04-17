@@ -14,7 +14,8 @@ public class Diag : ClientSubCommand {
     var parent: IpfsApiClient?
     
     /** Generates a network diagnostics report */
-    public func net(_ completionHandler: @escaping (String) -> Void) throws {
+    @discardableResult
+    public func net(_ completionHandler: @escaping (String) -> Void) throws -> CancellableRequest {
         try parent!.fetchBytes("diag/net?stream-channels=true") {
             bytes in
             completionHandler(String(bytes: bytes, encoding: String.Encoding.utf8)!)
@@ -22,7 +23,8 @@ public class Diag : ClientSubCommand {
     }
     
     /* Prints out system diagnostic information. */
-    public func sys(_ completionHandler: @escaping (String) -> Void) throws {
+    @discardableResult
+    public func sys(_ completionHandler: @escaping (String) -> Void) throws -> CancellableRequest {
         try parent!.fetchBytes("diag/sys?stream-channels=true") {
             bytes in
             completionHandler(String(bytes: bytes, encoding: String.Encoding.utf8)!)

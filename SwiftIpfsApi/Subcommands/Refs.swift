@@ -36,8 +36,9 @@ public class Refs : ClientSubCommand {
         let Ref: String
         let Err: String
     }
-    
-    public func local(_ completionHandler: @escaping ([Multihash]) -> Void) throws {
+
+    @discardableResult
+    public func local(_ completionHandler: @escaping ([Multihash]) -> Void) throws -> CancellableRequest {
         try parent!.fetchData("refs/local") {
             (data: Data) in
             let fixedJsonData = fixStreamJson(data)

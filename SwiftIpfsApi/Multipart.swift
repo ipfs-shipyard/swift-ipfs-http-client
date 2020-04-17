@@ -141,7 +141,7 @@ extension Multipart {
         return oldMultipart
     }
     
-    public static func finishMultipart(_ multipart: Multipart, completionHandler: @escaping (Data) -> Void) {
+    public static func finishMultipart(_ multipart: Multipart, completionHandler: @escaping (Data) -> Void) -> CancellableRequest {
         
         let outString = "--" + multipart.boundary + "--" + lineFeed
         
@@ -167,5 +167,7 @@ extension Multipart {
         }
         
         task.resume()
+
+        return CancellableDataTask(request: task)
     }
 }
